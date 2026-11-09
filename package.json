@@ -4,8 +4,11 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test --test-concurrency=1",
+    "db:setup": "node db/setup.js",
+    "db:reset": "node db/setup.js --reset",
+    "ready": "node db/ready.js"
   },
   "keywords": [],
   "author": "",
@@ -13,9 +16,22 @@
   "type": "commonjs",
   "dependencies": {
     "axios": "^1.13.6",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.10",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.3",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
     "mysql2": "^3.20.0",
     "serialport": "^13.0.0",
     "socket.io": "^4.8.3"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "socket.io-client": "^4.8.4",
+    "supertest": "^7.3.2"
   }
 }

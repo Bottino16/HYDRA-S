@@ -1,0 +1,67 @@
+CREATE TABLE IF NOT EXISTS usuarios (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ nome VARCHAR(100) NOT NULL,
+ usuario VARCHAR(50) NOT NULL UNIQUE,
+ senha_hash VARCHAR(255) NOT NULL,
+ nivel ENUM('master','cliente') NOT NULL DEFAULT 'cliente',
+ plano ENUM('basico','premium') NOT NULL DEFAULT 'basico',
+ ativo BOOLEAN NOT NULL DEFAULT TRUE,
+ criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ ultimo_login DATETIME NULL
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS perfis_planta (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ usuario_id INT UNSIGNED NOT NULL,
+ nome VARCHAR(100) NOT NULL,
+ limite_umidade TINYINT UNSIGNED NOT NULL,
+ FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS configuracao_rega (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ usuario_id INT UNSIGNED NOT NULL,
+ perfil_planta_id INT UNSIGNED NULL,
+ hora CHAR(5) NOT NULL,
+ duracao INT UNSIGNED NOT NULL,
+ ativo BOOLEAN NOT NULL DEFAULT FALSE,
+ dias_do_mes JSON NOT NULL,
+ UNIQUE KEY usuario_perfil (usuario_id, perfil_planta_id),
+ FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
+ FOREIGN KEY (perfil_planta_id) REFERENCES perfis_planta(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS leituras (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ solo DECIMAL(5,2) NULL,
+ temperatura DECIMAL(5,2) NULL,
+ umidade_ar DECIMAL(5,2) NULL,
+ nivel_rio DECIMAL(5,2) NULL,
+ nivel_poco DECIMAL(5,2) NULL,
+ nivel_caixa DECIMAL(5,2) NULL,
+ bombas JSON NOT NULL,
+ data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ INDEX idx_leituras_data_hora (data_hora)
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS eventos (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ tipo VARCHAR(50) NOT NULL,
+ severidade ENUM('info','aviso','erro') NOT NULL,
+ mensagem TEXT NOT NULL,
+ data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ INDEX idx_eventos_data_hora (data_hora)
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS acionamentos (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ usuario_id INT UNSIGNED NULL,
+ bomba TINYINT UNSIGNED NOT NULL,
+ origem ENUM('auto','manual','agendada','ia') NOT NULL,
+ inicio DATETIME NOT NULL,
+ fim DATETIME NULL,
+ FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS conversas_ia (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ usuario_id INT UNSIGNED NOT NULL,
+ papel ENUM('user','assistant') NOT NULL,
+ mensagem TEXT NOT NULL,
+ data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
