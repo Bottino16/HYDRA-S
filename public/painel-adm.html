@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDA | Painel Administrativo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        /* === VARIÁVEIS SAAS === */
+        :root {
+            --bg-base: #09090b;
+            --bg-panel: rgba(24, 24, 27, 0.65);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --accent: #3b82f6; 
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --premium: #8b5cf6;
+            --radius-lg: 16px;
+            --radius-sm: 8px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 40px 20px;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* === BACKGROUND ORBS === */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.25;
+            z-index: -1;
+            animation: floatOrb 15s infinite alternate ease-in-out;
+        }
+        .orb-1 { width: 500px; height: 500px; background: var(--warning); top: -150px; left: -100px; }
+        .orb-2 { width: 400px; height: 400px; background: var(--premium); bottom: -100px; right: -50px; animation-delay: -7s; }
+
+        @keyframes floatOrb {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(50px, 50px) scale(1.2); }
+        }
+
+        /* === ESTRUTURA === */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-title h1 {
+            margin: 0;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--warning);
+        }
+        .header-title p {
+            margin: 4px 0 0 36px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* === PAINÉIS (GLASSMORPHISM) === */
+        .glass-panel {
+            background: var(--bg-panel);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+
+        /* === FORMULÁRIOS === */
+        .form-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        input, select {
+            flex: 1;
+            min-width: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        /* === BOTÕES === */
+        .btn {
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            transition: 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #059669; transform: translateY(-1px); }
+        
+        .btn-danger-outline { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+        .btn-danger-outline:hover { background: rgba(239, 68, 68, 0.1); }
+
+        .btn-warning-outline { background: transparent; border: 1px solid var(--warning); color: var(--warning); }
+        .btn-warning-outline:hover { background: rgba(245, 158, 11, 0.1); }
+
+        /* === TABELAS === */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: middle;
+        }
+
+        tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+        /* === BADGES === */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge-master { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid var(--warning); }
+        .badge-cliente { background: rgba(59, 130, 246, 0.1); color: var(--accent); border: 1px solid var(--accent); }
+        .badge-premium { background: rgba(139, 92, 246, 0.1); color: var(--premium); border: 1px solid var(--premium); }
+        .badge-basico { background: rgba(161, 161, 170, 0.1); color: var(--text-secondary); border: 1px solid var(--text-secondary); }
+
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-action:hover { background: rgba(255, 255, 255, 0.05); }
+
+        /* === TOAST DE NOTIFICAÇÃO === */
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: var(--bg-panel);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            padding: 16px 24px;
+            border-radius: var(--radius-sm);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            animation: slideIn 0.3s ease-out forwards;
+            font-size: 14px;
+        }
+
+        .toast.success i { color: var(--success); }
+        .toast.error i { color: var(--danger); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        /* === MODAL DE EDIÇÃO === */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1; pointer-events: auto;
+        }
+        .modal-content {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            width: 100%; max-width: 450px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-header {
+            font-size: 18px; font-weight: 600; margin-bottom: 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            color: var(--warning);
+        }
+        .modal-header i.close-btn { 
+            cursor: pointer; color: var(--text-secondary); transition: 0.2s;
+        }
+        .modal-header i.close-btn:hover { color: var(--danger); }
+        
+        .modal-body .form-group {
+            margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px;
+        }
+        .modal-body label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+        .modal-body input, .modal-body select { width: 100%; box-sizing: border-box; }
+        
+        .modal-footer {
+            display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+
+    <div class="container">
+        <header>
+            <div class="header-title">
+                <h1><i class="ph-fill ph-shield-check"></i> Painel Administrativo (Master)</h1>
+                <p>Controle de Acesso, Planos Comerciais e Logs do Sistema</p>
+            </div>
+            <div style="display:flex; gap:12px;">
+                <a href="arthur.html" class="btn btn-warning-outline" style="text-decoration:none;">
+                    <i class="ph ph-gauge"></i> Dashboard de Irrigação
+                </a>
+                <button class="btn btn-danger-outline" onclick="fazerLogout()">
+                    <i class="ph ph-sign-out"></i> Sair do Sistema
+                </button>
+            </div>
+        </header>
+
+        <div class="glass-panel">
+            <div class="panel-header">
+                <span><i class="ph ph-users"></i> GESTÃO DE CLIENTES E USUÁRIOS (NUVEM)</span>
+            </div>
+
+            <div class="form-row">
+                <input type="text" id="novo-usuario" placeholder="Nome do cliente/usuário" autocomplete="off">
+                <input type="password" id="nova-senha" placeholder="Senha">
+                
+                <select id="novo-nivel">
+                    <option value="cliente">Acesso: Cliente (Ver Painel)</option>
+                    <option value="master">Acesso: Administrador (Master)</option>
+                </select>
+
+                <select id="novo-plano">
+                    <option value="basico">Plano: Básico (Agendado)</option>
+                    <option value="premium">Plano: Premium (IA + Tempo Real)</option>
+                </select>
+
+                <button class="btn btn-success" onclick="adicionarUsuario()">
+                    <i class="ph ph-plus"></i> Adicionar
+                </button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Senha</th>
+                        <th>Nível de Acesso</th>
+                        <th>Plano Contratado</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-usuarios">
+                    <tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Carregando usuários do servidor...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="glass-panel">
+            <div class="panel-header">
+                <span><i class="ph ph-list-dashes"></i> LOGS DO SISTEMA</span>
+                <button class="btn-action" onclick="limparLogs()"><i class="ph ph-trash"></i> Limpar Logs</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data / Hora</th>
+                        <th>Evento</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-logs">
+                    <tr>
+                        <td style="color: var(--text-secondary);" id="log-data-atual">--</td>
+                        <td>Acesso ao painel Master realizado.</td>
+                        <td><span class="badge" style="color: var(--success);"><i class="ph-fill ph-check-circle"></i> Sucesso</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalEdicao">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span><i class="ph-fill ph-pencil-simple"></i> Editar Usuário</span>
+                <i class="ph ph-x close-btn" onclick="fecharModal()"></i>
+            </div>
+            
+            <div class="modal-body">
+                <input type="hidden" id="edit-id">
+                
+                <div class="form-group">
+                    <label>NOME DE USUÁRIO</label>
+                    <input type="text" id="edit-nome" placeholder="Digite o novo nome">
+                </div>
+
+                <div class="form-group">
+                    <label>NOVA SENHA (Deixe em branco para não alterar)</label>
+                    <input type="password" id="edit-senha" placeholder="Digite a nova senha">
+                </div>
+
+                <div class="form-group">
+                    <label>NÍVEL DE ACESSO</label>
+                    <select id="edit-nivel">
+                        <option value="cliente">Cliente (Painel Hídrico)</option>
+                        <option value="master">Administrador (Master)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>PLANO CONTRATADO</label>
+                    <select id="edit-plano">
+                        <option value="basico">Plano Básico</option>
+                        <option value="premium">Plano Premium</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-danger-outline" onclick="fecharModal()">Cancelar</button>
+                <button class="btn btn-success" onclick="salvarEdicao()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        // Verificação de Segurança
+        document.addEventListener("DOMContentLoaded", () => {
+            const usuarioLogado = JSON.parse(sessionStorage.getItem('sda_usuario'));
+            if (!usuarioLogado || usuarioLogado.nivel !== 'master') {
+                alert("Acesso Negado: Você não possui privilégios de Administrador.");
+                window.location.href = 'arthur.html';
+                return;
+            }
+            carregarUsuarios();
+            const d=new Date(); document.getElementById('log-data-atual').innerText = d.toLocaleDateString('pt-BR')+' - '+d.toTimeString().slice(0,5);
+        });
+
+        // ==========================================
+        // CARREGAR E LISTAR USUÁRIOS
+        // ==========================================
+        async function carregarUsuarios() {
+            try {
+                const resposta = await fetch('/api/usuarios'); 
+                if(!resposta.ok) throw new Error("Erro ao buscar dados na API.");
+                const usuarios = await resposta.json();
+                renderizarTabela(usuarios);
+            } catch (erro) {
+                mostrarToast('Erro ao conectar com o banco de dados.', 'error');
+            }
+        }
+
+        function renderizarTabela(usuarios) {
+            const tbody = document.getElementById('tabela-usuarios');
+            tbody.innerHTML = '';
+
+            usuarios.forEach(user => {
+                const nomeFinal = user.usuario || user.nome || user.username || user.login || 'Desconhecido';
+                const nivelFinal = user.nivel || user.role || 'cliente';
+                const planoFinal = user.plano || 'basico';
+                const idFinal = user.id;
+
+                const badgeNivel = nivelFinal === 'master' 
+                    ? `<span class="badge badge-master"><i class="ph-fill ph-crown"></i> MASTER</span>` 
+                    : `<span class="badge badge-cliente">CLIENTE</span>`;
+                
+                const badgePlano = planoFinal === 'premium'
+                    ? `<span class="badge badge-premium"><i class="ph-fill ph-sparkle"></i> PREMIUM</span>`
+                    : `<span class="badge badge-basico">BÁSICO</span>`;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 500;">${nomeFinal}</td>
+                    <td style="color: var(--text-secondary);">*** (Oculto)</td>
+                    <td>${badgeNivel}</td>
+                    <td>${badgePlano}</td>
+                    <td class="actions-cell">
+                        <button class="btn-action" style="color: var(--warning);" onclick="abrirModalEdicao(${idFinal}, '${nomeFinal}', '${nivelFinal}', '${planoFinal}')">
+                            <i class="ph ph-pencil-simple"></i> Editar
+                        </button>
+                        <button class="btn-action" style="color: var(--danger);" onclick="deletarUsuario(${idFinal}, '${nomeFinal}')">
+                            <i class="ph ph-trash"></i> Excluir
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function adicionarUsuario() {
+            const user = document.getElementById('novo-usuario').value.trim();
+            const pass = document.getElementById('nova-senha').value.trim();
+            const nivel = document.getElementById('novo-nivel').value;
+            const plano = document.getElementById('novo-plano').value;
+
+            if (!user || !pass) {
+                mostrarToast('Preencha o usuário e a senha!', 'error');
+                return;
+            }
+
+            try {
+                const resposta = await fetch('/api/usuarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario: user, senha: pass, nivel: nivel, plano: plano })
+                });
+
+                if (resposta.ok) {
+                    mostrarToast(`Usuário ${user} criado com sucesso!`, 'success');
+                    document.getElementById('novo-usuario').value = '';
+                    document.getElementById('nova-senha').value = '';
+                    carregarUsuarios(); 
+                } else {
+                    const erro = await resposta.json();
+                    mostrarToast(erro.mensagem || 'Erro ao criar usuário.', 'error');
+                }
+            } catch (erro) {
+                mostrarToast('Falha na comunicação com o servidor.', 'error');
+            }
+        }
+
+        // ==========================================
+        // LÓGICA DO MODAL DE EDIÇÃO
+        // ==========================================
+        function abrirModalEdicao(id, nome, nivel, plano) {
+            // Preenche os inputs do modal com os dados atuais do usuário
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-nome').value = nome;
+            document.getElementById('edit-senha').value = ''; // Sempre limpo
+            document.getElementById('edit-nivel').value = nivel;
+            document.getElementById('edit-plano').value = plano;
+
+            // Mostra o Modal
+            document.getElementById('modalEdicao').classList.add('active');
+        }
+
+        function fecharModal() {
+            // Esconde o modal
+            document.getElementById('modalEdicao').classList.remove('active');
+        }
+
+        async function salvarEdicao() {
+            // Pega os dados que o admin digitou no modal
+            const id = document.getElementById('edit-id').value;
+            const nome = document.getElementById('edit-nome').value.trim();
+            const senha = document.getElementById('edit-senha').value.trim();
+            const nivel = document.getElementById('edit-nivel').value;
+            const plano = document.getElementById('edit-plano').value;
+
+            if (!nome) {
+                mostrarToast('O nome do usuário não pode ficar vazio!', 'error');
+                return;
+            }
+
+            try {
+                const resposta = await fetch(`/api/usuarios/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario: nome, senha: senha, nivel: nivel, plano: plano })
+                });
+
+                if (resposta.ok) {
+                    mostrarToast('Usuário atualizado com sucesso!', 'success');
+                    fecharModal();      // Esconde o painel
+                    carregarUsuarios(); // Recarrega a tabela para ver a alteração
+                } else {
+                    const erro = await resposta.json();
+                    mostrarToast(erro.mensagem || 'Erro ao atualizar usuário.', 'error');
+                }
+            } catch (erro) {
+                mostrarToast('Falha de conexão com o servidor.', 'error');
+            }
+        }
+
+        async function deletarUsuario(id, nome) {
+            if (nome.toLowerCase() === 'master' || id === 1) {
+                mostrarToast('Ação bloqueada. O Master principal não pode ser excluído.', 'error');
+                return;
+            }
+
+            if(confirm(`ATENÇÃO: Tem certeza que deseja excluir permanentemente "${nome}"?`)) {
+                try {
+                    const resposta = await fetch(`/api/usuarios/${id}`, { method: 'DELETE' });
+                    if (resposta.ok) {
+                        mostrarToast(`Usuário ${nome} excluído.`, 'success');
+                        carregarUsuarios(); 
+                    } else {
+                        mostrarToast('Erro ao excluir usuário.', 'error');
+                    }
+                } catch (erro) {
+                    mostrarToast('Falha ao conectar.', 'error');
+                }
+            }
+        }
+
+        function limparLogs() {
+            if(confirm("Deseja realmente limpar os logs?")) {
+                document.getElementById('tabela-logs').innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Sem logs recentes.</td></tr>';
+                mostrarToast('Logs limpos.', 'success');
+            }
+        }
+
+        function fazerLogout() {
+            sessionStorage.removeItem('sda_usuario');
+            window.location.href = 'arthur.html';
+        }
+
+        // Toasts
+        function mostrarToast(mensagem, tipo = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${tipo}`;
+            const icone = tipo === 'success' ? 'ph-fill ph-check-circle' : 'ph-fill ph-warning-circle';
+            toast.innerHTML = `<i class="${icone}" style="font-size: 20px;"></i> <span>${mensagem}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease-out forwards';
+                setTimeout(() => { toast.remove(); }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

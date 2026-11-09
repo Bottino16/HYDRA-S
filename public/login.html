@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDA | Login do Sistema</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg-dark: #0d1117; --card-bg: #161b22; --border: #30363d;
+            --text-main: #e6edf3; --text-dim: #8b949e; --accent: #58a6ff;
+            --danger: #da3633;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif; background-color: var(--bg-dark); color: var(--text-main);
+            margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center;
+        }
+
+        .login-box {
+            background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+            padding: 40px; width: 100%; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .logo-icon { font-size: 48px; color: var(--accent); margin-bottom: 10px; }
+        h2 { margin: 0 0 5px 0; font-size: 22px; font-weight: 600; }
+        p { color: var(--text-dim); font-size: 13px; margin-bottom: 30px; }
+
+        input {
+            width: 100%; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border);
+            padding: 12px; border-radius: 6px; font-size: 14px; outline: none; box-sizing: border-box; margin-bottom: 15px;
+            transition: 0.2s;
+        }
+        input:focus { border-color: var(--accent); }
+
+        .btn-login {
+            width: 100%; background: var(--accent); color: #0d1117; font-weight: 700; border: none;
+            padding: 12px; border-radius: 6px; font-size: 14px; cursor: pointer; transition: 0.2s;
+        }
+        .btn-login:hover { background: #79c0ff; }
+
+        #mensagem-erro { color: var(--danger); font-size: 13px; margin-top: 15px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <i class="ph ph-drop logo-icon"></i>
+        <h2>Acesso Restrito</h2>
+        <p>Sistema de Irrigação Inteligente</p>
+
+        <input type="text" id="campo-usuario" placeholder="Nome de Usuário" autocomplete="off">
+        <input type="password" id="campo-senha" placeholder="Senha">
+        
+        <button class="btn-login" onclick="fazerLogin()">Entrar</button>
+
+        <div id="mensagem-erro">Usuário ou senha incorretos.</div>
+    </div>
+
+    <script>
+        // NOVO CÓDIGO: Conecta com o Banco de Dados via API!
+        async function fazerLogin() {
+            const user = document.getElementById('campo-usuario').value.trim();
+            const pass = document.getElementById('campo-senha').value.trim();
+            const erro = document.getElementById('mensagem-erro');
+            const btn = document.querySelector('.btn-login');
+
+            if (!user || !pass) return;
+
+            btn.innerText = 'Acessando...';
+            erro.style.display = 'none';
+
+            try {
+                // Vai no seu server.js verificar se a senha está no MySQL da Aiven
+                const resposta = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user: user, pass: pass })
+                });
+
+                const dados = await resposta.json();
+
+                if (dados.sucesso) {
+                    // Guarda o perfil da pessoa (para o arthur.html saber o plano dela depois)
+                    sessionStorage.setItem('sda_usuario', JSON.stringify(dados.usuario));
+                    
+                    // Se for Master, vai para o painel de Admin. Senão, vai para a rega.
+                    if (dados.usuario.nivel === 'master') {
+                        window.location.href = 'painel-adm.html';
+                    } else {
+                        window.location.href = 'arthur.html';
+                    }
+                } else {
+                    mostrarErro(dados.mensagem);
+                    btn.innerText = 'Entrar';
+                }
+            } catch (err) {
+                mostrarErro("Erro de conexão com o servidor.");
+                btn.innerText = 'Entrar';
+            }
+        }
+
+        function mostrarErro(mensagem) {
+            const erro = document.getElementById('mensagem-erro');
+            erro.style.display = 'block';
+            erro.innerText = mensagem;
+            
+            // Tremidinha no botão
+            const btn = document.querySelector('.btn-login');
+            btn.style.transform = 'translateX(-5px)';
+            setTimeout(() => btn.style.transform = 'translateX(0)', 100);
+        }
+
+        // Permite dar 'Enter' para logar
+        document.getElementById('campo-senha').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') fazerLogin();
+        });
+    </script>
+</body>
+</html>

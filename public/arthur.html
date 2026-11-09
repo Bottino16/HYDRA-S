@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDA | Terminal SaaS</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <style>
+        /* === VARIÁVEIS SAAS MODERNAS === */
+        :root {
+            /* Dark Mode (Padrão SaaS) - Tons mais profundos e elegantes */
+            --bg-base: #0f1115; /* Fundo principal escuro com leve tom azulado */
+            --bg-panel: rgba(22, 24, 29, 0.7);
+            --bg-card: rgba(30, 33, 40, 0.6);
+            --border-color: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            
+            --accent-glow: rgba(56, 189, 248, 0.2);
+            --accent: #38bdf8; /* Light Blue moderno */
+            --success: #10b981; /* Emerald */
+            --danger: #ef4444; /* Red */
+            --warning: #f59e0b; /* Amber */
+            --premium: #a855f7; /* Purple */
+
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 8px;
+            
+            --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.5);
+            --glass-blur: blur(20px);
+        }
+
+        /* Light Mode (Elegante) */
+        body.light-mode {
+            --bg-base: #f8fafc;
+            --bg-panel: rgba(255, 255, 255, 0.85);
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --border-color: rgba(0, 0, 0, 0.08);
+            --border-hover: rgba(0, 0, 0, 0.15);
+            
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            
+            --accent-glow: rgba(56, 189, 248, 0.15);
+            --shadow-float: 0 12px 40px rgba(0, 0, 0, 0.06);
+        }
+
+        /* === RESET E LAYOUT GLOBAL === */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            background-image: radial-gradient(circle at top right, var(--accent-glow), transparent 40%);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* === SIDEBAR === */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-panel);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 28px;
+            z-index: 50;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 48px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--accent), #0284c7);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            box-shadow: 0 8px 24px var(--accent-glow);
+        }
+
+        .brand-text h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+        .brand-text p { margin: 2px 0 0; font-size: 12px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; font-weight: 500;}
+
+        .nav-menu { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+        
+        .nav-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 14px 16px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: left;
+            width: 100%;
+            text-decoration: none;
+        }
+
+        .nav-btn:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .nav-btn i { font-size: 22px; transition: color 0.2s; }
+        .nav-btn:hover i { color: var(--accent); }
+        .nav-btn.danger:hover i { color: var(--danger); }
+        .nav-btn.danger:hover { color: var(--danger); background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.2); }
+
+        .status-badge {
+            margin-top: auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 14px 16px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* === MAIN CONTENT & BENTO GRID === */
+        .main-wrapper {
+            flex: 1;
+            padding: 40px 48px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 36px;
+        }
+        .page-header h2 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -1px; }
+        .page-header p { margin: 6px 0 0; color: var(--text-secondary); font-size: 15px; }
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+        }
+
+        .bento-card {
+            background: var(--bg-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .bento-card:hover { 
+            border-color: var(--border-hover); 
+            transform: translateY(-4px); 
+            box-shadow: var(--shadow-float); 
+        }
+        
+        .bento-card-header { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 20px; }
+        .bento-card-header i { font-size: 20px; color: var(--text-primary); }
+
+        /* Tamanhos do Grid */
+        .col-span-3 { grid-column: span 3; }
+        .col-span-4 { grid-column: span 4; }
+        .col-span-8 { grid-column: span 8; }
+        .col-span-12 { grid-column: span 12; }
+
+        /* === COMPONENTES DA UI === */
+        .stat-value { font-size: 46px; font-weight: 300; letter-spacing: -2px; margin-bottom: 16px; display: block; line-height: 1;}
+        .progress-bg { height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);}
+        body.light-mode .progress-bg { background: rgba(0,0,0,0.08); box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);}
+        .progress-fill { height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        .glow-danger { border-color: var(--danger) !important; box-shadow: 0 0 40px rgba(239, 68, 68, 0.15) inset; }
+
+        select, input {
+            background: rgba(0,0,0,0.2);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 14px 16px;
+            border-radius: var(--radius-sm);
+            width: 100%;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.2s;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 14px;
+        }
+        body.light-mode select, body.light-mode input { background: rgba(255,255,255,0.5); }
+        select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+        .btn {
+            cursor: pointer; padding: 14px 18px; border-radius: var(--radius-sm);
+            font-size: 14px; font-weight: 600; width: 100%;
+            border: 1px solid transparent; transition: all 0.2s;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+            font-family: 'Inter', sans-serif; margin-bottom: 10px;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { filter: brightness(1.1); box-shadow: 0 6px 20px var(--accent-glow); }
+        .btn-outline { background: transparent; border-color: var(--border-color); color: var(--text-primary); }
+        .btn-outline:hover { background: var(--bg-card); border-color: var(--border-hover); }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: rgba(239, 68, 68, 0.2); }
+        .btn-danger:hover { background: var(--danger); color: #fff; box-shadow: 0 6px 20px rgba(239, 68, 68, 0.2); }
+        .btn-success { background: rgba(16, 185, 129, 0.1); color: var(--success); border-color: rgba(16, 185, 129, 0.2); }
+        .btn-success:hover { background: var(--success); color: #fff; box-shadow: 0 6px 20px rgba(16, 185, 129, 0.2); }
+
+        #graficoUmidade { height: 320px !important; width: 100% !important; }
+
+        /* Animações e Status */
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-secondary); }
+        .dot.online { background: var(--success); box-shadow: 0 0 12px var(--success); animation: pulse 2s infinite; }
+        .dot.offline { background: var(--danger); box-shadow: 0 0 12px var(--danger); }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+
+        .spin-anim { animation: spin 1.5s linear infinite; color: var(--accent) !important; filter: drop-shadow(0 0 12px var(--accent)); }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .text-pumping { color: var(--accent) !important; text-shadow: 0 0 10px var(--accent-glow); }
+
+        /* Painel Notificação / Alerta / Toast */
+        #painel-alerta { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--danger); padding: 18px; border-radius: var(--radius-md); font-weight: 500; font-size: 15px; display: flex; align-items: center; gap: 14px; margin-bottom: 28px; backdrop-filter: var(--glass-blur); box-shadow: 0 4px 20px rgba(239, 68, 68, 0.1);}
+        
+        .relative { position: relative; }
+        .badge { position: absolute; top: 6px; right: 12px; background: var(--danger); color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);}
+        
+        .notification-panel { display: none; position: absolute; top: 10px; left: 105%; background: var(--bg-panel); backdrop-filter: blur(30px); border: 1px solid var(--border-color); border-radius: var(--radius-md); width: 340px; box-shadow: var(--shadow-float); z-index: 1000; max-height: 400px; overflow-y: auto; }
+        .notif-header { padding: 18px; font-weight: 600; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        .notif-item { padding: 16px 18px; border-bottom: 1px solid var(--border-color); font-size: 13px; display: flex; gap: 14px; align-items: flex-start; transition: 0.2s;}
+        .notif-item:hover { background: rgba(255,255,255,0.03); }
+
+        #toast-container { position: fixed; bottom: 40px; right: 40px; z-index: 9999; display: flex; flex-direction: column; gap: 14px; }
+        .toast { background: var(--bg-panel); backdrop-filter: blur(20px); border: 1px solid var(--border-color); color: var(--text-primary); padding: 18px 24px; border-radius: var(--radius-md); box-shadow: var(--shadow-float); display: flex; align-items: center; gap: 14px; font-size: 15px; font-weight: 500; animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1), fadeOut 0.4s ease 3.6s forwards; border-left: 5px solid var(--accent); }
+        @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(20px); } }
+
+        /* Modais */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); align-items: center; justify-content: center; z-index: 10000; }
+        .modal-content { background: var(--bg-base); border: 1px solid var(--border-color); padding: 36px; border-radius: var(--radius-lg); width: 480px; max-width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-float); position: relative;}
+        .modal-content.large { width: 850px; }
+        
+        .month-picker { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-top: 20px; }
+        .day-box-month { padding: 14px 0; border: 1px solid var(--border-color); text-align: center; cursor: pointer; font-size: 14px; border-radius: var(--radius-sm); transition: 0.2s; background: rgba(0,0,0,0.2); font-weight: 600; }
+        .day-box-month:hover { border-color: var(--accent); background: rgba(56, 189, 248, 0.1); }
+        .day-box-month.selected { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 4px 15px var(--accent-glow); }
+
+        /* === PREMIUM LOCK REFINADO === */
+        .bloqueado-basico { 
+            position: relative; 
+            overflow: hidden;
+            pointer-events: none; /* Impede clique */
+        }
+        .bloqueado-basico::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 17, 21, 0.6); /* Overlay escuro */
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 10;
+        }
+        body.light-mode .bloqueado-basico::before {
+            background: rgba(255, 255, 255, 0.6);
+        }
+        .bloqueado-basico::after { 
+            content: "🔒 RECURSO MASTER"; 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            background: linear-gradient(135deg, var(--premium), #7e22ce); 
+            color: #fff; 
+            padding: 10px 24px; 
+            border-radius: 30px; 
+            font-weight: 700; 
+            font-size: 13px; 
+            box-shadow: 0 8px 24px rgba(168, 85, 247, 0.5); 
+            z-index: 11; 
+            letter-spacing: 1px; 
+            white-space: nowrap;
+        }
+
+        @media (max-width: 1024px) { .bento-grid { grid-template-columns: repeat(8, 1fr); } .col-span-4 { grid-column: span 8; } .sidebar { width: 220px; } }
+        @media (max-width: 768px) { body { flex-direction: column; overflow: auto; } .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); padding: 20px; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; box-sizing: border-box;} .brand { margin-bottom: 0; } .nav-menu { flex-direction: row; width: 100%; gap: 8px; flex-wrap: wrap; margin-top: 20px; } .nav-btn { width: auto; padding: 10px 14px; flex: 1; justify-content: center;} .nav-btn span { display: none; } .status-badge { width: 100%; margin-top: 20px; justify-content: center; } .main-wrapper { padding: 20px; } .bento-grid { grid-template-columns: 1fr; display: flex; flex-direction: column; } .col-span-3, .col-span-8, .col-span-4 { grid-column: span 1; } }
+    </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<aside class="sidebar">
+    <div class="brand">
+        <div class="brand-icon"><i class="ph-fill ph-drop"></i></div>
+        <div class="brand-text">
+            <h1>SDA Dashboard</h1>
+            <p>Controle Hídrico</p>
+        </div>
+    </div>
+
+    <nav class="nav-menu">
+        <button class="nav-btn" onclick="abrirDoc()">
+            <i class="ph ph-book-open-text"></i> <span>Documentação</span>
+        </button>
+        <button class="nav-btn" onclick="toggleTema()">
+            <i class="ph ph-moon" id="icone-tema"></i> <span>Alternar Tema</span>
+        </button>
+        <button class="nav-btn relative" onclick="toggleNotificacoes()">
+            <i class="ph ph-bell"></i> <span>Notificações</span>
+            <span class="badge" id="notif-badge" style="display: none;">0</span>
+            
+            <div class="notification-panel" id="painel-notif">
+                <div class="notif-header">
+                    <span>Alertas do Sistema</span>
+                    <span style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:12px; font-weight:600;" onclick="event.stopPropagation(); limparNotificacoes()">Limpar Tudo</span>
+                </div>
+                <div id="lista-notif"></div>
+            </div>
+        </button>
+        <button class="nav-btn" onclick="toggleFullScreen()">
+            <i class="ph ph-corners-out" id="icone-fullscreen"></i> <span>Tela Cheia</span>
+        </button>
+        <a href="painel-adm.html" class="nav-btn">
+            <i class="ph ph-shield-check"></i> <span>Painel Admin</span>
+        </a>
+        <a href="arthur.html" class="nav-btn danger" style="margin-top: 24px;">
+            <i class="ph ph-sign-out"></i> <span>Encerrar Sessão</span>
+        </a>
+    </nav>
+
+    <div class="status-badge">
+        <span class="dot" id="dot-status"></span>
+        <span id="status-conexao">Conectando...</span>
+    </div>
+</aside>
+
+<main class="main-content main-wrapper">
+    
+    <header class="page-header">
+        <div>
+            <h2>Visão Geral da Telemetria</h2>
+            <p>Monitoramento em tempo real dos sensores IoT.</p>
+        </div>
+    </header>
+
+    <div id="painel-alerta" style="display: none;">
+        <i class="ph-fill ph-warning-circle" style="font-size: 28px;"></i>
+        <span>Atenção: Anomalia crítica detectada no fluxo de água. Verifique a tubulação.</span>
+    </div>
+
+    <div class="bento-grid">
+        
+        <div class="bento-card col-span-3" id="card-solo">
+            <div class="bento-card-header"><i class="ph ph-plant" style="color: var(--success);"></i> Umidade do Solo</div>
+            <span class="stat-value" id="texto-umidade">--%</span>
+            <div class="progress-bg"><div class="progress-fill" id="prog-umidade" style="width: 0%; background: var(--success);"></div></div>
+        </div>
+
+        <div class="bento-card col-span-3">
+            <div class="bento-card-header"><i class="ph ph-thermometer" style="color: var(--warning);"></i> Temperatura</div>
+            <span class="stat-value" id="texto-temp" style="color: var(--warning);">--°C</span>
+            <div class="progress-bg"><div class="progress-fill" id="prog-temp" style="width: 0%; background: var(--warning);"></div></div>
+        </div>
+
+        <div class="bento-card col-span-3">
+            <div class="bento-card-header"><i class="ph ph-cloud-fog" style="color: var(--accent);"></i> Umidade do Ar</div>
+            <span class="stat-value" id="texto-umid-ar" style="color: var(--accent);">--%</span>
+            <div class="progress-bg"><div class="progress-fill" id="prog-umid-ar" style="width: 0%; background: var(--accent);"></div></div>
+        </div>
+
+        <div class="bento-card col-span-3">
+            <div class="bento-card-header"><i class="ph ph-drop" style="color: #60a5fa;"></i> Nível do Tanque</div>
+            <span class="stat-value" id="texto-agua">0.0 L</span>
+            <div class="progress-bg"><div class="progress-fill" id="prog-agua" style="width: 0%; background: #60a5fa;"></div></div>
+        </div>
+
+        <div class="bento-card col-span-8">
+            <div class="bento-card-header" style="justify-content: space-between;">
+                <span style="display:flex; align-items:center; gap:10px;"><i class="ph ph-chart-line-up"></i> Histórico Analítico</span>
+                <button class="btn btn-outline" onclick="baixarRelatorio()" style="width:auto; padding: 8px 14px; margin:0; font-size:12px;">
+                    <i class="ph ph-download-simple"></i> Exportar CSV
+                </button>
+            </div>
+            <div style="position: relative; height: 320px; width: 100%;">
+                <canvas id="graficoUmidade"></canvas>
+            </div>
+        </div>
+
+        <div class="bento-card col-span-4" style="display: flex; flex-direction: column; justify-content: center;">
+            <div class="bento-card-header"><i class="ph ph-game-controller"></i> Override Manual</div>
+            
+            <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 24px;">
+                <input type="number" id="tempo-manual" value="2" style="margin: 0; flex: 1; text-align: center; font-size: 24px; font-weight: 300;">
+                <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary); letter-spacing: 1px;">MINUTOS</span>
+            </div>
+            
+            <button class="btn btn-primary" onclick="regarManual()" style="padding: 18px; font-size: 15px;"><i class="ph-fill ph-power" style="font-size: 22px;"></i> Forçar Irrigação Agora</button>
+            <button class="btn btn-danger" onclick="pararRega()"><i class="ph-fill ph-stop-circle" style="font-size: 20px;"></i> Corte de Fluxo Emergencial</button>
+            
+            <div style="text-align: center; margin-top: 36px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                <i id="icone-bomba" class="ph-fill ph-engine" style="font-size: 54px; color: var(--text-secondary); transition: all 0.3s;"></i>
+                <div id="texto-bomba" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); letter-spacing: 1.5px;">STATUS: STANDBY</div>
+            </div>
+        </div>
+
+        <div class="bento-card col-span-4 recurso-premium">
+            <div class="bento-card-header"><i class="ph ph-cloud-sun"></i> Clima & IA (API)</div>
+            <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 24px;">
+                <i id="icone-clima" class="ph-fill ph-sun" style="font-size: 64px; color: var(--warning); filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.3));"></i>
+                <div>
+                    <div id="texto-clima" style="font-size: 26px; font-weight: 300; letter-spacing: -1px;">Carregando...</div>
+                    <div id="status-clima-rega" style="font-size: 13px; color: var(--success); font-weight: 600; text-transform: uppercase; margin-top: 4px;">Aguardando satélite</div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-outline" style="font-size: 13px; padding: 10px; flex: 1;" onclick="atualizarClimaSimulado()">🎮 Simular</button>
+                <button class="btn btn-primary" style="font-size: 13px; padding: 10px; flex: 1;" onclick="buscarClimaReal()">🛰️ Sync Real</button>
+            </div>
+        </div>
+
+        <div class="bento-card col-span-4 recurso-premium">
+            <div class="bento-card-header"><i class="ph ph-faders"></i> Perfis de Operação</div>
+            <select id="seletorPlanta" onchange="atualizarLimiteIdeal()" style="padding: 16px; font-size: 16px; margin-bottom: 20px; font-weight: 500;"></select>
+            <div style="display: flex; gap: 12px;">
+                <button class="btn btn-success" onclick="abrirModalPerfil(false)"><i class="ph ph-plus"></i> Novo</button>
+                <button class="btn btn-outline" onclick="abrirModalPerfil(true)" style="color: var(--warning); border-color: rgba(245, 158, 11, 0.3);"><i class="ph ph-pencil-simple"></i> Editar</button>
+                <button class="btn btn-danger" onclick="excluirPerfil()"><i class="ph ph-trash"></i></button>
+            </div>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 20px; line-height: 1.6;">O sistema ajustará dinamicamente o gatilho de umidade da bomba baseado no perfil selecionado.</div>
+        </div>
+
+        <div class="bento-card col-span-4">
+            <div class="bento-card-header"><i class="ph ph-clock-user"></i> Cronograma de Automação</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                <input type="time" id="input-hora" style="margin: 0;">
+                <input type="number" id="input-duracao" placeholder="Duração (min)" style="margin: 0;">
+            </div>
+            <select id="input-ativo">
+                <option value="on">🟢 Robô Ativado</option>
+                <option value="off">🔴 Robô Desativado</option>
+            </select>
+            <button class="btn btn-outline" onclick="abrirCalendario()"><i class="ph ph-calendar-blank"></i> Definir Dias no Mês</button>
+            <button class="btn btn-primary" onclick="salvarAgendamento()" style="margin-top: 14px; margin-bottom: 0;"><i class="ph ph-floppy-disk"></i> Gravar Configuração</button>
+        </div>
+
+    </div>
+</main>
+
+<div id="modal-doc" class="modal">
+    <div class="modal-content large">
+        <h3 style="margin-top: 0; font-size: 22px; display: flex; align-items: center; gap: 10px;"><i class="ph ph-book-open" style="color: var(--accent);"></i> Documentação do Sistema</h3>
+        <p style="color: var(--text-secondary); font-size: 15px; line-height: 1.6;">Este sistema foi projetado para atender diferentes necessidades de irrigação, dividido em modalidades de operação.</p>
+        
+        <div style="background: rgba(0,0,0,0.2); padding: 24px; border-radius: var(--radius-md); margin-top: 24px;">
+            <h4 style="margin: 0 0 14px 0; color: var(--accent); display: flex; align-items: center; gap: 10px;"><i class="ph ph-shield-check"></i> Segurança e Planos</h4>
+            <div style="display: flex; gap: 20px; margin-top: 20px;">
+                <div style="flex: 1; border: 1px solid #f59e0b; padding: 20px; border-radius: var(--radius-sm); background: rgba(245, 158, 11, 0.05);">
+                    <h5 style="margin: 0 0 10px 0; color: #f59e0b; font-size: 16px;">👑 Plano Master</h5>
+                    <p style="margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Acesso Total. Gerenciamento de DB e Usuários, Clima Inteligente e Perfis.</p>
+                </div>
+                <div style="flex: 1; border: 1px solid var(--accent); padding: 20px; border-radius: var(--radius-sm); background: var(--accent-glow);">
+                    <h5 style="margin: 0 0 10px 0; color: var(--accent); font-size: 16px;">🌱 Plano Padrão</h5>
+                    <p style="margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">Operação de Telemetria básica, agendamento simples e Override Manual.</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 14px; margin-top: 36px;">
+            <button class="btn btn-primary" onclick="baixarDocumentacao()"><i class="ph ph-file-doc"></i> Baixar Documentação (.doc)</button>
+            <button class="btn btn-outline" onclick="fecharDoc()">Fechar Painel</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-calendario" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-top: 0; font-size: 20px; display: flex; align-items: center; gap: 10px;"><i class="ph ph-calendar-check" style="color: var(--accent);"></i> Dias de Ativação</h3>
+        <p style="font-size: 14px; color: var(--text-secondary);">Selecione em quais dias do mês a automação deve atuar.</p>
+        <div class="month-picker" id="calendario-dias-mes"></div>
+        <button class="btn btn-primary" style="margin-top: 28px;" onclick="fecharCalendario()">Confirmar Seleção</button>
+    </div>
+</div>
+
+<div id="modal-perfil" class="modal">
+    <div class="modal-content">
+        <h3 id="titulo-modal-perfil" style="margin-top: 0; font-size: 20px; display: flex; align-items: center; gap: 10px;"><i class="ph ph-plant" style="color: var(--success);"></i> Novo Perfil</h3>
+        <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;">ÍCONE E NOME DO PERFIL</label>
+        <input type="text" id="nome-perfil" placeholder="Ex: 🌺 Modo Orquídeas">
+        <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block; margin-top: 16px;">LIMITE IDEAL DE UMIDADE (%)</label>
+        <input type="number" id="limite-perfil" placeholder="Ex: 20">
+        <input type="hidden" id="id-perfil-editando" value="">
+        <div style="display: flex; gap: 14px; margin-top: 28px;">
+            <button class="btn btn-primary" onclick="salvarPerfil()">Gravar no Sistema</button>
+            <button class="btn btn-outline" onclick="fecharModalPerfil()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const socket = typeof io !== 'undefined' ? io() : { on:()=>{}, emit:()=>{} };
+    
+    let diasMesSelecionados = [];
+    let limiteUmidadeIdeal = 15;
+    let alertaAberto = false; 
+
+    // --- MODO CLARO / ESCURO ---
+    let temaAtual = localStorage.getItem('sda_tema') || 'dark';
+    function aplicarTema() {
+        const iconeTema = document.getElementById('icone-tema');
+        if(temaAtual === 'light') { document.body.classList.add('light-mode'); iconeTema.classList.replace('ph-moon', 'ph-sun'); } 
+        else { document.body.classList.remove('light-mode'); iconeTema.classList.replace('ph-sun', 'ph-moon'); }
+    }
+    function toggleTema() { temaAtual = temaAtual === 'dark' ? 'light' : 'dark'; localStorage.setItem('sda_tema', temaAtual); aplicarTema(); }
+    aplicarTema();
+
+    // --- NOTIFICAÇÕES ---
+    let notificacoes = JSON.parse(localStorage.getItem('sda_notificacoes')) || [];
+    function atualizarPainelNotificacoes() {
+        const lista = document.getElementById('lista-notif');
+        const badge = document.getElementById('notif-badge');
+        lista.innerHTML = '';
+        if(notificacoes.length === 0) {
+            lista.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-secondary); font-size: 14px;">Nenhum alerta recente.</div>';
+            badge.style.display = 'none';
+        } else {
+            badge.style.display = 'flex'; badge.innerText = notificacoes.length;
+            [...notificacoes].reverse().forEach(n => {
+                let corIcone = n.tipo === 'alerta' ? 'var(--danger)' : 'var(--accent)';
+                let icone = n.tipo === 'alerta' ? 'ph-warning' : 'ph-info';
+                lista.innerHTML += `<div class="notif-item unread"><i class="ph-fill ${icone}" style="color: ${corIcone}; font-size: 20px;"></i><div style="flex:1;"><div style="color: var(--text-primary); font-weight: 500; margin-bottom: 4px;">${n.titulo}</div><div style="color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: 0.5px;">${n.hora}</div></div></div>`;
+            });
+        }
+    }
+    function adicionarNotificacao(titulo, tipo) {
+        let horaAtual = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        notificacoes.push({ titulo: titulo, hora: horaAtual, tipo: tipo });
+        if(notificacoes.length > 5) notificacoes.shift(); 
+        localStorage.setItem('sda_notificacoes', JSON.stringify(notificacoes));
+        atualizarPainelNotificacoes();
+    }
+    function toggleNotificacoes() {
+        const painel = document.getElementById('painel-notif');
+        painel.style.display = painel.style.display === 'block' ? 'none' : 'block';
+    }
+    function limparNotificacoes() { notificacoes = []; localStorage.setItem('sda_notificacoes', JSON.stringify(notificacoes)); atualizarPainelNotificacoes(); }
+    atualizarPainelNotificacoes();
+
+    // --- CLIMA E PREVISÃO JUNTADOS ---
+    let chovendo = false;
+    let modoSimulacao = false;
+
+    const tiposClima = {
+        ensolarado: { nome: 'Ensolarado', icone: 'ph-sun', cor: 'var(--warning)', chove: false, textoSec: 'Rega Automática Liberada' },
+        nublado: { nome: 'Nublado', icone: 'ph-cloud', cor: 'var(--text-secondary)', chove: false, textoSec: 'Atenção à evaporação' },
+        chuvoso: { nome: 'Chuvoso', icone: 'ph-cloud-rain', cor: 'var(--accent)', chove: true, textoSec: 'Rega Bloqueada (Economia)' }
+    };
+
+    function aplicarClimaNaInterface(clima, temperaturaReal = "") {
+        const iconeEl = document.getElementById('icone-clima');
+        iconeEl.className = `ph-fill ${clima.icone}`;
+        iconeEl.style.color = clima.cor;
+        iconeEl.style.filter = `drop-shadow(0 0 20px ${clima.cor}60)`; 
+        
+        document.getElementById('texto-clima').innerText = clima.nome + (temperaturaReal ? ` (${temperaturaReal}°C)` : " (Simulado)");
+        const statusTexto = document.getElementById('status-clima-rega');
+        statusTexto.innerText = clima.textoSec;
+        statusTexto.style.color = clima.chove ? 'var(--danger)' : 'var(--success)';
+        chovendo = clima.chove; 
+    }
+
+    async function buscarClimaReal() {
+        modoSimulacao = false;
+        showToast("Sincronizando com API de Clima...", "info");
+        try {
+            const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-10.9111&longitude=-37.0717&current_weather=true');
+            const data = await response.json();
+            const weatherCode = data.current_weather.weathercode;
+            const temperatura = data.current_weather.temperature;
+            
+            let estadoAtual;
+            if (weatherCode <= 3) { estadoAtual = (weatherCode === 0) ? tiposClima.ensolarado : tiposClima.nublado; } 
+            else { estadoAtual = tiposClima.chuvoso; }
+            
+            aplicarClimaNaInterface(estadoAtual, temperatura);
+            showToast("Clima atualizado (Aracaju)!", "success");
+        } catch (error) {
+            console.error("Erro na API de Clima:", error);
+            showToast("Erro na API, usando clima de fallback.", "error");
+            aplicarClimaNaInterface(tiposClima.nublado);
+        }
+    }
+
+    function atualizarClimaSimulado() {
+        modoSimulacao = true;
+        const arrayClimas = [tiposClima.ensolarado, tiposClima.nublado, tiposClima.chuvoso];
+        const climaSorteado = arrayClimas[Math.floor(Math.random() * arrayClimas.length)];
+        aplicarClimaNaInterface(climaSorteado);
+        showToast(`Modo de Simulação ativado: ${climaSorteado.nome}`, "warning");
+    }
+
+    buscarClimaReal();
+    setInterval(() => { if(!modoSimulacao) buscarClimaReal(); }, 30 * 60 * 1000);
+
+    // --- FUNÇÕES DA INTERFACE & TOASTS ---
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        let color = type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : type === 'warning' ? 'var(--warning)' : 'var(--accent)';
+        let icon = type === 'success' ? 'ph-check-circle' : type === 'error' ? 'ph-warning-circle' : 'ph-info';
+        toast.style.borderLeftColor = color;
+        toast.innerHTML = `<i class="ph-fill ${icon}" style="color: ${color}; font-size: 26px;"></i> <span style="font-weight: 600;">${message}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.animation = 'fadeOut 0.4s ease forwards';
+            setTimeout(() => toast.remove(), 400);
+        }, 3600);
+    }
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); document.getElementById('icone-fullscreen').classList.replace('ph-corners-out', 'ph-corners-in'); } 
+        else { document.exitFullscreen(); document.getElementById('icone-fullscreen').classList.replace('ph-corners-in', 'ph-corners-out'); }
+    }
+
+    function abrirDoc() { document.getElementById("modal-doc").style.display = "flex"; }
+    function fecharDoc() { document.getElementById("modal-doc").style.display = "none"; }
+
+    function setBombaStatus(isPumping) {
+        const icone = document.getElementById('icone-bomba');
+        const texto = document.getElementById('texto-bomba');
+        if(isPumping) { icone.classList.add('spin-anim'); texto.textContent = "STATUS: BOMBEANDO..."; texto.classList.add('text-pumping'); } 
+        else { icone.classList.remove('spin-anim'); texto.textContent = "STATUS: STANDBY"; texto.classList.remove('text-pumping'); }
+    }
+
+    // --- SISTEMA DE PERFIS ---
+    let perfisPadrao = [
+        { id: '15', nome: '🌵 Modo Cacto', limite: 15 }, { id: '30', nome: '🌱 Modo Gramado', limite: 30 },
+        { id: '45', nome: '🥬 Modo Hortaliça', limite: 45 }, { id: '60', nome: '🌴 Modo Tropical', limite: 60 }
+    ];
+    let meusPerfis = JSON.parse(localStorage.getItem('sda_perfis')) || perfisPadrao;
+    let perfilAtivoId = localStorage.getItem('sda_perfil_ativo') || '15'; 
+
+    function carregarSelectPerfis() {
+        const select = document.getElementById("seletorPlanta");
+        select.innerHTML = ""; 
+        meusPerfis.forEach(p => {
+            let opcao = document.createElement("option");
+            opcao.value = p.id; opcao.textContent = `${p.nome} (Limite ${p.limite}%)`;
+            if(p.id === perfilAtivoId) opcao.selected = true;
+            select.appendChild(opcao);
+        });
+        atualizarLimiteIdeal(false); 
+    }
+
+    function atualizarLimiteIdeal(mostrarAviso = true) {
+        perfilAtivoId = document.getElementById("seletorPlanta").value;
+        const perfilEscolhido = meusPerfis.find(p => p.id === perfilAtivoId);
+        if(perfilEscolhido) {
+            limiteUmidadeIdeal = parseInt(perfilEscolhido.limite);
+            localStorage.setItem('sda_perfil_ativo', perfilAtivoId);
+            if(mostrarAviso) showToast(`Perfil alterado para: ${perfilEscolhido.nome}`, 'info');
+            alertaAberto = false; 
+        }
+    }
+
+    function abrirModalPerfil(modoEdicao) {
+        if(modoEdicao) {
+            const perfilAtual = meusPerfis.find(p => p.id === perfilAtivoId);
+            document.getElementById('titulo-modal-perfil').innerHTML = '<i class="ph ph-pencil-simple" style="color: var(--warning);"></i> Editar Perfil';
+            document.getElementById('nome-perfil').value = perfilAtual.nome; document.getElementById('limite-perfil').value = perfilAtual.limite; document.getElementById('id-perfil-editando').value = perfilAtual.id;
+        } else {
+            document.getElementById('titulo-modal-perfil').innerHTML = '<i class="ph ph-plus" style="color: var(--success);"></i> Novo Perfil';
+            document.getElementById('nome-perfil').value = ''; document.getElementById('limite-perfil').value = ''; document.getElementById('id-perfil-editando').value = '';
+        }
+        document.getElementById('modal-perfil').style.display = 'flex';
+    }
+
+    function fecharModalPerfil() { document.getElementById('modal-perfil').style.display = 'none'; }
+
+    function salvarPerfil() {
+        const nome = document.getElementById('nome-perfil').value;
+        const limite = document.getElementById('limite-perfil').value;
+        const idEditando = document.getElementById('id-perfil-editando').value;
+
+        if(!nome || !limite) { showToast('Preencha o nome e o limite!', 'error'); return; }
+
+        if(idEditando !== '') {
+            let index = meusPerfis.findIndex(p => p.id === idEditando);
+            meusPerfis[index].nome = nome; meusPerfis[index].limite = limite;
+            showToast('Perfil atualizado!', 'success');
+        } else {
+            const novoId = 'perfil_' + Date.now();
+            meusPerfis.push({ id: novoId, nome: nome, limite: limite });
+            perfilAtivoId = novoId; 
+            showToast('Novo perfil criado!', 'success');
+        }
+        localStorage.setItem('sda_perfis', JSON.stringify(meusPerfis));
+        fecharModalPerfil(); carregarSelectPerfis(); 
+    }
+
+    function excluirPerfil() {
+        if(meusPerfis.length <= 1) { showToast('Não é possível excluir o único perfil.', 'error'); return; }
+        if(confirm("Tem certeza que deseja excluir este perfil?")) {
+            meusPerfis = meusPerfis.filter(p => p.id !== perfilAtivoId);
+            localStorage.setItem('sda_perfis', JSON.stringify(meusPerfis));
+            perfilAtivoId = meusPerfis[0].id;
+            showToast('Perfil deletado.', 'warning'); carregarSelectPerfis();
+        }
+    }
+    carregarSelectPerfis();
+
+    // --- SOCKETS REAIS ---
+    socket.on('config_atual', (config) => {
+        document.getElementById('input-hora').value = config.hora;
+        document.getElementById('input-duracao').value = config.duracao;
+        document.getElementById('input-ativo').value = config.ativo ? "on" : "off";
+        diasMesSelecionados = config.diasMes || [];
+    });
+
+    socket.on('connect', () => {
+        document.getElementById('status-conexao').innerText = "Sistema Online";
+        document.getElementById('dot-status').className = "dot online";
+    });
+
+    socket.on('disconnect', () => {
+        document.getElementById('status-conexao').innerText = "Sistema Offline";
+        document.getElementById('dot-status').className = "dot offline";
+    });
+
+    socket.on('aviso_agendamento', (msg) => {
+        const tipo = /ALERTA|cancelad|interrompid/i.test(msg) ? 'alerta' : 'info';
+        showToast(msg, tipo === 'alerta' ? 'warning' : 'success');
+        adicionarNotificacao(msg, tipo);
+    });
+
+    socket.on('status_bomba', (ligada) => setBombaStatus(ligada));
+
+    socket.on('dados_sensores', (dados) => {
+        let valores = String(dados).trim().split(",");
+        if (valores.length >= 4) {
+            let umidade_bruta = parseInt(valores[0]);
+            let distancia = parseFloat(valores[1]);
+            let temp = parseFloat(valores[2]).toFixed(1);
+            let umiAr = parseFloat(valores[3]).toFixed(1);
+
+            let um_porc = Math.round(((1023 - umidade_bruta) / 1023) * 100);
+            um_porc = Math.min(Math.max(um_porc, 0), 100);
+            
+            let litros = ((11 - Math.min(distancia, 11)) / 11) * 5.6;
+            let porcentagem_tanque = (litros / 5.6) * 100;
+
+            document.getElementById("texto-umidade").textContent = um_porc + "%";
+            document.getElementById("texto-temp").textContent = temp + "°C";
+            document.getElementById("texto-umid-ar").textContent = umiAr + "%";
+            document.getElementById("texto-agua").textContent = litros.toFixed(1) + " L";
+
+            const valSolo = document.getElementById("texto-umidade");
+            const cardSolo = document.getElementById("card-solo");
+            const corSolo = um_porc < limiteUmidadeIdeal ? "var(--danger)" : "var(--success)";
+            valSolo.style.color = corSolo;
+            
+            if (um_porc < limiteUmidadeIdeal) {
+                cardSolo.classList.add('glow-danger');
+                if(!alertaAberto && !chovendo) {
+                    adicionarNotificacao(`Umidade crítica (${um_porc}%) - Bomba acionada!`, 'alerta');
+                    alertaAberto = true;
+                }
+            } else { cardSolo.classList.remove('glow-danger'); alertaAberto = false; }
+
+            document.getElementById("prog-umidade").style.width = um_porc + "%";
+            document.getElementById("prog-umidade").style.background = corSolo;
+            document.getElementById("prog-temp").style.width = (temp * 2) + "%"; 
+            document.getElementById("prog-umid-ar").style.width = umiAr + "%";
+            document.getElementById("prog-agua").style.width = porcentagem_tanque + "%";
+        }
+    });
+
+    // --- CALENDÁRIO ---
+    function abrirCalendario() { gerarCalendarioMes(); document.getElementById("modal-calendario").style.display = "flex"; }
+    function fecharCalendario() { document.getElementById("modal-calendario").style.display = "none"; }
+    function gerarCalendarioMes() {
+        const data = new Date(); const ultimoDia = new Date(data.getFullYear(), data.getMonth() + 1, 0).getDate();
+        const container = document.getElementById('calendario-dias-mes'); container.innerHTML = "";
+        for(let i = 1; i <= ultimoDia; i++) {
+            let div = document.createElement('div');
+            div.className = 'day-box-month' + (diasMesSelecionados.includes(i) ? ' selected' : ''); div.innerText = i;
+            div.onclick = () => {
+                if(diasMesSelecionados.includes(i)) diasMesSelecionados = diasMesSelecionados.filter(d => d !== i);
+                else diasMesSelecionados.push(i);
+                gerarCalendarioMes();
+            };
+            container.appendChild(div);
+        }
+    }
+
+    function salvarAgendamento() {
+        let dados = {
+            hora: document.getElementById('input-hora').value,
+            duracao: parseInt(document.getElementById('input-duracao').value),
+            ativo: document.getElementById('input-ativo').value === "on",
+            diasMes: diasMesSelecionados
+        };
+        socket.emit('salvar_agendamento', dados);
+        showToast('Configuração gravada no banco de dados.', 'success');
+    }
+
+    // --- COMANDOS MANUAIS ---
+    function regarManual() { 
+        if(chovendo) {
+            showToast('Operação bloqueada: Está chovendo agora!', 'error');
+            adicionarNotificacao('Rega manual bloqueada pelo sensor de chuva.', 'alerta');
+            return;
+        }
+        let tempoMin = parseInt(document.getElementById('tempo-manual').value);
+        socket.emit('regar_manual', tempoMin); 
+        setBombaStatus(true);
+        showToast(`Irrigação forçada iniciada por ${tempoMin} minutos!`, 'success');
+        setTimeout(() => { setBombaStatus(false); }, tempoMin * 60000);
+    }
+    
+    function pararRega() { socket.emit('parar_rega_manual'); setBombaStatus(false); showToast('Corte de fluxo acionado com sucesso.', 'error'); }
+
+    // Fechar painel notificação
+    document.addEventListener('click', function(event) {
+        const painelNotif = document.getElementById('painel-notif');
+        const relativeBtn = document.querySelector('.relative');
+        if (painelNotif.style.display === 'block' && !relativeBtn.contains(event.target)) {
+            painelNotif.style.display = 'none';
+        }
+    });
+
+    // --- GRÁFICO E EXPORTAÇÕES ---
+    Chart.defaults.color = '#94a3b8';
+    Chart.defaults.font.family = 'Inter';
+    
+    const ctx = document.getElementById('graficoUmidade').getContext('2d');
+    let gradient = ctx.createLinearGradient(0, 0, 0, 320);
+    gradient.addColorStop(0, 'rgba(56, 189, 248, 0.5)');
+    gradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+
+    const grafico = new Chart(ctx, {
+        type: 'line',
+        data: { 
+            labels: ['00:00','04:00','08:00','12:00','16:00','20:00'], 
+            datasets: [{ 
+                label: 'Umidade (%)', 
+                data: [45, 42, 38, 20, 55, 52], 
+                borderColor: '#38bdf8', 
+                tension: 0.4, 
+                fill: true, 
+                backgroundColor: gradient, 
+                borderWidth: 3, 
+                pointBackgroundColor: '#0f1115', 
+                pointBorderColor: '#38bdf8', 
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }] 
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { display: false }, 
+                tooltip: { 
+                    mode: 'index', 
+                    intersect: false,
+                    backgroundColor: 'rgba(15, 17, 21, 0.9)',
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 14, weight: 'bold' },
+                    padding: 12,
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1
+                } 
+            }, 
+            scales: { 
+                y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false } }, 
+                x: { grid: { display: false, drawBorder: false } } 
+            }, 
+            interaction: { mode: 'nearest', axis: 'x', intersect: false } 
+        }
+    });
+
+    socket.on('historico_grafico', (historico) => {
+        grafico.data.labels = historico.map(p => p.hora);
+        grafico.data.datasets[0].data = historico.map(p => p.umidade);
+        grafico.update();
+    });
+
+    function baixarRelatorio() {
+        if (grafico.data.labels.length === 0) { showToast("Aguarde o sistema coletar mais dados.", "warning"); return; }
+        let csvContent = "data:text/csv;charset=utf-8,Horario da Leitura,Umidade do Solo (%)\n"; 
+        for (let i = 0; i < grafico.data.labels.length; i++) { csvContent += `${grafico.data.labels[i]},${grafico.data.datasets[0].data[i]}\n`; }
+        const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", `SDA_Relatorio.csv`);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link); showToast("Download do relatório iniciado!", "success");
+    }
+
+    function baixarDocumentacao() {
+        const conteudo = `Documentação Técnica: Central de Controle Hídrico (SDA)\n\n1. Visão Geral...\n\n(DOCUMENTAÇÃO COMPLETA GERADA PELO SISTEMA)`;
+        const blob = new Blob(['\ufeff' + conteudo], { type: 'application/msword' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = 'Documentacao_Tecnica_SDA.doc';
+        document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); showToast("Documentação gerada com sucesso!", "success");
+    }
+</script>
+</body>
+</html>
