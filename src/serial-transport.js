@@ -16,7 +16,7 @@ class SerialTransport{
    port.open(error=>{if(error){if(this.port===port)this.port=null;this.reset('Porta serial indisponível.');}});
   }catch{this.reset('Detecção serial indisponível.');}finally{this.opening=false;}
  }
- write(line){if(!this.port?.isOpen)throw Object.assign(new Error('Arduino desconectado.'),{status:503});this.port.write(line,error=>{if(error)this.reset('Falha ao transmitir comando.');});}
+ write(line){if(!this.port?.isOpen)throw Object.assign(new Error('Arduino desconectado.'),{status:503});const port=this.port;port.write(line,error=>{if(error){if(this.port===port)this.port=null;this.buffer='';this.overflow=false;this.reset('Falha ao transmitir comando.');if(port.isOpen)port.close();}});}
  close(){this.closed=true;clearInterval(this.timer);if(this.port?.isOpen)this.port.close();}
 }
 module.exports={SerialTransport};
