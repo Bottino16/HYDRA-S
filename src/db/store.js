@@ -1,0 +1,109 @@
+const mysql = require('mysql2/promise');
+const { databaseOptions } = require('../config');
+const { adminCredentials } = require('../../db/seed');
+const publicUser = row => ({id: row.id, nome: row.nome, usuario: row.usuario, user: row.usuario, nivel: row.nivel, plano: row.plano, ativo: !!row.ativo, criado_em: row.criado_em, ultimo_login: row.ultimo_login});
+const {OperationalStore}=require('./operational-store');
+class Store extends OperationalStore {
+  constructor(cfg) { super();this.actions=[];this.eventLog=[];this.cfg = cfg; this.users = []; this.profiles = []; this.schedules = []; this.readings = []; this.mode = 'memory'; this.pool = null; this.message = 'Demonstração em memória: dados perdidos ao reiniciar.'; }
+  async init() {
+    if (this.cfg.dbMode === 'mysql') {
+      this.pool = mysql.createPool(databaseOptions());
+      this.pool.on('connection', connection=>connection.query("SET time_zone = '+00:00'"));
+      try {
+        await require('./migrations').migrate(this.pool);
+        await this.loadOperations();
+        const [users] = await this.pool.execute('SELECT * FROM usuarios');
+        if (!users.length) throw new Error('Banco sem administrador; execute npm run db:setup.');
+        const [profiles] = await this.pool.execute('SELECT * FROM perfis_planta');
+        const [schedules] = await this.pool.execute('SELECT * FROM configuracao_rega');
+        this.users = users; this.profiles = profiles; this.schedules = schedules;
+        this.mode = 'mysql'; this.message = ''; return;
+      } catch { await this.pool.end(); this.pool = null; this.message = 'Banco indisponível ou não preparado. Modo memória: dados perdidos ao reiniciar; execute db:setup e reinicie para recuperar o banco.'; }
+    }
+    const admin = await adminCredentials();
+    this.users = [{...admin, id: 1, criado_em: new Date()}];
+  }
+  status() { return {mode: this.mode, warning: this.message}; }
+  // Após falha, não reaplica escritas na reconexão: evita divergências silenciosas.
+  async write(sql, params) {
+    if (this.mode !== 'mysql') return null;
+    try { const [result] = await this.pool.execute(sql, params); return result; }
+    catch (error) {
+      if (['ER_DUP_ENTRY','ER_DATA_TOO_LONG','ER_NO_REFERENCED_ROW_2'].includes(error.code)) throw Object.assign(new Error('Dados conflitantes ou inválidos.'), {status: 409});
+      this.mode = 'memory'; this.message = 'Conexão com banco perdida. Alterações agora são temporárias; reinicie após restabelecer o banco.';
+      return null;
+    }
+  }
+  findUser(name) { return this.users.find(u => u.usuario.toLowerCase() === String(name).toLowerCase()); }
+  byId(id) { return this.users.find(u => u.id === Number(id)); }
+  async createUser(data) {
+    if (this.findUser(data.usuario)) throw Object.assign(new Error('Usuário já existe.'), {status: 409});
+    const result = await this.write('INSERT INTO usuarios (nome, usuario, senha_hash, nivel, plano, ativo) VALUES (?, ?, ?, ?, ?, ?)', [data.nome, data.usuario, data.senha_hash, data.nivel, data.plano, data.ativo]);
+    const row = {...data, id: result?.insertId || Math.max(0, ...this.users.map(u=>u.id)) + 1, criado_em: new Date()};
+    this.users.push(row); return publicUser(row);
+  }
+  async updateUser(id, data) {
+    const row = this.byId(id);
+    if (!row) throw Object.assign(new Error('Usuário não encontrado.'), {status:404});
+    if (this.users.some(u=>u.id !== row.id && u.usuario.toLowerCase() === data.usuario.toLowerCase())) throw Object.assign(new Error('Usuário já existe.'), {status:409});
+    if (row.nivel === 'master' && row.ativo && (!data.ativo || data.nivel !== 'master') && this.users.filter(u=>u.ativo && u.nivel === 'master').length === 1) throw Object.assign(new Error('Preserve pelo menos um master ativo.'), {status:409});
+    await this.write('UPDATE usuarios SET nome = ?, usuario = ?, senha_hash = ?, nivel = ?, plano = ?, ativo = ? WHERE id = ?', [data.nome,data.usuario,data.senha_hash,data.nivel,data.plano,data.ativo,row.id]);
+    Object.assign(row, data); return publicUser(row);
+  }
+  async deleteUser(id) {
+    const row = this.byId(id);
+    if (!row) throw Object.assign(new Error('Usuário não encontrado.'), {status:404});
+    if (row.nivel === 'master' && row.ativo && this.users.filter(u=>u.ativo && u.nivel === 'master').length === 1) throw Object.assign(new Error('Não é possível excluir o último master ativo.'), {status:409});
+    await this.write('DELETE FROM usuarios WHERE id = ?', [row.id]); this.users = this.users.filter(u=>u.id !== row.id);
+  }
+  async lastLogin(user) { const at = new Date(); await this.write('UPDATE usuarios SET ultimo_login = ? WHERE id = ?', [at,user.id]); user.ultimo_login = at; }
+  async saveProfiles(id, profiles) {
+    let fresh;
+    if (this.mode === 'mysql') {
+      let connection;
+      try {
+        connection=await this.pool.getConnection();await connection.beginTransaction();
+        const [existing]=await connection.execute('SELECT id FROM perfis_planta WHERE usuario_id = ?', [id]);
+        const owned=new Set(existing.map(p=>p.id));const kept=new Set();
+        for(const profile of profiles){
+          const profileId=Number(profile.id);
+          if(owned.has(profileId)){
+            await connection.execute('UPDATE perfis_planta SET nome = ?, limite_umidade = ?, selecionado = ? WHERE id = ? AND usuario_id = ?', [profile.nome,profile.limite,!!profile.selecionado,profileId,id]);kept.add(profileId);
+          } else {
+            const [result]=await connection.execute('INSERT INTO perfis_planta (usuario_id, nome, limite_umidade, selecionado) VALUES (?, ?, ?, ?)', [id,profile.nome,profile.limite,!!profile.selecionado]);kept.add(result.insertId);
+          }
+        }
+        for(const row of existing)if(!kept.has(row.id))await connection.execute('DELETE FROM perfis_planta WHERE id = ? AND usuario_id = ?', [row.id,id]);
+        [fresh]=await connection.execute('SELECT * FROM perfis_planta WHERE usuario_id = ? ORDER BY id', [id]);
+        await connection.commit();
+      } catch {
+        if(connection)await connection.rollback().catch(()=>{});
+        this.mode='memory';this.message='Falha ao persistir perfis. Alterações temporárias em memória.';
+      } finally {if(connection)connection.release();}
+    }
+    const old=this.profiles.filter(p=>p.usuario_id===id);let nextId=Math.max(0,...this.profiles.map(p=>Number(p.id)))+1;
+    this.profiles=this.profiles.filter(p=>p.usuario_id!==id).concat(fresh||profiles.map(p=>({id:old.some(row=>row.id===Number(p.id))?Number(p.id):nextId++,usuario_id:id,nome:p.nome,limite_umidade:p.limite,selecionado:!!p.selecionado})));
+  }
+  async saveSchedule(id, data) {
+    const profileId=data.perfilPlantaId??this.profiles.find(p=>p.usuario_id===id&&p.selecionado)?.id??this.profiles.find(p=>p.usuario_id===id)?.id??null;
+    const previous = this.schedules.find(s=>s.usuario_id === id&&s.perfil_planta_id===profileId);
+    if(profileId!==null&&!this.profiles.some(p=>p.id===profileId&&p.usuario_id===id))throw Object.assign(new Error('Perfil não pertence ao usuário.'),{status:400});
+    const params = [data.hora,data.duracao,data.ativo,JSON.stringify(data.diasMes)];
+    let result;
+    if (previous) result = await this.write('UPDATE configuracao_rega SET hora = ?, duracao = ?, ativo = ?, dias_do_mes = ?, perfil_planta_id = ? WHERE id = ? AND usuario_id = ?', [...params,profileId,previous.id,id]);
+    else result = await this.write('INSERT INTO configuracao_rega (hora, duracao, ativo, dias_do_mes, usuario_id, perfil_planta_id) VALUES (?, ?, ?, ?, ?, ?)', [...params,id,profileId]);
+    const row = {id:previous?.id || result?.insertId || this.schedules.length+1, usuario_id:id, perfil_planta_id:profileId, hora:data.hora,duracao:data.duracao,ativo:data.ativo,dias_do_mes:data.diasMes};
+    this.schedules = this.schedules.filter(s=>s !== previous).concat(row);
+  }
+  schedule(id,profileId=null) { const selected=profileId??this.profiles.find(p=>p.usuario_id===id&&p.selecionado)?.id;const row=this.schedules.find(s=>s.usuario_id===id&&(selected==null||s.perfil_planta_id===Number(selected))); return row ? {id:row.id,perfilPlantaId:row.perfil_planta_id,hora:row.hora,duracao:row.duracao,ativo:!!row.ativo,diasMes:typeof row.dias_do_mes==='string'?JSON.parse(row.dias_do_mes):row.dias_do_mes} : {hora:'18:00',duracao:1,ativo:false,diasMes:[]}; }
+  async reading(data,at=new Date()) {
+    const result=await this.write('INSERT INTO leituras (solo, temperatura, umidade_ar, nivel_rio, nivel_poco, nivel_caixa, bombas, boias, modo, simulado, data_hora) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [data.solo,data.temperatura,data.umidade_ar,data.nivel_rio??null,data.nivel_poco??null,data.nivel_caixa,JSON.stringify(data.bombas),JSON.stringify(data.boias??null),data.modo??null,!!data.simulado,at]);
+    this.readings.push({...data,id:result?.insertId||Math.max(0,...this.readings.map(r=>r.id))+1,data_hora:at});this.readings=this.readings.slice(-10000);
+  }
+  async retain() {
+    this.readings=this.readings.filter(r=>Date.now()-new Date(r.data_hora)<=this.cfg.retentionDays*86400000);
+    await this.write('DELETE FROM leituras WHERE data_hora < DATE_SUB(UTC_TIMESTAMP(), INTERVAL ? DAY)', [this.cfg.retentionDays]);
+  }
+  async close() { if(this.pool) await this.pool.end(); }
+}
+module.exports = { Store, publicUser };

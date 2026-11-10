@@ -28,6 +28,7 @@ async function setup({reset = false} = {}) {
     }
     const statements = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8').split(';').map(s => s.trim()).filter(Boolean);
     for (const statement of statements) await db.query(statement);
+    await require('../src/db/migrations').migrate(db);
     await seed(db, credentials);
     console.log('Banco pronto; administrador criado se ainda não existia.');
   } finally { await db.end(); }

@@ -38,6 +38,9 @@ CREATE TABLE IF NOT EXISTS leituras (
  nivel_poco DECIMAL(5,2) NULL,
  nivel_caixa DECIMAL(5,2) NULL,
  bombas JSON NOT NULL,
+ boias JSON NULL,
+ modo VARCHAR(10) NULL,
+ simulado BOOLEAN NOT NULL DEFAULT FALSE,
  data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
  INDEX idx_leituras_data_hora (data_hora)
 ) ENGINE=InnoDB;
@@ -46,6 +49,7 @@ CREATE TABLE IF NOT EXISTS eventos (
  tipo VARCHAR(50) NOT NULL,
  severidade ENUM('info','aviso','erro') NOT NULL,
  mensagem TEXT NOT NULL,
+ simulado BOOLEAN NOT NULL DEFAULT FALSE,
  data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
  INDEX idx_eventos_data_hora (data_hora)
 ) ENGINE=InnoDB;
@@ -54,8 +58,18 @@ CREATE TABLE IF NOT EXISTS acionamentos (
  usuario_id INT UNSIGNED NULL,
  bomba TINYINT UNSIGNED NOT NULL,
  origem ENUM('auto','manual','agendada','ia') NOT NULL,
- inicio DATETIME NOT NULL,
- fim DATETIME NULL,
+ inicio DATETIME(3) NULL,
+ fim DATETIME(3) NULL,
+ ocorrencia VARCHAR(120) NULL,
+ agendamento_id INT UNSIGNED NULL,
+ perfil_planta_id INT UNSIGNED NULL,
+ status VARCHAR(20) NOT NULL DEFAULT 'iniciada',
+ motivo VARCHAR(255) NULL,
+ simulado BOOLEAN NOT NULL DEFAULT FALSE,
+ confirmado BOOLEAN NOT NULL DEFAULT FALSE,
+ vazao_l_min DECIMAL(12,4) NULL,
+ volume_estimado_l DECIMAL(12,4) NULL,
+ UNIQUE KEY idx_ocorrencia_unica (ocorrencia),
  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 CREATE TABLE IF NOT EXISTS conversas_ia (
