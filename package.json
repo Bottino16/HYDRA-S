@@ -8,7 +8,8 @@
     "test": "node --test --test-concurrency=1",
     "db:setup": "node db/setup.js",
     "db:reset": "node db/setup.js --reset",
-    "ready": "node db/ready.js"
+    "ready": "node db/ready.js",
+    "firmware:test": "node scripts/test-firmware.js && node scripts/test-sketch.js"
   },
   "keywords": [],
   "author": "",
@@ -30,6 +31,7 @@
     "node": ">=20.19"
   },
   "devDependencies": {
+    "avr8js": "^0.21.1",
     "jsdom": "^29.1.1",
     "socket.io-client": "^4.8.4",
     "supertest": "^7.3.2"
