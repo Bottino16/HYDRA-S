@@ -1,6 +1,6 @@
 // Estados exibidos vêm de telemetria/ACK validado; clique nunca presume acionamento.
 document.addEventListener('DOMContentLoaded',async()=>{
- const session=await window.sdaReady,master=session.usuario.nivel==='master';
+ const session=await window.sdaReady,master=session.usuario.nivel==='master',socket=window.sdaSocket||window.socket;
  const panel=document.createElement('section');panel.style.cssText='border:1px solid #587080;border-radius:12px;padding:20px;margin-bottom:24px';
  const title=document.createElement('h3');title.textContent='Maquete • Rio → Poço → Caixa → Plantação';panel.append(title);
  const safety=document.createElement('p');panel.append(safety);
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   if(state.limites){safety.textContent='Proteção: até '+state.limites.max+' bomba(s) simultânea(s), partidas espaçadas em '+state.limites.gap/1000+' s.';
    for(const id of ['input-duracao','tempo-manual']){const input=document.getElementById(id);if(input)input.max=Math.max(1,Math.floor(state.limites.cycles[2]/60000));}}
 
-  connection.textContent=valid?'Controlador conectado • protocolo v'+state.v+' • seq '+state.seq:'Sem telemetria recente. Estado das bombas desconhecido.';
+  connection.textContent=valid?(state.simulate?'SIMULAÇÃO':'Arduino')+' conectado • protocolo v'+state.v+' • seq '+state.seq:(state.simulate?'SIMULAÇÃO sem dados. Bombas desconhecidas.':'Arduino desconectado — sem dados. Bombas desconhecidas.');
   levels.textContent=valid?'Rio '+percent(state.rio)+' • Poço '+percent(state.poco)+' • Caixa '+percent(state.caixa):'Níveis indisponíveis';
   floats.textContent=valid?'Boias [rio, poço mín/máx, caixa mín/máx]: '+state.boias.map(v=>v===null?'inválida':v?'ativa':'inativa').join(' | '):'';
   alerts.textContent=valid?'Alertas (máscara): '+state.alertas:'';

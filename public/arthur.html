@@ -533,7 +533,7 @@
 </div>
 
 <script>
-    const socket = io({auth: async callback => { try { const data=await window.sdaReady;callback({csrfToken:data.csrfToken}); } catch { location.replace('/login.html'); } }});
+    const socket = window.sdaSocket = io({auth: async callback => { try { const data=await window.sdaReady;callback({csrfToken:data.csrfToken}); } catch { location.replace('/login.html'); } }});
     socket.on('system_status', renderStatus);
     socket.on('connect_error', error => { if(error.data?.status===401)location.replace('/login.html'); });
     socket.on('auth_error',()=>location.replace('/login.html'));
@@ -591,9 +591,9 @@
     let modoSimulacao = false;
 
     const tiposClima = {
-        ensolarado: { nome: 'Ensolarado', icone: 'ph-sun', cor: 'var(--warning)', chove: false, textoSec: 'Rega Automática Liberada' },
+        ensolarado: { nome: 'Ensolarado', icone: 'ph-sun', cor: 'var(--warning)', chove: false, textoSec: 'Clima informativo • travas locais preservadas' },
         nublado: { nome: 'Nublado', icone: 'ph-cloud', cor: 'var(--text-secondary)', chove: false, textoSec: 'Atenção à evaporação' },
-        chuvoso: { nome: 'Chuvoso', icone: 'ph-cloud-rain', cor: 'var(--accent)', chove: true, textoSec: 'Rega Bloqueada (Economia)' }
+        chuvoso: { nome: 'Chuvoso', icone: 'ph-cloud-rain', cor: 'var(--accent)', chove: true, textoSec: 'Chuva ilustrativa • não altera o controlador' }
     };
 
     function aplicarClimaNaInterface(clima, temperaturaReal = "") {
@@ -611,23 +611,16 @@
 
     async function buscarClimaReal() {
         modoSimulacao = false;
-        showToast("Sincronizando com API de Clima...", "info");
         try {
-            const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-10.9111&longitude=-37.0717&current_weather=true');
+            const response = await window.sdaRequest('/api/clima');
             const data = await response.json();
-            const weatherCode = data.current_weather.weathercode;
-            const temperatura = data.current_weather.temperature;
-            
-            let estadoAtual;
-            if (weatherCode <= 3) { estadoAtual = (weatherCode === 0) ? tiposClima.ensolarado : tiposClima.nublado; } 
-            else { estadoAtual = tiposClima.chuvoso; }
-            
-            aplicarClimaNaInterface(estadoAtual, temperatura);
-            showToast("Clima atualizado (Aracaju)!", "success");
-        } catch (error) {
-            console.error("Erro na API de Clima:", error);
-            showToast("Erro na API, usando clima de fallback.", "error");
-            aplicarClimaNaInterface(tiposClima.nublado);
+            if(data.data) aplicarClimaNaInterface(data.data.rainy ? tiposClima.chuvoso : tiposClima.ensolarado, data.data.temperature);
+            else document.getElementById('texto-clima').textContent='Clima sem dados';
+            document.getElementById('status-clima-rega').textContent=data.offline?'CLIMA OFFLINE • controle local preservado':'Clima via backend • informativo';
+            chovendo=false;
+        } catch {
+            document.getElementById('texto-clima').textContent='Clima sem dados';
+            document.getElementById('status-clima-rega').textContent='CLIMA OFFLINE • controle local preservado';
         }
     }
 
@@ -702,6 +695,7 @@
 
             if(mostrarAviso) { showToast(`Perfil alterado para: ${perfilEscolhido.nome}`, 'info'); persistirPerfis(); }
             alertaAberto = false; 
+            if(mostrarAviso)carregarAgendamentoPerfil();
         }
     }
 
@@ -750,11 +744,16 @@
         }
     }
     carregarSelectPerfis();
+    async function carregarAgendamentoPerfil() {
+        if(!Number.isInteger(Number(perfilAtivoId)))return;
+        const response=await window.sdaRequest('/api/agendamento?perfil='+encodeURIComponent(perfilAtivoId));
+        if(response.ok){const c=await response.json();document.getElementById('input-hora').value=c.hora;document.getElementById('input-duracao').value=c.duracao;document.getElementById('input-ativo').value=c.ativo?'on':'off';diasMesSelecionados=c.diasMes||[];}
+    }
     async function persistirPerfis() {
         const response=await window.sdaRequest('/api/perfis',{method:'PUT',body:JSON.stringify(meusPerfis.map(p=>({...p,selecionado:p.id===perfilAtivoId})))});
         if(!response.ok){showToast((await response.json()).mensagem,'error');throw new Error('Falha ao salvar perfis.');}
         const fresh=await (await window.sdaRequest('/api/perfis')).json();
-        meusPerfis=fresh;perfilAtivoId=String((fresh.find(p=>p.selecionado)||fresh[0]).id);carregarSelectPerfis();
+        meusPerfis=fresh;perfilAtivoId=String((fresh.find(p=>p.selecionado)||fresh[0]).id);carregarSelectPerfis();carregarAgendamentoPerfil();
     }
     window.sdaReady.then(async data=>{
         if(data.usuario.nivel!=='master'){
@@ -765,10 +764,12 @@
         const profiles=await response.json();
         if(profiles.length){meusPerfis=profiles;perfilAtivoId=String((profiles.find(p=>p.selecionado)||profiles[0]).id);carregarSelectPerfis();}
         else await persistirPerfis();
+        carregarAgendamentoPerfil();
     });
 
     // --- SOCKETS REAIS ---
     socket.on('config_atual', (config) => {
+        if(config.perfilPlantaId&&Number(perfilAtivoId)!==config.perfilPlantaId)return;
         document.getElementById('input-hora').value = config.hora;
         document.getElementById('input-duracao').value = config.duracao;
         document.getElementById('input-ativo').value = config.ativo ? "on" : "off";
@@ -776,7 +777,7 @@
     });
 
     socket.on('connect', () => {
-        document.getElementById('status-conexao').innerText = "Sistema Online";
+        document.getElementById('status-conexao').innerText = "Servidor conectado • aguardando telemetria";
         document.getElementById('dot-status').className = "dot online";
     });
 
@@ -793,44 +794,15 @@
 
     socket.on('status_bomba', (ligada) => setBombaStatus(ligada));
 
-    socket.on('dados_sensores', (dados) => {
-        let valores = String(dados).trim().split(",");
-        if (valores.length >= 4) {
-            let umidade_bruta = parseInt(valores[0]);
-            let distancia = parseFloat(valores[1]);
-            let temp = parseFloat(valores[2]).toFixed(1);
-            let umiAr = parseFloat(valores[3]).toFixed(1);
-
-            let um_porc = Math.round(((1023 - umidade_bruta) / 1023) * 100);
-            um_porc = Math.min(Math.max(um_porc, 0), 100);
-            
-            let litros = ((11 - Math.min(distancia, 11)) / 11) * 5.6;
-            let porcentagem_tanque = (litros / 5.6) * 100;
-
-            document.getElementById("texto-umidade").textContent = um_porc + "%";
-            document.getElementById("texto-temp").textContent = temp + "°C";
-            document.getElementById("texto-umid-ar").textContent = umiAr + "%";
-            document.getElementById("texto-agua").textContent = litros.toFixed(1) + " L";
-
-            const valSolo = document.getElementById("texto-umidade");
-            const cardSolo = document.getElementById("card-solo");
-            const corSolo = um_porc < limiteUmidadeIdeal ? "var(--danger)" : "var(--success)";
-            valSolo.style.color = corSolo;
-            
-            if (um_porc < limiteUmidadeIdeal) {
-                cardSolo.classList.add('glow-danger');
-                if(!alertaAberto && !chovendo) {
-                    adicionarNotificacao(`Umidade crítica (${um_porc}%) - Verifique o estado da bomba.`, 'alerta');
-                    alertaAberto = true;
-                }
-            } else { cardSolo.classList.remove('glow-danger'); alertaAberto = false; }
-
-            document.getElementById("prog-umidade").style.width = um_porc + "%";
-            document.getElementById("prog-umidade").style.background = corSolo;
-            document.getElementById("prog-temp").style.width = (temp * 2) + "%"; 
-            document.getElementById("prog-umid-ar").style.width = umiAr + "%";
-            document.getElementById("prog-agua").style.width = porcentagem_tanque + "%";
+    socket.on('estado_sistema', (state) => {
+        const valid=state.connected;
+        for(const [text,bar,value,unit] of [['texto-umidade','prog-umidade',state.solo,'%'],['texto-temp','prog-temp',state.temperatura,'°C'],['texto-umid-ar','prog-umid-ar',state.umidade_ar,'%'],['texto-agua','prog-agua',state.caixa,'%']]){
+            const known=valid&&typeof value==='number'&&Number.isFinite(value);
+            document.getElementById(text).textContent=known?value.toFixed(1)+unit:'sem dados';
+            document.getElementById(bar).style.width=known?Math.max(0,Math.min(100,value))+'%':'0%';
         }
+        document.getElementById('card-solo').classList.toggle('glow-danger',valid&&state.solo!==null&&state.solo<limiteUmidadeIdeal);
+        document.getElementById('status-conexao').textContent=valid?(state.simulate?'SIMULAÇÃO conectada':'Arduino conectado'):(state.simulate?'SIMULAÇÃO sem dados':'Arduino desconectado — sem dados');
     });
 
     // --- CALENDÁRIO ---
@@ -857,7 +829,7 @@
         showToast(response.ok?'Agendamento salvo.':(await response.json()).mensagem,response.ok?'success':'error');
     }
     async function regarManual() {
-        if(!confirm('Confirmar irrigação no modo simulação?'))return;
+        if(!confirm('Confirmar irrigação? As travas do controlador continuam obrigatórias.'))return;
         const response=await window.sdaRequest('/api/rega',{method:'POST',body:JSON.stringify({minutos:Number(document.getElementById('tempo-manual').value)})});
         if(!response.ok)showToast((await response.json()).mensagem,'error');
     }
@@ -887,10 +859,10 @@
     const grafico = new Chart(ctx, {
         type: 'line',
         data: { 
-            labels: ['00:00','04:00','08:00','12:00','16:00','20:00'], 
+            labels: [], 
             datasets: [{ 
                 label: 'Umidade (%)', 
-                data: [45, 42, 38, 20, 55, 52], 
+                data: [], 
                 borderColor: '#38bdf8', 
                 tension: 0.4, 
                 fill: true, 
@@ -933,13 +905,7 @@
         grafico.update();
     });
 
-    function baixarRelatorio() {
-        if (grafico.data.labels.length === 0) { showToast("Aguarde o sistema coletar mais dados.", "warning"); return; }
-        let csvContent = "data:text/csv;charset=utf-8,Horario da Leitura,Umidade do Solo (%)\n"; 
-        for (let i = 0; i < grafico.data.labels.length; i++) { csvContent += `${grafico.data.labels[i]},${grafico.data.datasets[0].data[i]}\n`; }
-        const encodedUri = encodeURI(csvContent); const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", `SDA_Relatorio.csv`);
-        document.body.appendChild(link); link.click(); document.body.removeChild(link); showToast("Download do relatório iniciado!", "success");
-    }
+    function baixarRelatorio() { location.href='/api/leituras.csv'+(window.sdaHistoryQuery?window.sdaHistoryQuery():''); }
 
     function baixarDocumentacao() {
         const conteudo = `Documentação Técnica: Central de Controle Hídrico (SDA)\n\n1. Visão Geral...\n\n(DOCUMENTAÇÃO COMPLETA GERADA PELO SISTEMA)`;
@@ -948,5 +914,6 @@
     }
 </script>
 <script src="/maquete.js"></script>
+<script src="/monitoring.js"></script>
 </body>
 </html>
