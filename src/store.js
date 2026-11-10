@@ -54,29 +54,44 @@ class Store {
   }
   async lastLogin(user) { const at = new Date(); await this.write('UPDATE usuarios SET ultimo_login = ? WHERE id = ?', [at,user.id]); user.ultimo_login = at; }
   async saveProfiles(id, profiles) {
-    // Atualiza por proprietário; nenhuma ID fornecida pelo navegador define outro dono.
+    let fresh;
     if (this.mode === 'mysql') {
-      const connection = await this.pool.getConnection();
+      let connection;
       try {
-        await connection.beginTransaction();
-        await connection.execute('DELETE FROM perfis_planta WHERE usuario_id = ?', [id]);
-        for (const profile of profiles) await connection.execute('INSERT INTO perfis_planta (usuario_id, nome, limite_umidade) VALUES (?, ?, ?)', [id,profile.nome,profile.limite]);
+        connection=await this.pool.getConnection();await connection.beginTransaction();
+        const [existing]=await connection.execute('SELECT id FROM perfis_planta WHERE usuario_id = ?', [id]);
+        const owned=new Set(existing.map(p=>p.id));const kept=new Set();
+        for(const profile of profiles){
+          const profileId=Number(profile.id);
+          if(owned.has(profileId)){
+            await connection.execute('UPDATE perfis_planta SET nome = ?, limite_umidade = ?, selecionado = ? WHERE id = ? AND usuario_id = ?', [profile.nome,profile.limite,!!profile.selecionado,profileId,id]);kept.add(profileId);
+          } else {
+            const [result]=await connection.execute('INSERT INTO perfis_planta (usuario_id, nome, limite_umidade, selecionado) VALUES (?, ?, ?, ?)', [id,profile.nome,profile.limite,!!profile.selecionado]);kept.add(result.insertId);
+          }
+        }
+        for(const row of existing)if(!kept.has(row.id))await connection.execute('DELETE FROM perfis_planta WHERE id = ? AND usuario_id = ?', [row.id,id]);
+        [fresh]=await connection.execute('SELECT * FROM perfis_planta WHERE usuario_id = ? ORDER BY id', [id]);
         await connection.commit();
-      } catch { await connection.rollback(); this.mode = 'memory'; this.message = 'Falha ao persistir perfis. Alterações temporárias em memória.'; }
-      finally { connection.release(); }
+      } catch {
+        if(connection)await connection.rollback().catch(()=>{});
+        this.mode='memory';this.message='Falha ao persistir perfis. Alterações temporárias em memória.';
+      } finally {if(connection)connection.release();}
     }
-    this.profiles = this.profiles.filter(p=>p.usuario_id !== id).concat(profiles.map((p,i)=>({id:i+1,usuario_id:id,nome:p.nome,limite_umidade:p.limite})));
+    const old=this.profiles.filter(p=>p.usuario_id===id);let nextId=Math.max(0,...this.profiles.map(p=>Number(p.id)))+1;
+    this.profiles=this.profiles.filter(p=>p.usuario_id!==id).concat(fresh||profiles.map(p=>({id:old.some(row=>row.id===Number(p.id))?Number(p.id):nextId++,usuario_id:id,nome:p.nome,limite_umidade:p.limite,selecionado:!!p.selecionado})));
   }
   async saveSchedule(id, data) {
-    const previous = this.schedules.find(s=>s.usuario_id === id && s.perfil_planta_id == null);
+    const previous = this.schedules.find(s=>s.usuario_id === id);
+    const profileId=data.perfilPlantaId??null;
+    if(profileId!==null&&!this.profiles.some(p=>p.id===profileId&&p.usuario_id===id))throw Object.assign(new Error('Perfil não pertence ao usuário.'),{status:400});
     const params = [data.hora,data.duracao,data.ativo,JSON.stringify(data.diasMes)];
     let result;
-    if (previous) result = await this.write('UPDATE configuracao_rega SET hora = ?, duracao = ?, ativo = ?, dias_do_mes = ? WHERE id = ? AND usuario_id = ?', [...params,previous.id,id]);
-    else result = await this.write('INSERT INTO configuracao_rega (hora, duracao, ativo, dias_do_mes, usuario_id) VALUES (?, ?, ?, ?, ?)', [...params,id]);
-    const row = {id:previous?.id || result?.insertId || this.schedules.length+1, usuario_id:id, perfil_planta_id:null, hora:data.hora,duracao:data.duracao,ativo:data.ativo,dias_do_mes:data.diasMes};
+    if (previous) result = await this.write('UPDATE configuracao_rega SET hora = ?, duracao = ?, ativo = ?, dias_do_mes = ?, perfil_planta_id = ? WHERE id = ? AND usuario_id = ?', [...params,profileId,previous.id,id]);
+    else result = await this.write('INSERT INTO configuracao_rega (hora, duracao, ativo, dias_do_mes, usuario_id, perfil_planta_id) VALUES (?, ?, ?, ?, ?, ?)', [...params,id,profileId]);
+    const row = {id:previous?.id || result?.insertId || this.schedules.length+1, usuario_id:id, perfil_planta_id:profileId, hora:data.hora,duracao:data.duracao,ativo:data.ativo,dias_do_mes:data.diasMes};
     this.schedules = this.schedules.filter(s=>s !== previous).concat(row);
   }
-  schedule(id) { const row=this.schedules.find(s=>s.usuario_id===id && s.perfil_planta_id==null); return row ? {hora:row.hora,duracao:row.duracao,ativo:!!row.ativo,diasMes:typeof row.dias_do_mes==='string'?JSON.parse(row.dias_do_mes):row.dias_do_mes} : {hora:'18:00',duracao:5,ativo:false,diasMes:[]}; }
+  schedule(id) { const row=this.schedules.find(s=>s.usuario_id===id); return row ? {hora:row.hora,duracao:row.duracao,ativo:!!row.ativo,diasMes:typeof row.dias_do_mes==='string'?JSON.parse(row.dias_do_mes):row.dias_do_mes} : {hora:'18:00',duracao:5,ativo:false,diasMes:[]}; }
   async reading(data) {
     this.readings.push({...data,data_hora:new Date()}); this.readings=this.readings.slice(-1000);
     await this.write('INSERT INTO leituras (solo, temperatura, umidade_ar, nivel_rio, nivel_poco, nivel_caixa, bombas) VALUES (?, ?, ?, ?, ?, ?, ?)', [data.solo,data.temperatura,data.umidade_ar,null,null,data.nivel_caixa,JSON.stringify(data.bombas)]);

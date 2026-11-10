@@ -32,7 +32,8 @@ async function setup({reset = false} = {}) {
     console.log('Banco pronto; administrador criado se ainda não existia.');
   } finally { await db.end(); }
 }
-if (require.main === module) setup({reset: process.argv.includes('--reset')}).catch(() => {
+if (require.main === module) setup({reset: process.argv.includes('--reset')}).catch(error => {
+  if(error.status===400) console.error(error.message);
   console.error('Falha no setup. Verifique credenciais, força da senha, permissões, certificado e disponibilidade do MySQL.'); process.exitCode = 1;
 });
 module.exports = { setup };

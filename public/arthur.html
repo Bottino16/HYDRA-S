@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/auth.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     
     <style>
@@ -336,6 +337,7 @@
         <button class="nav-btn" onclick="abrirDoc()">
             <i class="ph ph-book-open-text"></i> <span>Documentação</span>
         </button>
+        <button class="nav-btn" onclick="sdaChangePassword()">Trocar senha</button>
         <button class="nav-btn" onclick="toggleTema()">
             <i class="ph ph-moon" id="icone-tema"></i> <span>Alternar Tema</span>
         </button>
@@ -354,10 +356,10 @@
         <button class="nav-btn" onclick="toggleFullScreen()">
             <i class="ph ph-corners-out" id="icone-fullscreen"></i> <span>Tela Cheia</span>
         </button>
-        <a href="painel-adm.html" class="nav-btn">
+        <a href="painel-adm.html" id="admin-link" class="nav-btn">
             <i class="ph ph-shield-check"></i> <span>Painel Admin</span>
         </a>
-        <a href="arthur.html" class="nav-btn danger" style="margin-top: 24px;">
+        <a href="#" onclick="sdaLogout(); return false" class="nav-btn danger" style="margin-top: 24px;">
             <i class="ph ph-sign-out"></i> <span>Encerrar Sessão</span>
         </a>
     </nav>
@@ -531,7 +533,11 @@
 </div>
 
 <script>
-    const socket = typeof io !== 'undefined' ? io() : { on:()=>{}, emit:()=>{} };
+    const socket = io({auth: async callback => { try { const data=await window.sdaReady;callback({csrfToken:data.csrfToken}); } catch { location.replace('/login.html'); } }});
+    socket.on('system_status', renderStatus);
+    socket.on('connect_error', error => { if(error.data?.status===401)location.replace('/login.html'); });
+    socket.on('auth_error',()=>location.replace('/login.html'));
+    socket.on('command_error',data=>showToast(data.mensagem,'error'));
     
     let diasMesSelecionados = [];
     let limiteUmidadeIdeal = 15;
@@ -548,7 +554,7 @@
     aplicarTema();
 
     // --- NOTIFICAÇÕES ---
-    let notificacoes = JSON.parse(localStorage.getItem('sda_notificacoes')) || [];
+    let notificacoes = JSON.parse(localStorage.getItem('sda_notificacoes_v2')) || [];
     function atualizarPainelNotificacoes() {
         const lista = document.getElementById('lista-notif');
         const badge = document.getElementById('notif-badge');
@@ -561,7 +567,8 @@
             [...notificacoes].reverse().forEach(n => {
                 let corIcone = n.tipo === 'alerta' ? 'var(--danger)' : 'var(--accent)';
                 let icone = n.tipo === 'alerta' ? 'ph-warning' : 'ph-info';
-                lista.innerHTML += `<div class="notif-item unread"><i class="ph-fill ${icone}" style="color: ${corIcone}; font-size: 20px;"></i><div style="flex:1;"><div style="color: var(--text-primary); font-weight: 500; margin-bottom: 4px;">${n.titulo}</div><div style="color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: 0.5px;">${n.hora}</div></div></div>`;
+                const item=document.createElement('div');item.className='notif-item';
+                item.textContent=String(n.titulo)+' — '+String(n.hora);lista.appendChild(item);
             });
         }
     }
@@ -569,14 +576,14 @@
         let horaAtual = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         notificacoes.push({ titulo: titulo, hora: horaAtual, tipo: tipo });
         if(notificacoes.length > 5) notificacoes.shift(); 
-        localStorage.setItem('sda_notificacoes', JSON.stringify(notificacoes));
+        localStorage.setItem('sda_notificacoes_v2', JSON.stringify(notificacoes));
         atualizarPainelNotificacoes();
     }
     function toggleNotificacoes() {
         const painel = document.getElementById('painel-notif');
         painel.style.display = painel.style.display === 'block' ? 'none' : 'block';
     }
-    function limparNotificacoes() { notificacoes = []; localStorage.setItem('sda_notificacoes', JSON.stringify(notificacoes)); atualizarPainelNotificacoes(); }
+    function limparNotificacoes() { notificacoes = []; localStorage.setItem('sda_notificacoes_v2', JSON.stringify(notificacoes)); atualizarPainelNotificacoes(); }
     atualizarPainelNotificacoes();
 
     // --- CLIMA E PREVISÃO JUNTADOS ---
@@ -643,7 +650,7 @@
         let color = type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : type === 'warning' ? 'var(--warning)' : 'var(--accent)';
         let icon = type === 'success' ? 'ph-check-circle' : type === 'error' ? 'ph-warning-circle' : 'ph-info';
         toast.style.borderLeftColor = color;
-        toast.innerHTML = `<i class="ph-fill ${icon}" style="color: ${color}; font-size: 26px;"></i> <span style="font-weight: 600;">${message}</span>`;
+        toast.textContent = message;
         container.appendChild(toast);
         setTimeout(() => {
             toast.style.animation = 'fadeOut 0.4s ease forwards';
@@ -671,8 +678,8 @@
         { id: '15', nome: '🌵 Modo Cacto', limite: 15 }, { id: '30', nome: '🌱 Modo Gramado', limite: 30 },
         { id: '45', nome: '🥬 Modo Hortaliça', limite: 45 }, { id: '60', nome: '🌴 Modo Tropical', limite: 60 }
     ];
-    let meusPerfis = JSON.parse(localStorage.getItem('sda_perfis')) || perfisPadrao;
-    let perfilAtivoId = localStorage.getItem('sda_perfil_ativo') || '15'; 
+    let meusPerfis = perfisPadrao;
+    let perfilAtivoId = '15';
 
     function carregarSelectPerfis() {
         const select = document.getElementById("seletorPlanta");
@@ -691,8 +698,8 @@
         const perfilEscolhido = meusPerfis.find(p => p.id === perfilAtivoId);
         if(perfilEscolhido) {
             limiteUmidadeIdeal = parseInt(perfilEscolhido.limite);
-            localStorage.setItem('sda_perfil_ativo', perfilAtivoId);
-            if(mostrarAviso) showToast(`Perfil alterado para: ${perfilEscolhido.nome}`, 'info');
+
+            if(mostrarAviso) { showToast(`Perfil alterado para: ${perfilEscolhido.nome}`, 'info'); persistirPerfis(); }
             alertaAberto = false; 
         }
     }
@@ -711,7 +718,7 @@
 
     function fecharModalPerfil() { document.getElementById('modal-perfil').style.display = 'none'; }
 
-    function salvarPerfil() {
+    async function salvarPerfil() {
         const nome = document.getElementById('nome-perfil').value;
         const limite = document.getElementById('limite-perfil').value;
         const idEditando = document.getElementById('id-perfil-editando').value;
@@ -728,20 +735,36 @@
             perfilAtivoId = novoId; 
             showToast('Novo perfil criado!', 'success');
         }
-        localStorage.setItem('sda_perfis', JSON.stringify(meusPerfis));
+        await persistirPerfis();
         fecharModalPerfil(); carregarSelectPerfis(); 
     }
 
-    function excluirPerfil() {
+    async function excluirPerfil() {
         if(meusPerfis.length <= 1) { showToast('Não é possível excluir o único perfil.', 'error'); return; }
         if(confirm("Tem certeza que deseja excluir este perfil?")) {
             meusPerfis = meusPerfis.filter(p => p.id !== perfilAtivoId);
-            localStorage.setItem('sda_perfis', JSON.stringify(meusPerfis));
+            await persistirPerfis();
             perfilAtivoId = meusPerfis[0].id;
             showToast('Perfil deletado.', 'warning'); carregarSelectPerfis();
         }
     }
     carregarSelectPerfis();
+    async function persistirPerfis() {
+        const response=await window.sdaRequest('/api/perfis',{method:'PUT',body:JSON.stringify(meusPerfis.map(p=>({...p,selecionado:p.id===perfilAtivoId})))});
+        if(!response.ok){showToast((await response.json()).mensagem,'error');throw new Error('Falha ao salvar perfis.');}
+        const fresh=await (await window.sdaRequest('/api/perfis')).json();
+        meusPerfis=fresh;perfilAtivoId=String((fresh.find(p=>p.selecionado)||fresh[0]).id);carregarSelectPerfis();
+    }
+    window.sdaReady.then(async data=>{
+        if(data.usuario.nivel!=='master'){
+            document.getElementById('admin-link').hidden=true;
+            document.querySelectorAll('[onclick="regarManual()"], [onclick="pararRega()"]').forEach(el=>el.disabled=true);
+        }
+        const response=await window.sdaRequest('/api/perfis');
+        const profiles=await response.json();
+        if(profiles.length){meusPerfis=profiles;perfilAtivoId=String((profiles.find(p=>p.selecionado)||profiles[0]).id);carregarSelectPerfis();}
+        else await persistirPerfis();
+    });
 
     // --- SOCKETS REAIS ---
     socket.on('config_atual', (config) => {
@@ -796,7 +819,7 @@
             if (um_porc < limiteUmidadeIdeal) {
                 cardSolo.classList.add('glow-danger');
                 if(!alertaAberto && !chovendo) {
-                    adicionarNotificacao(`Umidade crítica (${um_porc}%) - Bomba acionada!`, 'alerta');
+                    adicionarNotificacao(`Umidade crítica (${um_porc}%) - Verifique o estado da bomba.`, 'alerta');
                     alertaAberto = true;
                 }
             } else { cardSolo.classList.remove('glow-danger'); alertaAberto = false; }
@@ -827,32 +850,20 @@
         }
     }
 
-    function salvarAgendamento() {
-        let dados = {
-            hora: document.getElementById('input-hora').value,
-            duracao: parseInt(document.getElementById('input-duracao').value),
-            ativo: document.getElementById('input-ativo').value === "on",
-            diasMes: diasMesSelecionados
-        };
-        socket.emit('salvar_agendamento', dados);
-        showToast('Configuração gravada no banco de dados.', 'success');
+    async function salvarAgendamento() {
+        const dados={hora:document.getElementById('input-hora').value,duracao:Number(document.getElementById('input-duracao').value),ativo:document.getElementById('input-ativo').value==='on',diasMes:diasMesSelecionados,perfilPlantaId:Number(perfilAtivoId)};
+        const response=await window.sdaRequest('/api/agendamento',{method:'PUT',body:JSON.stringify(dados)});
+        showToast(response.ok?'Agendamento salvo.':(await response.json()).mensagem,response.ok?'success':'error');
     }
-
-    // --- COMANDOS MANUAIS ---
-    function regarManual() { 
-        if(chovendo) {
-            showToast('Operação bloqueada: Está chovendo agora!', 'error');
-            adicionarNotificacao('Rega manual bloqueada pelo sensor de chuva.', 'alerta');
-            return;
-        }
-        let tempoMin = parseInt(document.getElementById('tempo-manual').value);
-        socket.emit('regar_manual', tempoMin); 
-        setBombaStatus(true);
-        showToast(`Irrigação forçada iniciada por ${tempoMin} minutos!`, 'success');
-        setTimeout(() => { setBombaStatus(false); }, tempoMin * 60000);
+    async function regarManual() {
+        if(!confirm('Confirmar irrigação no modo simulação?'))return;
+        const response=await window.sdaRequest('/api/rega',{method:'POST',body:JSON.stringify({minutos:Number(document.getElementById('tempo-manual').value)})});
+        if(!response.ok)showToast((await response.json()).mensagem,'error');
     }
-    
-    function pararRega() { socket.emit('parar_rega_manual'); setBombaStatus(false); showToast('Corte de fluxo acionado com sucesso.', 'error'); }
+    async function pararRega() {
+        const response=await window.sdaRequest('/api/rega',{method:'DELETE'});
+        if(!response.ok)showToast((await response.json()).mensagem,'error');
+    }
 
     // Fechar painel notificação
     document.addEventListener('click', function(event) {

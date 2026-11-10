@@ -302,6 +302,7 @@
             display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px;
         }
     </style>
+<script src="/auth.js"></script>
 </head>
 <body>
 
@@ -318,6 +319,7 @@
                 <a href="arthur.html" class="btn btn-warning-outline" style="text-decoration:none;">
                     <i class="ph ph-gauge"></i> Dashboard de Irrigação
                 </a>
+                <button class="btn btn-danger-outline" onclick="sdaChangePassword()">Trocar minha senha</button>
                 <button class="btn btn-danger-outline" onclick="fazerLogout()">
                     <i class="ph ph-sign-out"></i> Sair do Sistema
                 </button>
@@ -435,16 +437,11 @@
     <div id="toast-container"></div>
 
     <script>
-        // Verificação de Segurança
-        document.addEventListener("DOMContentLoaded", () => {
-            const usuarioLogado = JSON.parse(sessionStorage.getItem('sda_usuario'));
-            if (!usuarioLogado || usuarioLogado.nivel !== 'master') {
-                alert("Acesso Negado: Você não possui privilégios de Administrador.");
-                window.location.href = 'arthur.html';
-                return;
-            }
+        document.addEventListener('DOMContentLoaded', async () => {
+            const data=await window.sdaReady;
+            if(data.usuario.nivel!=='master'){location.replace('/arthur.html');return;}
             carregarUsuarios();
-            const d=new Date(); document.getElementById('log-data-atual').innerText = d.toLocaleDateString('pt-BR')+' - '+d.toTimeString().slice(0,5);
+            document.getElementById('log-data-atual').textContent=new Date().toLocaleString('pt-BR');
         });
 
         // ==========================================
@@ -452,7 +449,7 @@
         // ==========================================
         async function carregarUsuarios() {
             try {
-                const resposta = await fetch('/api/usuarios'); 
+                const resposta = await window.sdaRequest('/api/usuarios');
                 if(!resposta.ok) throw new Error("Erro ao buscar dados na API.");
                 const usuarios = await resposta.json();
                 renderizarTabela(usuarios);
@@ -462,45 +459,24 @@
         }
 
         function renderizarTabela(usuarios) {
-            const tbody = document.getElementById('tabela-usuarios');
-            tbody.innerHTML = '';
-
-            usuarios.forEach(user => {
-                const nomeFinal = user.usuario || user.nome || user.username || user.login || 'Desconhecido';
-                const nivelFinal = user.nivel || user.role || 'cliente';
-                const planoFinal = user.plano || 'basico';
-                const idFinal = user.id;
-
-                const badgeNivel = nivelFinal === 'master' 
-                    ? `<span class="badge badge-master"><i class="ph-fill ph-crown"></i> MASTER</span>` 
-                    : `<span class="badge badge-cliente">CLIENTE</span>`;
-                
-                const badgePlano = planoFinal === 'premium'
-                    ? `<span class="badge badge-premium"><i class="ph-fill ph-sparkle"></i> PREMIUM</span>`
-                    : `<span class="badge badge-basico">BÁSICO</span>`;
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td style="font-weight: 500;">${nomeFinal}</td>
-                    <td style="color: var(--text-secondary);">*** (Oculto)</td>
-                    <td>${badgeNivel}</td>
-                    <td>${badgePlano}</td>
-                    <td class="actions-cell">
-                        <button class="btn-action" style="color: var(--warning);" onclick="abrirModalEdicao(${idFinal}, '${nomeFinal}', '${nivelFinal}', '${planoFinal}')">
-                            <i class="ph ph-pencil-simple"></i> Editar
-                        </button>
-                        <button class="btn-action" style="color: var(--danger);" onclick="deletarUsuario(${idFinal}, '${nomeFinal}')">
-                            <i class="ph ph-trash"></i> Excluir
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+            const tbody=document.getElementById('tabela-usuarios');tbody.replaceChildren();
+            for(const user of usuarios){
+                const tr=document.createElement('tr');
+                for(const value of [user.usuario,'*** (Oculto)',user.nivel,user.plano]){
+                    const td=document.createElement('td');td.textContent=String(value);tr.append(td);
+                }
+                const actions=document.createElement('td');actions.className='actions-cell';
+                const edit=document.createElement('button');edit.className='btn-action';edit.textContent='Editar / redefinir senha';
+                edit.addEventListener('click',()=>abrirModalEdicao(user.id,user.usuario,user.nivel,user.plano));
+                const remove=document.createElement('button');remove.className='btn-action';remove.textContent='Excluir';
+                remove.addEventListener('click',()=>deletarUsuario(user.id,user.usuario));
+                actions.append(edit,remove);tr.append(actions);tbody.append(tr);
+            }
         }
 
         async function adicionarUsuario() {
             const user = document.getElementById('novo-usuario').value.trim();
-            const pass = document.getElementById('nova-senha').value.trim();
+            const pass = document.getElementById('nova-senha').value;
             const nivel = document.getElementById('novo-nivel').value;
             const plano = document.getElementById('novo-plano').value;
 
@@ -510,7 +486,7 @@
             }
 
             try {
-                const resposta = await fetch('/api/usuarios', {
+                const resposta = await window.sdaRequest('/api/usuarios', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ usuario: user, senha: pass, nivel: nivel, plano: plano })
@@ -554,7 +530,7 @@
             // Pega os dados que o admin digitou no modal
             const id = document.getElementById('edit-id').value;
             const nome = document.getElementById('edit-nome').value.trim();
-            const senha = document.getElementById('edit-senha').value.trim();
+            const senha = document.getElementById('edit-senha').value;
             const nivel = document.getElementById('edit-nivel').value;
             const plano = document.getElementById('edit-plano').value;
 
@@ -564,7 +540,7 @@
             }
 
             try {
-                const resposta = await fetch(`/api/usuarios/${id}`, {
+                const resposta = await window.sdaRequest(`/api/usuarios/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ usuario: nome, senha: senha, nivel: nivel, plano: plano })
@@ -584,14 +560,9 @@
         }
 
         async function deletarUsuario(id, nome) {
-            if (nome.toLowerCase() === 'master' || id === 1) {
-                mostrarToast('Ação bloqueada. O Master principal não pode ser excluído.', 'error');
-                return;
-            }
-
             if(confirm(`ATENÇÃO: Tem certeza que deseja excluir permanentemente "${nome}"?`)) {
                 try {
-                    const resposta = await fetch(`/api/usuarios/${id}`, { method: 'DELETE' });
+                    const resposta = await window.sdaRequest(`/api/usuarios/${id}`, { method: 'DELETE' });
                     if (resposta.ok) {
                         mostrarToast(`Usuário ${nome} excluído.`, 'success');
                         carregarUsuarios(); 
@@ -611,10 +582,7 @@
             }
         }
 
-        function fazerLogout() {
-            sessionStorage.removeItem('sda_usuario');
-            window.location.href = 'arthur.html';
-        }
+        function fazerLogout() { window.sdaLogout(); }
 
         // Toasts
         function mostrarToast(mensagem, tipo = 'success') {
@@ -622,7 +590,7 @@
             const toast = document.createElement('div');
             toast.className = `toast ${tipo}`;
             const icone = tipo === 'success' ? 'ph-fill ph-check-circle' : 'ph-fill ph-warning-circle';
-            toast.innerHTML = `<i class="${icone}" style="font-size: 20px;"></i> <span>${mensagem}</span>`;
+            toast.textContent = mensagem;
             container.appendChild(toast);
             setTimeout(() => {
                 toast.style.animation = 'fadeOut 0.3s ease-out forwards';
