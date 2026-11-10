@@ -1,6 +1,8 @@
 # SDA — Sistema de Irrigação Inteligente
 
-TCC SENAI / CETAF-AJU. Fase 0.5: banco e autenticação recriados, com simulação no backend. O firmware existente está preservado e **não deve ser usado na nova maquete antes da Fase 1**.
+TCC SENAI / CETAF-AJU. Fase 0.5 preservada; Fase 1 implementa firmware, protocolo e integração de três bombas/cinco boias. **Firmware NÃO validado para uso real até o usuário confirmar os testes físicos.** Nenhum hardware foi acionado nesta entrega.
+
+Documentos da Fase 1: [firmware e configuração](firmware/README.md), [plano físico supervisionado](docs/TESTE-FISICO-FASE-1.md), [pinos e ligações](docs/PINOS-E-LIGACOES.md), [protocolo v1](docs/PROTOCOLO-SERIAL-V1.md), [matriz de boias](docs/MATRIZ-BOIAS.md) e [relatório](docs/RELATORIO-FASE-1.md).
 
 ## Subir do zero em cerca de 5 minutos
 
@@ -34,7 +36,8 @@ Em `DB_MODE=mysql`, `npm start` tenta carregar o banco. Se falhar, usa memória 
 | `npm start` | Servidor com banco existente ou fallback em memória |
 | `npm run db:setup` | Cria banco, tabelas e primeiro administrador |
 | `npm run db:reset` | Apaga tabelas da aplicação somente após digitar `APAGAR nome_do_banco` em terminal interativo |
-| `npm test` | Testes de autenticação, autorização, sockets, fallback, XSS e carregamento funcional |
+| `npm test` | Testes de autenticação, protocolo, ACK, painel, APIs e regressões |
+| `npm run firmware:test` | Compila e executa controle/sketch no ATmega328P emulado; requer core AVR e CLI, não placa |
 
 `db:reset` perde todos os dados da aplicação e não possui opção de confirmação automática. Não apaga outros bancos.
 
@@ -54,7 +57,10 @@ Em `DB_MODE=mysql`, `npm start` tenta carregar o banco. Se falhar, usa memória 
 - `src/config.js`: ambiente e TLS.
 - `src/password.js`: política de senha e bcrypt, custo 12.
 - `src/store.js`: SQL parametrizado, cache transitório e fallback.
-- `src/simulation.js`: simulação compartilhada transitória de uma bomba, sem serial.
+- `src/simulation.js`: integração comum serial/simulação, estado validado, ACK e agendamento.
+- `src/device-link.js`, `src/protocol.js`: checksum, sequências, validade e fila de comandos.
+- `src/simulated-board.js`, `src/pump-control.js`: física dos três reservatórios/cinco boias e controle equivalente ao C++.
+- `src/serial-transport.js`: porta configurável, detecção conservadora e reconexão.
 - `db/schema.sql`: sete tabelas, relações, índices e nomes corrigidos.
 - `db/seed.js`, `db/setup.js`: provisionamento e seed seguro.
 - `public/auth.js`, `public/login.js`: sessão real, CSRF, login/logout e troca de senha.
@@ -64,7 +70,7 @@ Sessões usam cookie `httpOnly`, `SameSite=Strict`, expiração absoluta de 60 m
 
 Consultas com valores usam prepared statements. A criação de banco e os comandos DDL usam SQL estático ou escape `??` de identificadores pelo driver, com `DB_NAME` validado. Os segredos antigos não foram usados nem migrados; removê-los daqui não revoga credenciais no provedor.
 
-Perfis e agendamentos pertencem ao usuário. O schema suporta vínculo do agendamento com planta; esta interface edita um agendamento por usuário. Histórico grava solo, temperatura, umidade do ar e nível disponível; rio/poço ficam nulos na simulação atual. `READING_SAVE_SECONDS` controla coleta; `READING_RETENTION_DAYS` controla exclusão no início e a cada hora. O buffer em memória tem limite de 1000 leituras.
+Perfis e agendamentos pertencem ao usuário. O schema suporta vínculo do agendamento com planta; esta interface edita um agendamento por usuário. Histórico grava solo, temperatura, umidade do ar, níveis disponíveis e três bombas; rio/poço têm percentuais apenas na física simulada e ficam nulos no hardware sem sensores contínuos. `READING_SAVE_SECONDS` controla coleta; `READING_RETENTION_DAYS` controla exclusão no início e a cada hora. O buffer em memória tem limite de 1000 leituras.
 
 ## Testar
 
@@ -89,10 +95,21 @@ O `.env.example` contém todos os campos utilizados. `DB_SSL_CA` aponta para cer
 
 ## Pendências das próximas fases
 
-- **Fase 1:** firmware novo, boias, três bombas e travas físicas. Nada do firmware foi alterado nesta fase.
-- **Fase 2:** camadas completas de routes/controllers/services, serial/reconexão, simulação das três bombas, clima centralizado, histórico consultável e auditoria operacional de eventos/acionamentos. As tabelas correspondentes já estão criadas. O clima atual ainda vem do Open-Meteo no navegador; os limites meteorológicos não são uma trava física.
+- **Fase 1:** implementação/testes de software concluídos; ensaios físicos A/B/C/D e calibração final PENDENTES.
+- **Fase 2 (aguarda aprovação):** concluir camadas routes/controllers/services, clima centralizado, histórico consultável e auditoria operacional de eventos/acionamentos; aprofundar observabilidade da serial/reconexão já implementada por exigência da Fase 1. As tabelas correspondentes já estão criadas. O clima atual ainda vem do Open-Meteo no navegador; os limites meteorológicos não são uma trava física.
 - **Fase 3:** Claude, streaming, limites de uso e conhecimento. As variáveis reservadas não são usadas agora.
 - **Fase 4 — OFFLINE, apenas planejado:** versionar Chart.js e ícones em `/public/vendor`, servir fontes WOFF2 localmente, remover CDNs/importações remotas e adaptar CSP; oferecer clima indisponível/simulado sem internet. Testar em navegador com rede bloqueada. Dependências, imagem Docker e banco deverão estar previamente instalados; a IA remota requer internet.
 - **Fase 5:** documentação elétrica, testes de segurança física, roteiro da banca e revisão visual final.
 
 A CSP ainda permite scripts/estilos inline do dashboard legado e CDNs identificadas. O XSS de dados de usuário foi corrigido com DOM/textContent e handlers vinculados por função; remoção completa de inline faz parte do redesign. Os logs visuais antigos e o documento `.doc` de demonstração ainda são legados, sem valor de auditoria.
+
+
+## Integração do firmware — Fase 1
+
+O modo normal para apresentação continua `SIMULATE=true`, sem Arduino: três bombas, cinco boias e ACK/protocolo são simulados no backend. A fonte de limiares/tempos é `firmware/sda/Config.h`; o simulador lê esses valores. O limite inicial é **uma bomba simultânea**, com 2 s entre partidas. Máximos por ciclo são 120/120/60 s; cooldown de 30 s. Rega antiga em minutos é recusada quando excede 60 s da bomba 3, sem truncamento silencioso. O painel novo permite ciclos de teste de 4 s; o agendamento segue uma ocorrência por usuário e dia/hora.
+
+Somente para o roteiro físico supervisionado, depois de conferir ligações, use `SIMULATE=false` e `SERIAL_PORT=COMx`. `auto` só abre quando encontra exatamente um dispositivo de fabricante reconhecido; ambiguidade fica desconectada. Falha serial não derruba o site nem muda silenciosamente para dados simulados. Depois de 3,5 s sem telemetria válida, bombas aparecem como desconhecidas. O firmware volta AUTO local após 10 s sem heartbeat; isso não é emergência elétrica.
+
+Novas APIs autenticadas: `GET /api/estado`; master: `POST /api/bombas/:id` com `{on,ms}`, `/api/modo` com `{mode}`, `/api/limiares` com `{dry,wet}` e `/api/calibracao` com `{dry,wet}`. Todas as escritas exigem CSRF. `/api/rega` e eventos antigos permanecem compatíveis com a autorização da Fase 0.5. Uma resposta HTTP de sucesso contém ACK validado, não só confirmação de que bytes foram enviados. O painel nunca presume ligado no clique. A declaração de saída ligada do Arduino ainda não mede vazão/corrente/contato de relé.
+
+Os ensaios A/B/C/D não foram executados; fonte, diodos, contatos, boias, geometria, polarização e sensor de solo permanecem a conferir. ECHO em D13 compartilha pino com atividade de LED/bootloader: confira a proteção série e possível conflito descritos no diagrama antes de energizar. As bibliotecas/fontes externas continuam como pendência offline da Fase 4.
