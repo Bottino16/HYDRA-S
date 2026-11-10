@@ -10,7 +10,7 @@ window.sdaReady = fetch('/api/me', {cache:'no-store'}).then(async response => {
 function renderStatus(data) {
   let banner=document.getElementById('sda-system-banner');
   if(!banner){banner=document.createElement('div');banner.id='sda-system-banner';banner.setAttribute('role','status');banner.style.cssText='padding:12px;background:#17354a;color:#fff;border-radius:8px;margin-bottom:16px';(document.querySelector('main')||document.querySelector('.container')||document.body).prepend(banner);}
-  banner.textContent='MODO SIMULAÇÃO • '+(data.warning||'Banco conectado.');
+  banner.textContent=(data.simulate?'MODO SIMULAÇÃO':'HARDWARE — validação física pendente')+' • '+(data.warning||'Banco conectado.');
 }
 window.sdaRequest = async function(url, options={}) {
   await window.sdaReady;

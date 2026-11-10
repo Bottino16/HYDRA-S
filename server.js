@@ -24,7 +24,6 @@ function validSchedule(data) {
 }
 async function createApplication(options={}) {
   const cfg=options.config||config();
-  if(!cfg.simulate)throw new Error('Esta fase opera somente com SIMULATE=true. Serial será integrada na Fase 2.');
   const store=options.store||new Store(cfg); await store.init();
   const app=express(), server=http.createServer(app);
   app.disable('x-powered-by');
@@ -71,7 +70,7 @@ async function createApplication(options={}) {
       await new Promise((resolve,reject)=>sessionStore.destroy(id,error=>error?reject(error):resolve()));io.in('session:'+id).disconnectSockets(true);
     }
   }
-  app.get('/api/me',(req,res)=>res.json({usuario:publicUser(req.user),csrfToken:req.session.csrf,...store.status(),simulate:true}));
+  app.get('/api/me',(req,res)=>res.json({usuario:publicUser(req.user),csrfToken:req.session.csrf,...store.status(),simulate:cfg.simulate}));
   app.post('/api/logout',asyncRoute(async(req,res)=>{const id=req.sessionID;await new Promise((resolve,reject)=>req.session.destroy(error=>error?reject(error):resolve()));io.in('session:'+id).disconnectSockets(true);res.clearCookie('sda.sid',{httpOnly:true,sameSite:'strict',secure:cfg.secure});res.json({sucesso:true});}));
   app.get('/api/usuarios',master,(req,res)=>res.json(store.users.map(publicUser)));
   app.post('/api/usuarios',master,asyncRoute(async(req,res)=>{const data=validUser(req.body);validatePassword(req.body.senha,data.usuario);data.senha_hash=await hashPassword(req.body.senha);res.status(201).json({sucesso:true,usuario:await store.createUser(data)});}));
@@ -83,8 +82,13 @@ async function createApplication(options={}) {
   app.put('/api/perfis',asyncRoute(async(req,res)=>{const profiles=req.body;if(!Array.isArray(profiles)||!profiles.length||profiles.length>30||profiles.some(p=>typeof p.nome!=='string'||!p.nome.trim()||p.nome.length>100||!Number.isInteger(Number(p.limite))||Number(p.limite)<1||Number(p.limite)>99))throw fail(400,'Perfis inválidos.');await store.saveProfiles(req.user.id,profiles.map(p=>({id:p.id,nome:p.nome.trim(),limite:Number(p.limite),selecionado:!!p.selecionado})));res.json({sucesso:true});}));
   app.get('/api/agendamento',(req,res)=>res.json(store.schedule(req.user.id)));
   app.put('/api/agendamento',asyncRoute(async(req,res)=>{await store.saveSchedule(req.user.id,validSchedule(req.body));res.json({sucesso:true});}));
-  app.post('/api/rega',master,(req,res,next)=>{try{sim.pump(req.body.minutos);res.json({sucesso:true});}catch(error){next(error);}});
-  app.delete('/api/rega',master,(req,res)=>{sim.stop();res.json({sucesso:true});});
+  app.post('/api/rega',master,asyncRoute(async(req,res)=>{const ack=await sim.pump(req.body.minutos);res.json({sucesso:true,ack});}));
+  app.delete('/api/rega',master,asyncRoute(async(req,res)=>{const ack=await sim.stop();res.json({sucesso:true,ack});}));
+  app.get('/api/estado',(req,res)=>res.json(sim.snapshot()));
+  app.post('/api/bombas/:id',master,asyncRoute(async(req,res)=>{const ack=await sim.pumpId(Number(req.params.id),req.body.on,req.body.ms??0);res.json({sucesso:true,ack});}));
+  app.post('/api/modo',master,asyncRoute(async(req,res)=>{if(!['AUTO','MANUAL'].includes(req.body.mode))throw fail(400,'Modo inválido.');const ack=await sim.command({cmd:'setMode',mode:req.body.mode});res.json({sucesso:true,ack});}));
+  app.post('/api/limiares',master,asyncRoute(async(req,res)=>{const {dry,wet}=req.body;if(!Number.isInteger(dry)||!Number.isInteger(wet)||dry<1||dry>=wet||wet>100)throw fail(400,'Limiares inválidos.');const ack=await sim.command({cmd:'setThresholds',dry,wet});res.json({sucesso:true,ack});}));
+  app.post('/api/calibracao',master,asyncRoute(async(req,res)=>{const {dry,wet}=req.body;if(!Number.isInteger(dry)||!Number.isInteger(wet)||wet<0||dry>1023||dry<=wet+50)throw fail(400,'Calibração inválida.');const ack=await sim.command({cmd:'calibrate',dry,wet});res.json({sucesso:true,ack});}));
   app.use('/api',(req,res)=>res.status(404).json({mensagem:'Rota inexistente.'}));
   io.use((socket,next)=>{
     const req=socket.request,user=store.byId(req.session?.userId);
@@ -131,7 +135,7 @@ async function createApplication(options={}) {
   });
   app.use(express.static(publicDir,{index:false,dotfiles:'deny'}));
   app.use((req,res)=>res.status(404).send('Não encontrado.'));
-  app.use((error,req,res,next)=>{if(res.headersSent)return next(error);res.status(error.status||500).json({mensagem:error.status&&error.status<500?error.message:'Erro interno; tente novamente.'});});
+  app.use((error,req,res,next)=>{if(res.headersSent)return next(error);res.status(error.status||500).json({mensagem:error.status&&[400,401,403,404,409,429,503,504].includes(error.status)?error.message:'Erro interno; tente novamente.'});});
   await store.retain();
   const retention=setInterval(()=>store.retain().catch(()=>{}),3600000);retention.unref();
   const socketExpiry=setInterval(()=>{
@@ -141,6 +145,6 @@ async function createApplication(options={}) {
   },1000);socketExpiry.unref();
   return {app,server,io,store,async close(){clearInterval(socketExpiry);clearInterval(cleanup);clearInterval(retention);sim.close();await new Promise(resolve=>io.close(resolve));await store.close();}};
 }
-async function start(){const cfg=config(),instance=await createApplication({config:cfg});await new Promise(resolve=>instance.server.listen(cfg.port,cfg.host,resolve));console.log(`SDA: ${cfg.origin} | simulação | banco: ${instance.store.mode}`);if(instance.store.message)console.warn(instance.store.message);return instance;}
+async function start(){const cfg=config(),instance=await createApplication({config:cfg});await new Promise(resolve=>instance.server.listen(cfg.port,cfg.host,resolve));console.log(`SDA: ${cfg.origin} | ${cfg.simulate?'simulação':'serial (validação física pendente)'} | banco: ${instance.store.mode}`);if(instance.store.message)console.warn(instance.store.message);return instance;}
 if(require.main===module)start().catch(error=>{console.error(error.message);process.exitCode=1;});
 module.exports={createApplication,start};

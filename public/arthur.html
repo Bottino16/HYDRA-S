@@ -667,6 +667,7 @@
     function fecharDoc() { document.getElementById("modal-doc").style.display = "none"; }
 
     function setBombaStatus(isPumping) {
+        if(isPumping===null){document.getElementById('texto-bomba').textContent='STATUS: DESCONHECIDO';document.getElementById('icone-bomba').classList.remove('spin-anim');return;}
         const icone = document.getElementById('icone-bomba');
         const texto = document.getElementById('texto-bomba');
         if(isPumping) { icone.classList.add('spin-anim'); texto.textContent = "STATUS: BOMBEANDO..."; texto.classList.add('text-pumping'); } 
@@ -946,5 +947,6 @@
         document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); showToast("Documentação gerada com sucesso!", "success");
     }
 </script>
+<script src="/maquete.js"></script>
 </body>
 </html>

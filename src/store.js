@@ -91,10 +91,10 @@ class Store {
     const row = {id:previous?.id || result?.insertId || this.schedules.length+1, usuario_id:id, perfil_planta_id:profileId, hora:data.hora,duracao:data.duracao,ativo:data.ativo,dias_do_mes:data.diasMes};
     this.schedules = this.schedules.filter(s=>s !== previous).concat(row);
   }
-  schedule(id) { const row=this.schedules.find(s=>s.usuario_id===id); return row ? {hora:row.hora,duracao:row.duracao,ativo:!!row.ativo,diasMes:typeof row.dias_do_mes==='string'?JSON.parse(row.dias_do_mes):row.dias_do_mes} : {hora:'18:00',duracao:5,ativo:false,diasMes:[]}; }
+  schedule(id) { const row=this.schedules.find(s=>s.usuario_id===id); return row ? {hora:row.hora,duracao:row.duracao,ativo:!!row.ativo,diasMes:typeof row.dias_do_mes==='string'?JSON.parse(row.dias_do_mes):row.dias_do_mes} : {hora:'18:00',duracao:1,ativo:false,diasMes:[]}; }
   async reading(data) {
     this.readings.push({...data,data_hora:new Date()}); this.readings=this.readings.slice(-1000);
-    await this.write('INSERT INTO leituras (solo, temperatura, umidade_ar, nivel_rio, nivel_poco, nivel_caixa, bombas) VALUES (?, ?, ?, ?, ?, ?, ?)', [data.solo,data.temperatura,data.umidade_ar,null,null,data.nivel_caixa,JSON.stringify(data.bombas)]);
+    await this.write('INSERT INTO leituras (solo, temperatura, umidade_ar, nivel_rio, nivel_poco, nivel_caixa, bombas) VALUES (?, ?, ?, ?, ?, ?, ?)', [data.solo,data.temperatura,data.umidade_ar,data.nivel_rio??null,data.nivel_poco??null,data.nivel_caixa,JSON.stringify(data.bombas)]);
   }
   async retain() { await this.write('DELETE FROM leituras WHERE data_hora < DATE_SUB(UTC_TIMESTAMP(), INTERVAL ? DAY)', [this.cfg.retentionDays]); }
   async close() { if(this.pool) await this.pool.end(); }
