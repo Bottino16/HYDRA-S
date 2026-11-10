@@ -1,4 +1,5 @@
 const fs = require('node:fs');
+const path = require('node:path');
 require('dotenv').config({ quiet: true });
 function number(name, fallback, min = 1, max = 1000000) {
   const value = Number(process.env[name] || fallback);
@@ -14,7 +15,16 @@ function config() {
   const origin = new URL(process.env.APP_ORIGIN || 'http://localhost:3000').origin;
   const mode = process.env.DB_MODE || 'mysql';
   if (!['mysql', 'memory'].includes(mode)) throw new Error('DB_MODE deve ser mysql ou memory.');
+  const timeZone=process.env.SCHEDULE_TIMEZONE||'America/Fortaleza';
+  new Intl.DateTimeFormat('en-CA',{timeZone}).format();
+  const flows=[1,2,3].map(i=>{const raw=process.env['FLOW_PUMP_'+i+'_L_MIN'];if(!raw)return null;const v=Number(raw);if(!Number.isFinite(v)||v<=0||v>1000)throw new Error('Vazão inválida.');return v;});
   return {
+    dataStaleMs:number('DATA_STALE_SECONDS',5,1,300)*1000,
+    serialReconnectMs:number('SERIAL_RECONNECT_MS',3000,100,60000),serialPath:process.env.SERIAL_PORT||'auto',
+    scheduleTimeZone:timeZone,scheduleJournalDir:path.resolve(process.env.SCHEDULE_JOURNAL_DIR||'.data/schedule-occurrences'),
+    settingsFile:path.resolve(process.env.SETTINGS_FILE||'.data/device-settings.json'),flows,
+    weatherOffline:process.env.WEATHER_OFFLINE!=='false',weatherCacheMs:number('WEATHER_CACHE_SECONDS',600,1,86400)*1000,
+    weatherTimeoutMs:number('WEATHER_TIMEOUT_MS',2000,100,15000),weatherKey:process.env.OPENWEATHER_API_KEY||'',
     host: process.env.HOST || '127.0.0.1', port: number('PORT', 3000, 1, 65535), origin,
     secret, secure, ttl: number('SESSION_TTL_MINUTES', 60, 1, 1440) * 60000,
     simulate: process.env.SIMULATE !== 'false', dbMode: mode,

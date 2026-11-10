@@ -11,7 +11,7 @@ class DeviceLink extends EventEmitter{
   }
   if(this.lastSeq!==null){const delta=(seq-this.lastSeq)>>>0;if(delta===0||delta>=0x80000000){this.rejected++;this.emit('discard','sequence');return false;}}
   this.lastSeq=seq;
-  if(data.type==='state'){this.state={...data,v:1,seq};this.at=this.clock();this.emit('state',this.snapshot());}
+  if(data.type==='state'){this.state={...data,v:1,seq};this.at=this.clock();this.emit('state',this.snapshot());this.emit('telemetry',this.snapshot());}
   else if(data.type==='ack'){
    const pending=this.pending.get(data.cmd);if(!pending)return true;
    clearTimeout(pending.timer);this.pending.delete(data.cmd);queueMicrotask(()=>this.flush());
@@ -20,7 +20,12 @@ class DeviceLink extends EventEmitter{
   }
   return true;
  }
- snapshot(){const connected=!!this.state&&this.clock()-this.at<=this.staleMs;return {...this.state,connected,receivedAt:this.at,pumps:connected?this.state.pumps:[null,null,null],rejected:this.rejected};}
+ snapshot(){
+  const connected=!!this.state&&this.clock()-this.at<=this.staleMs;
+  const visible={...this.state};
+  if(!connected){for(const key of ['solo','solo_bruto','temperatura','umidade_ar','caixa','rio','poco','modo','alertas'])visible[key]=null;visible.boias=[null,null,null,null,null];}
+  return {...visible,connected,receivedAt:this.at,pumps:connected?this.state.pumps:[null,null,null],rejected:this.rejected};
+ }
  command(data){
   if(this.waiting.length>=16)return Promise.reject(Object.assign(new Error('Fila de comandos cheia.'),{status:429}));
   const seq=this.seq=(this.seq+1)>>>0;

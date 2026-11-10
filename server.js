@@ -10,6 +10,8 @@ const { config } = require('./src/config');
 const { Store, publicUser } = require('./src/store');
 const { validatePassword, hashPassword, comparePassword } = require('./src/password');
 const { simulation } = require('./src/simulation');
+const {WeatherService}=require('./src/services/weather');
+const {monitoringRoutes}=require('./src/routes/monitoring-routes');
 const asyncRoute = fn => (req,res,next) => Promise.resolve(fn(req,res,next)).catch(next);
 const fail = (status,message) => Object.assign(new Error(message),{status});
 function validUser(body) {
@@ -28,7 +30,7 @@ async function createApplication(options={}) {
   const app=express(), server=http.createServer(app);
   app.disable('x-powered-by');
   // Inline legado apenas na interface; conteúdo dinâmico de usuário usa textContent.
-  app.use(helmet({contentSecurityPolicy:{directives:{defaultSrc:["'self'"],scriptSrc:["'self'","'unsafe-inline'",'https://cdn.jsdelivr.net','https://unpkg.com'],scriptSrcAttr:["'unsafe-inline'"],styleSrc:["'self'","'unsafe-inline'",'https://fonts.googleapis.com'],fontSrc:["'self'",'https://fonts.gstatic.com','https://cdn.jsdelivr.net','https://unpkg.com','data:'],connectSrc:["'self'",'https://api.open-meteo.com','https://unpkg.com','https://cdn.jsdelivr.net'],imgSrc:["'self'",'data:'],upgradeInsecureRequests:null}},strictTransportSecurity:cfg.secure?undefined:false}));
+  app.use(helmet({contentSecurityPolicy:{directives:{defaultSrc:["'self'"],scriptSrc:["'self'","'unsafe-inline'",'https://cdn.jsdelivr.net','https://unpkg.com'],scriptSrcAttr:["'unsafe-inline'"],styleSrc:["'self'","'unsafe-inline'",'https://fonts.googleapis.com'],fontSrc:["'self'",'https://fonts.gstatic.com','https://cdn.jsdelivr.net','https://unpkg.com','data:'],connectSrc:["'self'",'https://unpkg.com','https://cdn.jsdelivr.net'],imgSrc:["'self'",'data:'],upgradeInsecureRequests:null}},strictTransportSecurity:cfg.secure?undefined:false}));
   app.use(express.json({limit:'32kb'}));
   const sessionStore=new session.MemoryStore();
   const sessionMiddleware=session({name:'sda.sid',secret:cfg.secret,resave:false,saveUninitialized:false,store:sessionStore,cookie:{httpOnly:true,sameSite:'strict',secure:cfg.secure,maxAge:cfg.ttl}});
@@ -63,7 +65,8 @@ async function createApplication(options={}) {
   }));
   app.use('/api',auth,csrf);
   const apiLimit=rateLimit({windowMs:60000,limit:300,legacyHeaders:false,standardHeaders:'draft-8'});app.use('/api',apiLimit);
-  const sim=simulation(io,store,cfg);
+  const sim=simulation(io,store,cfg,options.deviceOptions||{});await sim.ready;
+  const weather=options.weather||new WeatherService(cfg);
   async function revoke(userId){
     const sessions=await new Promise((resolve,reject)=>sessionStore.all((error,data)=>error?reject(error):resolve(data)));
     for(const [id,data] of Object.entries(sessions))if(data.userId===Number(userId)){
@@ -80,15 +83,10 @@ async function createApplication(options={}) {
   app.post('/api/senha',asyncRoute(async(req,res)=>{if(typeof req.body.atual!=='string'||!await comparePassword(req.body.atual,req.user.senha_hash))throw fail(400,'Senha atual incorreta.');validatePassword(req.body.nova,req.user.usuario);await store.updateUser(req.user.id,{...req.user,senha_hash:await hashPassword(req.body.nova)});await revoke(req.user.id);res.json({sucesso:true});}));
   app.get('/api/perfis',(req,res)=>res.json(store.profiles.filter(p=>p.usuario_id===req.user.id).map(p=>({id:String(p.id),nome:p.nome,limite:p.limite_umidade,selecionado:!!p.selecionado}))));
   app.put('/api/perfis',asyncRoute(async(req,res)=>{const profiles=req.body;if(!Array.isArray(profiles)||!profiles.length||profiles.length>30||profiles.some(p=>typeof p.nome!=='string'||!p.nome.trim()||p.nome.length>100||!Number.isInteger(Number(p.limite))||Number(p.limite)<1||Number(p.limite)>99))throw fail(400,'Perfis inválidos.');await store.saveProfiles(req.user.id,profiles.map(p=>({id:p.id,nome:p.nome.trim(),limite:Number(p.limite),selecionado:!!p.selecionado})));res.json({sucesso:true});}));
-  app.get('/api/agendamento',(req,res)=>res.json(store.schedule(req.user.id)));
-  app.put('/api/agendamento',asyncRoute(async(req,res)=>{await store.saveSchedule(req.user.id,validSchedule(req.body));res.json({sucesso:true});}));
-  app.post('/api/rega',master,asyncRoute(async(req,res)=>{const ack=await sim.pump(req.body.minutos);res.json({sucesso:true,ack});}));
-  app.delete('/api/rega',master,asyncRoute(async(req,res)=>{const ack=await sim.stop();res.json({sucesso:true,ack});}));
-  app.get('/api/estado',(req,res)=>res.json(sim.snapshot()));
-  app.post('/api/bombas/:id',master,asyncRoute(async(req,res)=>{const ack=await sim.pumpId(Number(req.params.id),req.body.on,req.body.ms??0);res.json({sucesso:true,ack});}));
-  app.post('/api/modo',master,asyncRoute(async(req,res)=>{if(!['AUTO','MANUAL'].includes(req.body.mode))throw fail(400,'Modo inválido.');const ack=await sim.command({cmd:'setMode',mode:req.body.mode});res.json({sucesso:true,ack});}));
-  app.post('/api/limiares',master,asyncRoute(async(req,res)=>{const {dry,wet}=req.body;if(!Number.isInteger(dry)||!Number.isInteger(wet)||dry<1||dry>=wet||wet>100)throw fail(400,'Limiares inválidos.');const ack=await sim.command({cmd:'setThresholds',dry,wet});res.json({sucesso:true,ack});}));
-  app.post('/api/calibracao',master,asyncRoute(async(req,res)=>{const {dry,wet}=req.body;if(!Number.isInteger(dry)||!Number.isInteger(wet)||wet<0||dry>1023||dry<=wet+50)throw fail(400,'Calibração inválida.');const ack=await sim.command({cmd:'calibrate',dry,wet});res.json({sucesso:true,ack});}));
+  app.get('/api/agendamento',(req,res)=>res.json(store.schedule(req.user.id,req.query.perfil??null)));
+  app.get('/api/agendamentos',(req,res)=>res.json(store.schedules.filter(row=>row.usuario_id===req.user.id).map(row=>store.schedule(req.user.id,row.perfil_planta_id))));
+  app.put('/api/agendamento',asyncRoute(async(req,res)=>{await store.saveSchedule(req.user.id,validSchedule(req.body));await sim.event('agendamento_configurado','info','Agendamento por perfil atualizado.');res.json({sucesso:true});}));
+  app.use('/api',monitoringRoutes({store,device:sim,weather},master));
   app.use('/api',(req,res)=>res.status(404).json({mensagem:'Rota inexistente.'}));
   io.use((socket,next)=>{
     const req=socket.request,user=store.byId(req.session?.userId);
@@ -114,7 +112,7 @@ async function createApplication(options={}) {
       catch(error){const result={sucesso:false,status:error.status||500,mensagem:error.status?error.message:'Erro interno.'};if(typeof ack==='function')ack(result);else socket.emit('command_error',result);}
     });
     handle('salvar_agendamento',false,async data=>{const valid=validSchedule(data);await store.saveSchedule(socket.currentUser.id,valid);socket.emit('config_atual',valid);});
-    handle('regar_manual',true,data=>sim.pump(data));
+    handle('regar_manual',true,data=>sim.pump(data,{userId:socket.currentUser.id}));
     handle('parar_rega_manual',true,()=>sim.stop());
     // Eventos administrativos legados não operam fora das rotas autorizadas.
     handle('admin_pedir_usuarios',true,()=>socket.emit('admin_lista_usuarios',store.users.map(publicUser)));
@@ -143,7 +141,7 @@ async function createApplication(options={}) {
       if(error||!data||!store.byId(data.userId)?.ativo||(!data.expiresAt||data.expiresAt<=Date.now()))socket.disconnect(true);
     });
   },1000);socketExpiry.unref();
-  return {app,server,io,store,async close(){clearInterval(socketExpiry);clearInterval(cleanup);clearInterval(retention);sim.close();await new Promise(resolve=>io.close(resolve));await store.close();}};
+  return {app,server,io,store,device:sim,async close(){clearInterval(socketExpiry);clearInterval(cleanup);clearInterval(retention);await sim.close();await new Promise(resolve=>io.close(resolve));await store.close();}};
 }
 async function start(){const cfg=config(),instance=await createApplication({config:cfg});await new Promise(resolve=>instance.server.listen(cfg.port,cfg.host,resolve));console.log(`SDA: ${cfg.origin} | ${cfg.simulate?'simulação':'serial (validação física pendente)'} | banco: ${instance.store.mode}`);if(instance.store.message)console.warn(instance.store.message);return instance;}
 if(require.main===module)start().catch(error=>{console.error(error.message);process.exitCode=1;});
