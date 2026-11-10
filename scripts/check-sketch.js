@@ -15,7 +15,7 @@ const uart=new avr.AVRUSART(cpu,avr.usart0Config,16000000);const frames=[],queue
 function send(line){queue.push(...Buffer.from(line));}
 let lastReceive=-100000; // Espaça recepção e leitura da UART, como uma linha 9600 baud real.
 const later=(us,callback)=>cpu.addClockEvent(callback,Math.round(us*16));
-const f=[false,false,false,false,false];d.setPin(2,false);d.setPin(3,false);b.setPin(0,false);b.setPin(1,false);b.setPin(2,false);b.setPin(3,true);b.setPin(5,false);
+const f=[false,false,false,false,false];d.setPin(2,false);d.setPin(3,false);b.setPin(0,false);b.setPin(1,false);b.setPin(2,false);b.setPin(3,true);c.setPin(1,false);
 let previousDdr=0,previousTrig=false,echoWidth=700,irrigationSeen=false,earlyStart=false,dhtRespond=true,echoRespond=true;
 b.addListener(value=>{
  const ddr=cpu.data[avr.portBConfig.DDR],dhtOutput=!!(ddr&8),wasOutput=!!(previousDdr&8);previousDdr=ddr;
@@ -24,7 +24,10 @@ b.addListener(value=>{
   for(const value of values)for(let bit=7;bit>=0;bit--){at+=50;later(at,()=>b.setPin(3,true));at+=(value&(1<<bit))?70:26;later(at,()=>b.setPin(3,false));}
   later(at+50,()=>b.setPin(3,true));
  }
- const trig=!!(value&16);if(previousTrig&&!trig&&(ddr&16)&&echoRespond){const width=echoWidth;later(200,()=>b.setPin(5,true));later(200+width,()=>b.setPin(5,false));}previousTrig=trig;
+ });
+c.addListener(value=>{
+ const ddr=cpu.data[avr.portCConfig.DDR],trig=!!(value&4);
+ if(previousTrig&&!trig&&(ddr&4)&&echoRespond){const width=echoWidth;later(200,()=>c.setPin(1,true));later(200+width,()=>c.setPin(1,false));}previousTrig=trig;
 });
 d.addListener(value=>{const ddr=cpu.data[avr.portDConfig.DDR];for(const pin of [7,5,4])if((ddr&(1<<pin))&&!(value&(1<<pin))){if(cpu.cycles<5*16000000)earlyStart=true;if(pin===4)irrigationSeen=true;}});
 uart.onLineTransmit=line=>{frames.push(decode(line));};
@@ -51,4 +54,6 @@ assert.ok(acks.some(a=>a.cmd===0&&!a.ok&&a.code===11),'Comando corrompido deve s
 assert.equal(states.at(-1).temperatura,null);assert.equal(states.at(-1).umidade_ar,null);assert.equal(states.at(-1).caixa,null);
 assert.equal(states.at(-1).pumps[2],false,'Perda da boia mínima deve desligar irrigação.');
 assert.equal((cpu.data[avr.portDConfig.PORT]>>4)&1,1); // Relé ativo LOW está desligado.
-console.log(JSON.stringify({sketch:'sda.ino',virtualSeconds:9.4,telemetryFrames:states.length,acks:acks.length,checks:13,physicalHardware:false},null,2));
+assert.equal(cpu.data[avr.portBConfig.DDR]&32,0,'D13 deve permanecer livre.');
+assert.equal(cpu.data[avr.portCConfig.DDR]&6,4,'A1 entrada e A2 saída.');
+console.log(JSON.stringify({sketch:'sda.ino',virtualSeconds:9.4,telemetryFrames:states.length,acks:acks.length,checks:15,physicalHardware:false},null,2));

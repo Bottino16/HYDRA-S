@@ -15,8 +15,9 @@
 | D4 | IN3 relé | Bomba 3: caixa → plantação; LOW liga |
 | D6 | Buzzer | Ativo em HIGH; passivo configurável; se corrente exceder GPIO, usar driver/transistor |
 | D11 | DHT11 DATA | Pull-up externo conforme módulo/sensor; PCINT3 no porto B |
-| D12 | Ultrassônico TRIG | Pulso gerado sem delay |
-| D13 | Ultrassônico ECHO | PCINT5 no porto B; prever resistor série de 2,2 kΩ e conferir conflito de bootloader antes de ligar |
+| A2 (digital 16) | Ultrassônico TRIG | Pulso gerado sem delay, porto C/PC2 |
+| A1 (digital 15) | Ultrassônico ECHO | Entrada digital 5 V, PCINT9 no porto C/PC1 |
+| D12/D13 | Livres | Sem sensor/relé; D13 pode ter atividade do LED/bootloader |
 | D0/D1 | UART USB | Reservados ao monitor/servidor; não conectar bombas ou sensores |
 | GND / 5 V | Referência lógica | GND comum entre UNO, sensores e entradas lógicas do módulo conforme seu fabricante |
 
@@ -44,9 +45,18 @@ O fusível e a bitola dependem da corrente de partida/travamento e dos cabos; a 
 
 O 1N4007 citado no projeto pertence a uma família de retificadores de 1 A nas condições da ficha; não é garantia de adequação ao motor desconhecido. Confira a corrente e a energia da carga e selecione o diodo com o orientador. Referência: [Vishay 1N4001–1N4007](https://www.vishay.com/docs/88503/1n4001.pdf).
 
-## D13 e bootloader
+## Sinais do ultrassônico — mapa corrigido na Fase 2
 
-O bootloader pode configurar PB5/D13 como saída para o LED antes de o sketch iniciar. Isso é visível no [código Optiboot](https://github.com/Optiboot/optiboot/blob/master/optiboot/bootloaders/optiboot/optiboot.c). Como o mapa solicitado usa D13 para ECHO, há possibilidade de disputa entre saídas durante reset/upload. A recomendação de resistor série de 2,2 kΩ entre ECHO e D13 é uma medida de limitação de corrente a conferir com o orientador e o módulo real; não comprova ausência de conflito. Se não for possível garantir compatibilidade, não energize o conjunto: será necessário aprovar remapeamento ou isolamento. O teste emulado executa a aplicação, não o bootloader físico.
+```text
+Ultrassônico VCC  → alimentação lógica 5 V compatível com o módulo
+Ultrassônico GND  → GND lógico comum
+Ultrassônico TRIG → A2 / digital 16 / PC2 (saída)
+Ultrassônico ECHO → A1 / digital 15 / PC1 / PCINT9 (entrada)
+D13              → livre; não conectar ECHO
+A0               → somente solo; ADC0 permanece inalterado
+```
+
+A1/A2 são usados como GPIO digitais. A1 tem interrupção de mudança no porto C, separada do DHT11 em D11. O remapeamento remove a conexão de ECHO ao pino do LED/bootloader. Não houve alteração física, upload ou validação real. Ensaios físicos permanecem pausados e o firmware NÃO VALIDADO.
 
 ## Alimentação e inicialização
 

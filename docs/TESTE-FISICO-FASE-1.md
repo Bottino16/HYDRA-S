@@ -1,6 +1,6 @@
 # Plano de teste físico supervisionado — SDA
 
-**STATUS: PENDENTE. Firmware NÃO aprovado para uso real.** Este documento é um roteiro para execução pelo usuário com o orientador/supervisor. Os resultados abaixo não foram preenchidos pelo agente. Não avance de etapa quando houver divergência.
+**STATUS: PAUSADO — usuário sem Arduino na Fase 2. PENDENTE. Firmware NÃO aprovado para uso real.** Este documento é um roteiro para execução pelo usuário com o orientador/supervisor. Os resultados abaixo não foram preenchidos pelo agente. Não avance de etapa quando houver divergência.
 
 ## Regras de parada e preparação
 
@@ -13,7 +13,7 @@ Conferir e registrar antes da etapa A:
 - Modelo exato do UNO R3, módulo de relé 5 V ativo LOW, sensores e bombas.
 - Pinos, NO/COM, diodos, fusível, bitola, isolamento de lógica e fixação conforme `PINOS-E-LIGACOES.md`.
 - Correntes nominais e de partida/travamento das bombas e corrente de bobinas; adequação da fonte 12 V/3 A. Até comprovar, manter **MAX_SIMULTANEOUS=1**.
-- ECHO em D13: conferir proteção série e disputa com LED/bootloader descrita em PINOS-E-LIGACOES.md; pendência impede energização.
+- Mapa atualizado na Fase 2: ECHO em A1 (digital 15), TRIG em A2 (digital 16), D13 livre; conferir com PINOS-E-LIGACOES.md antes de qualquer ensaio futuro.
 - Resistores/polarização que garantem entradas de relé inativas durante bootloader/reset. Verificar módulo sem carga, não confiar só no sketch.
 - Boias máximas abertas em cheio, mínimas fechadas com água; conferir com multímetro, sem energia.
 - Sensor capacitivo polarizado conforme o diagrama; valores de calibração e geometria ainda são provisórios.

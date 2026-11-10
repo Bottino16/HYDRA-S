@@ -9,7 +9,7 @@
 // Desarma watchdog herdado de reset antes de inicializar RAM e periféricos.
 void disableInheritedWatchdog() __attribute__((naked,section(".init3")));
 void disableInheritedWatchdog(){MCUSR=0;wdt_disable();}
-static_assert(Config::DHT_PIN==11&&Config::ECHO_PIN==13&&Config::SOIL_PIN==14,"Driver de interrupção/ADC específico do UNO: conferir mapeamento");
+static_assert(Config::DHT_PIN==11&&Config::ECHO_PIN==15&&Config::TRIG_PIN==16&&Config::SOIL_PIN==14,"Driver de interrupção/ADC específico do UNO: conferir mapeamento");
 Sda::Control control;
 Sda::Input sensors;
 Sda::Debounced floats[5];
@@ -22,19 +22,23 @@ uint32_t soilAt=0,dhtAt=0,ultraAt=0,telemetryAt=0,seq=0,lastCommand=0;
 bool seenCommand=false;
 char rx[Config::RX_SIZE],tx[Config::TX_SIZE];uint16_t rxLength=0,txLength=0,txAt=0;
 bool rxReady=false,rxOverflow=false;
-// ECHO e DHT usam interrupção de mudança de pino no porto B, específica do UNO R3.
-volatile uint8_t oldPortB=0,dhtPhase=0,dhtBits=0,dhtBytes[5]={0};
+// DHT: PCINT3/porto B. ECHO digital A1: PCINT9/porto C, específico do UNO R3.
+volatile uint8_t oldPortC=0,oldPortB=0,dhtPhase=0,dhtBits=0,dhtBytes[5]={0};
 volatile uint32_t echoRise=0,echoPulse=0,dhtEdge=0;
 volatile bool echoReady=false,dhtDone=false;
 uint8_t triggerPhase=0;uint32_t triggerAt=0,echoRequestedAt=0,dhtStartedAt=0;
 bool waitingEcho=false,dhtStarting=false;
 
-ISR(PCINT0_vect){
- const uint8_t port=PINB,changed=port^oldPortB;oldPortB=port;const uint32_t now=micros();
- if(changed&_BV(PB5)){
-  if(port&_BV(PB5))echoRise=now;
+ISR(PCINT1_vect){
+ const uint8_t port=PINC,changed=port^oldPortC;oldPortC=port;
+ if(changed&_BV(PC1)){
+  const uint32_t now=micros();
+  if(port&_BV(PC1))echoRise=now;
   else {echoPulse=now-echoRise;echoReady=true;}
  }
+}
+ISR(PCINT0_vect){
+ const uint8_t port=PINB,changed=port^oldPortB;oldPortB=port;const uint32_t now=micros();
  if((changed&_BV(PB3))&&dhtPhase){
   const bool high=port&_BV(PB3);const uint32_t duration=now-dhtEdge;dhtEdge=now;
   if(dhtPhase==1&&!high)dhtPhase=2;
@@ -168,7 +172,7 @@ void setup(){
  for(uint8_t i=0;i<5;i++)pinMode(Config::FLOAT_PINS[i],INPUT_PULLUP);
  digitalWrite(Config::BUZZER_PIN,LOW);pinMode(Config::BUZZER_PIN,OUTPUT);
  digitalWrite(Config::TRIG_PIN,LOW);pinMode(Config::TRIG_PIN,OUTPUT);pinMode(Config::ECHO_PIN,INPUT);pinMode(Config::DHT_PIN,INPUT_PULLUP);
- oldPortB=PINB;PCMSK0|=_BV(PCINT5)|_BV(PCINT3);PCICR|=_BV(PCIE0);
+ oldPortB=PINB;oldPortC=PINC;PCMSK0|=_BV(PCINT3);PCMSK1|=_BV(PCINT9);PCICR|=_BV(PCIE0)|_BV(PCIE1);
  ADMUX=_BV(REFS0);ADCSRA=_BV(ADEN)|_BV(ADPS2)|_BV(ADPS1)|_BV(ADPS0);DIDR0|=_BV(ADC0D);
  wdt_enable(Config::WATCHDOG_PRESCALER);
  Serial.begin(Config::BAUD);queue("{\"type\":\"boot\"}");

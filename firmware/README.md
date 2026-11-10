@@ -11,7 +11,7 @@
 - `sda/sda.ino`: aquisição assíncrona, saídas, watchdog, serial e buzzer no UNO R3/ATmega328P.
 - `tests/`: matriz e cenários em C++, compilados com avr-g++ e executados no ATmega328P emulado por avr8js. O código de controle é o mesmo incluído pelo sketch.
 
-Abra **sda/sda.ino**, selecione Arduino UNO (AVR Boards) e apenas compile até concluir a conferência elétrica. Não são necessárias bibliotecas adicionais de sensores ou JSON. O driver de DHT11 em D11 e ECHO em D13 usa PCINT do porto B do ATmega328P; esses pinos são conferidos por static_assert. Alterar esses dois pinos exige adaptar o driver, além de Config.h. ADC é dedicado a A0.
+Abra **sda/sda.ino**, selecione Arduino UNO (AVR Boards) e apenas compile até concluir a conferência elétrica. Não são necessárias bibliotecas adicionais de sensores ou JSON. O driver de DHT11 em D11 e ECHO em A1 (digital 15) usa PCINT do porto C; DHT usa PCINT do porto B do ATmega328P; esses pinos são conferidos por static_assert. Alterar esses dois pinos exige adaptar o driver, além de Config.h. ADC é dedicado a A0.
 
 ## Valores iniciais a conferir
 

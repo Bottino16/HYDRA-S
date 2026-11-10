@@ -8,7 +8,8 @@ constexpr uint8_t FLOAT_PINS[5]={2,3,8,9,10}; // rio, poço mínimo/máximo, cai
 constexpr uint8_t FLOAT_ACTIVE_LEVEL[5]={0,0,1,0,1};
 constexpr uint8_t RELAY_PINS[3]={7,5,4};
 constexpr uint8_t RELAY_ON=0, RELAY_OFF=1;
-constexpr uint8_t BUZZER_PIN=6, DHT_PIN=11, TRIG_PIN=12, ECHO_PIN=13;
+constexpr uint8_t BUZZER_PIN=6, DHT_PIN=11, TRIG_PIN=16, ECHO_PIN=15;
+// A2=16 (TRIG), A1=15 (ECHO digital/PCINT9); D12/D13 ficam livres.
 constexpr bool BUZZER_ACTIVE=true; // false usa tone() para buzzer passivo.
 constexpr uint16_t BUZZER_HZ=2000;
 constexpr uint32_t ALERT_HOLD_MS=3000;
