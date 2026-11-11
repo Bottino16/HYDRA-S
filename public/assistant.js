@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  const observer=new MutationObserver(()=>{if(viewing)hideOthers();});observer.observe(main,{childList:true});open.addEventListener('click',()=>view(true));
  el('h2','Assistente do Solo',panel);const back=el('button','Voltar à telemetria',panel);back.addEventListener('click',()=>view(false));
  const badge=el('p','Carregando assistente…',panel);badge.id='assistant-mode';
- el('p','A IA pode errar. Confirme orientações com análise de solo e agrônomo. Firmware NÃO VALIDADO; dados desta apresentação são simulados. Nenhuma bomba é acionada pelo chat.',panel).className='assistant-notice';
+ el('p','A IA pode errar. Confirme orientações com análise de solo e agrônomo. Firmware NÃO VALIDADO. Nenhuma bomba é acionada pelo chat.',panel).className='assistant-notice';
  el('p','Não envie nomes, e-mails, senhas, tokens ou outros dados pessoais. O envio à IA usa somente contexto sanitizado.',panel).className='assistant-notice';
  const toolbar=el('div',undefined,panel);toolbar.className='assistant-toolbar';const select=el('select',undefined,toolbar);select.setAttribute('aria-label','Conversas do assistente');const fresh=el('button','Nova conversa',toolbar),older=el('button','Carregar mensagens anteriores',toolbar);older.hidden=true;const more=el('button','Mais conversas',toolbar);more.hidden=true;
  const messages=el('div',undefined,panel);messages.id='assistant-messages';messages.setAttribute('aria-label','Mensagens do assistente');
@@ -59,5 +59,5 @@ document.addEventListener('DOMContentLoaded',async()=>{
   }catch(error){status.textContent=error.name==='AbortError'?'Resposta interrompida pelo usuário.':'Assistente indisponível. O painel continua funcionando.';}
   finally{setBusy(false);abort=null;await list().catch(()=>{});}
  });
- try{const config=await (await window.sdaRequest('/api/chat/status')).json();badge.textContent=config.demo?'DEMONSTRAÇÃO — sem IA real':config.configured?'Claude via backend • SIMULAÇÃO de sensores':'Assistente sem configuração • use demonstração ou configure o backend';input.maxLength=config.messageMaxChars;await list();}catch{badge.textContent='Assistente indisponível; telemetria preservada.';}
+ try{const config=await (await window.sdaRequest('/api/chat/status')).json();badge.textContent=config.demo?'DEMONSTRAÇÃO — sem IA real':config.configured?('Claude via backend • '+(session.simulate?'SIMULAÇÃO de sensores':'HARDWARE não validado')):'Assistente sem configuração • use demonstração ou configure o backend';input.maxLength=config.messageMaxChars;await list();}catch{badge.textContent='Assistente indisponível; telemetria preservada.';}
 });
