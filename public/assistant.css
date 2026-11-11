@@ -1,0 +1,13 @@
+[hidden]{display:none!important}
+#soil-assistant{max-width:960px;margin:0 auto;color:var(--text-primary,#e2e8f0)}
+#soil-assistant h2{font-size:28px;margin-bottom:10px}
+#soil-assistant button,#soil-assistant select,#soil-assistant textarea{font:inherit;border:1px solid #465668;border-radius:8px;padding:10px;background:#17212e;color:#e2e8f0}
+#soil-assistant button{cursor:pointer;margin:4px}#soil-assistant button:disabled{opacity:.5;cursor:wait}
+#soil-assistant textarea{width:100%;min-height:90px;box-sizing:border-box;resize:vertical}
+.assistant-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:16px 0}
+#assistant-messages{max-height:60vh;min-height:180px;overflow:auto;border:1px solid #344455;border-radius:12px;padding:16px;background:#0d1520}
+.assistant-message{border:1px solid #344455;border-radius:10px;padding:14px;margin:12px 0;overflow-wrap:anywhere;background:#14202c}
+.assistant-message[data-role=user]{background:#19354a}.assistant-message p{line-height:1.65;margin:5px 0}
+.assistant-message pre{white-space:pre-wrap}.assistant-message code{background:#080e16;padding:2px 5px;border-radius:3px}
+.assistant-meta{font-size:12px;color:#b7cbd8;display:block;margin:8px 0}#assistant-status{min-height:24px;color:#b8dbed}
+.assistant-notice{color:#b6c5d2;font-size:13px;line-height:1.5}#assistant-mode{display:inline-block;font-weight:700;padding:6px 10px;border:1px solid #7294ac;border-radius:8px}
