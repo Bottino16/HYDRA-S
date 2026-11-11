@@ -2,7 +2,7 @@ const {OccurrenceJournal}=require('../services/occurrence-journal');
 const path=require('node:path');
 const json=value=>typeof value==='string'?JSON.parse(value):value;
 const normalizeReading=row=>({...row,solo:row.solo===null?null:Number(row.solo),temperatura:row.temperatura===null?null:Number(row.temperatura),umidade_ar:row.umidade_ar===null?null:Number(row.umidade_ar),nivel_rio:row.nivel_rio==null?null:Number(row.nivel_rio),nivel_poco:row.nivel_poco==null?null:Number(row.nivel_poco),nivel_caixa:row.nivel_caixa==null?null:Number(row.nivel_caixa),bombas:json(row.bombas),boias:row.boias?json(row.boias):null,simulado:!!row.simulado});
-class OperationalStore{
+class OperationalStore extends require('./chat-store').ChatStore{
  async loadOperations(){
   const [actions]=await this.pool.execute('SELECT * FROM acionamentos ORDER BY id DESC LIMIT 2000');this.actions=actions;
   const [events]=await this.pool.execute('SELECT * FROM eventos ORDER BY id DESC LIMIT 200');this.eventLog=events;

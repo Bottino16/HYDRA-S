@@ -12,6 +12,8 @@ const { validatePassword, hashPassword, comparePassword } = require('./src/passw
 const { simulation } = require('./src/simulation');
 const {WeatherService}=require('./src/services/weather');
 const {monitoringRoutes}=require('./src/routes/monitoring-routes');
+const {AssistantService}=require('./src/assistant/service');
+const {assistantRoutes}=require('./src/assistant/routes');
 const asyncRoute = fn => (req,res,next) => Promise.resolve(fn(req,res,next)).catch(next);
 const fail = (status,message) => Object.assign(new Error(message),{status});
 function validUser(body) {
@@ -67,6 +69,8 @@ async function createApplication(options={}) {
   const apiLimit=rateLimit({windowMs:60000,limit:300,legacyHeaders:false,standardHeaders:'draft-8'});app.use('/api',apiLimit);
   const sim=simulation(io,store,cfg,options.deviceOptions||{});await sim.ready;
   const weather=options.weather||new WeatherService(cfg);
+  const assistant=new AssistantService({store,device:sim,weather,config:cfg.assistant,provider:options.assistantProvider});
+  app.use('/api',assistantRoutes(assistant));
   async function revoke(userId){
     const sessions=await new Promise((resolve,reject)=>sessionStore.all((error,data)=>error?reject(error):resolve(data)));
     for(const [id,data] of Object.entries(sessions))if(data.userId===Number(userId)){
@@ -141,7 +145,7 @@ async function createApplication(options={}) {
       if(error||!data||!store.byId(data.userId)?.ativo||(!data.expiresAt||data.expiresAt<=Date.now()))socket.disconnect(true);
     });
   },1000);socketExpiry.unref();
-  return {app,server,io,store,device:sim,async close(){clearInterval(socketExpiry);clearInterval(cleanup);clearInterval(retention);await sim.close();await new Promise(resolve=>io.close(resolve));await store.close();}};
+  return {app,server,io,store,device:sim,assistant,async close(){assistant.close();clearInterval(socketExpiry);clearInterval(cleanup);clearInterval(retention);await sim.close();await new Promise(resolve=>io.close(resolve));await store.close();}};
 }
 async function start(){const cfg=config(),instance=await createApplication({config:cfg});await new Promise(resolve=>instance.server.listen(cfg.port,cfg.host,resolve));console.log(`SDA: ${cfg.origin} | ${cfg.simulate?'simulação':'serial (validação física pendente)'} | banco: ${instance.store.mode}`);if(instance.store.message)console.warn(instance.store.message);return instance;}
 if(require.main===module)start().catch(error=>{console.error(error.message);process.exitCode=1;});

@@ -75,6 +75,10 @@ CREATE TABLE IF NOT EXISTS acionamentos (
 CREATE TABLE IF NOT EXISTS conversas_ia (
  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
  usuario_id INT UNSIGNED NOT NULL,
+ conversa_id CHAR(36) NULL,
+ metadados JSON NULL,
+ INDEX idx_chat_user_conversation (usuario_id, conversa_id, id),
+ INDEX idx_chat_usage (usuario_id, papel, data_hora),
  papel ENUM('user','assistant') NOT NULL,
  mensagem TEXT NOT NULL,
  data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

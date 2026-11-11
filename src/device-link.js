@@ -1,5 +1,6 @@
 const {EventEmitter}=require('node:events');
 const {encode,decode}=require('./protocol');
+const blockedReasons={1:'retenção de partida após reinício',2:'origem sem água',3:'destino cheio',4:'sensor inválido, ausente, vencido ou contraditório',5:'intervalo mínimo entre ciclos',6:'tempo máximo de ciclo',7:'limite de bombas simultâneas',8:'intervalo entre partidas',9:'solo já úmido',10:'sequência repetida ou antiga',11:'frame ou checksum inválido',12:'parâmetro ou modo inválido'};
 class DeviceLink extends EventEmitter{
  constructor(send,{clock=Date.now,ackMs=2500,staleMs=3500}={}){super();this.send=send;this.clock=clock;this.ackMs=ackMs;this.staleMs=staleMs;this.seq=0;this.lastSeq=null;this.pending=new Map();this.waiting=[];this.state=null;this.at=0;this.rejected=0;}
  receive(line){
@@ -16,7 +17,7 @@ class DeviceLink extends EventEmitter{
    const pending=this.pending.get(data.cmd);if(!pending)return true;
    clearTimeout(pending.timer);this.pending.delete(data.cmd);queueMicrotask(()=>this.flush());
    if(this.state){this.state={...this.state,pumps:[...data.pumps],modo:data.modo};this.emit('state',this.snapshot());}
-   if(data.ok)pending.resolve(data);else pending.reject(Object.assign(new Error('Comando bloqueado pelo controlador (código '+data.code+').'),{status:409,code:data.code}));
+   if(data.ok)pending.resolve(data);else pending.reject(Object.assign(new Error('Comando bloqueado pelo controlador: '+(blockedReasons[data.code]||'trava de segurança')+' (código '+data.code+').'),{status:409,code:data.code}));
   }
   return true;
  }

@@ -19,6 +19,11 @@ function config() {
   new Intl.DateTimeFormat('en-CA',{timeZone}).format();
   const flows=[1,2,3].map(i=>{const raw=process.env['FLOW_PUMP_'+i+'_L_MIN'];if(!raw)return null;const v=Number(raw);if(!Number.isFinite(v)||v<=0||v>1000)throw new Error('Vazão inválida.');return v;});
   return {
+    assistant:{demo:process.env.ASSISTANT_DEMO==='true',key:process.env.ANTHROPIC_API_KEY||'',model:process.env.ANTHROPIC_MODEL||'',
+      hourly:number('ASSISTANT_MESSAGES_PER_HOUR',20,1,1000),daily:number('ASSISTANT_MESSAGES_PER_DAY',100,1,10000),
+      messageChars:number('ASSISTANT_MESSAGE_MAX_CHARS',2000,50,8000),maxTokens:number('ASSISTANT_MAX_TOKENS',700,64,4096),
+      historyChars:number('ASSISTANT_HISTORY_MAX_CHARS',6000,100,24000),timeoutMs:number('ASSISTANT_TIMEOUT_SECONDS',30,1,120)*1000,
+      knowledgeDir:path.resolve('knowledge')},
     dataStaleMs:number('DATA_STALE_SECONDS',5,1,300)*1000,
     serialReconnectMs:number('SERIAL_RECONNECT_MS',3000,100,60000),serialPath:process.env.SERIAL_PORT||'auto',
     scheduleTimeZone:timeZone,scheduleJournalDir:path.resolve(process.env.SCHEDULE_JOURNAL_DIR||'.data/schedule-occurrences'),
