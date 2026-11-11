@@ -1,6 +1,8 @@
 # SDA — Sistema de Irrigação Inteligente
 
-TCC SENAI / CETAF-AJU. Fase 0.5 preservada; Fase 2 implementa backend, histórico, eventos, clima e operação explícita em simulação para três bombas/cinco boias. Ensaios físicos PAUSADOS. **Firmware NÃO validado para uso real até o usuário confirmar os testes físicos.** Nenhum hardware foi acionado nesta entrega.
+TCC SENAI / CETAF-AJU. Fase 0.5 preservada; Fase 3 acrescenta o Assistente do Solo com streaming, conhecimento privado e demonstração, preservando backend/segurança das fases anteriores. Ensaios físicos PAUSADOS. **Firmware NÃO validado para uso real até o usuário confirmar os testes físicos.** Nenhum hardware foi acionado nesta entrega.
+
+Entrega da Fase 3: [relatório](docs/RELATORIO-FASE-3.md) e [teste manual com/sem chave](docs/TESTE-MANUAL-FASE-3.md).
 
 Entrega da Fase 2: [relatório](docs/RELATORIO-FASE-2.md) e [teste manual em simulação](docs/TESTE-MANUAL-FASE-2.md).
 
@@ -88,7 +90,7 @@ $env:SDA_TEST_MYSQL_PASSWORD = 'sua_credencial_local'
 npm test
 ```
 
-O usuário deve poder criar/apagar bancos com prefixos `sda_test_` e `sda_phase2_`. As suítes criam nomes aleatórios e removem apenas seus bancos ao final. Não aponte para produção. Sem `SDA_TEST_MYSQL_PORT`, a integração é marcada como ignorada; o teste da configuração TLS continua rodando.
+O usuário deve poder criar/apagar bancos com prefixos `sda_test_`, `sda_phase2_` e `sda_phase3_`. As suítes criam nomes aleatórios e removem apenas seus bancos ao final. Não aponte para produção. Sem `SDA_TEST_MYSQL_PORT`, a integração é marcada como ignorada; o teste da configuração TLS continua rodando.
 
 ## Variáveis e operação
 
@@ -100,7 +102,7 @@ O `.env.example` contém todos os campos utilizados. `DB_SSL_CA` aponta para cer
 
 - **Fase 1:** implementação/testes de software concluídos; ensaios físicos A/B/C/D e calibração final PENDENTES.
 - **Fase 2:** concluída em simulação; relatório e roteiro acima. Hardware e provedor meteorológico real continuam sem ensaio físico/externo. Clima é informativo e não substitui travas do controlador.
-- **Fase 3:** Claude, streaming, limites de uso e conhecimento. As variáveis reservadas não são usadas agora.
+- **Fase 3:** implementada e testada sem chave real, com provedor falso e modo demonstração. Validação manual com a conta Anthropic é opcional e está documentada.
 - **Fase 4 — OFFLINE, apenas planejado:** versionar Chart.js e ícones em `/public/vendor`, servir fontes WOFF2 localmente, remover CDNs/importações remotas e adaptar CSP; oferecer clima indisponível/simulado sem internet. Testar em navegador com rede bloqueada. Dependências, imagem Docker e banco deverão estar previamente instalados; a IA remota requer internet.
 - **Fase 5:** documentação elétrica, testes de segurança física, roteiro da banca e revisão visual final.
 
@@ -126,3 +128,19 @@ Mantenha `SIMULATE=true`. `SERIAL_PORT=auto` só seleciona um dispositivo reconh
 O clima passa apenas pelo backend. `WEATHER_OFFLINE=true` é o padrão para apresentação sem rede. Com `false`, usa OpenWeather se houver `OPENWEATHER_API_KEY`, ou Open-Meteo sem chave; cache de 600 s e timeout de 2 s são configuráveis. Falha mostra clima offline, usando cache identificado quando existir. As bibliotecas visuais ainda dependem de CDN até a Fase 4.
 
 Preserve `.data/schedule-occurrences` e `.data/device-settings.json` entre reinícios. O diário exclusivo por ocorrência é durável mesmo em `DB_MODE=memory`; leituras, eventos e acionamentos em memória são temporários e limitados. O diário e as configurações são privados e não são servidos. Reinício após envio com resultado desconhecido marca o ciclo como incerto e não reenvia: o sistema prefere perder uma ocorrência a duplicar uma irrigação. Não executa horários já passados nem agenda de cliente na bomba compartilhada. Instância única local continua sendo o escopo.
+
+## Assistente do Solo — Fase 3
+
+Mantenha `SIMULATE=true`. Para a banca sem API use `ASSISTANT_DEMO=true`: a aba Assistente do Solo apresenta respostas pré-definidas, sempre rotuladas **resposta de demonstração, sem IA real**. Não existe fallback silencioso de Claude para demo. Firmware continua NÃO VALIDADO e não foi alterado.
+
+Para Claude real, use `ASSISTANT_DEMO=false` e configure `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL` exclusivamente no `.env`. Modelo não tem valor padrão no código. O SDK oficial `@anthropic-ai/sdk` fica apenas no backend; streaming por `POST /api/chat` exige sessão e CSRF. Sem chave/modelo, somente o assistente fica indisponível. Siga o roteiro manual antes de usar uma conta real: essas chamadas podem ser cobradas e não foram feitas pelo agente.
+
+`src/assistant/` reúne prompt, privacidade, seleção de contexto, busca em `/knowledge`, provedores e rotas. `src/db/chat-store.js` guarda mensagens na tabela existente `conversas_ia` (sem oitava tabela), agrupadas por UUID e usuário. A migração preserva mensagens anteriores. `GET/POST /api/conversas`, `GET /api/conversas/:id` e `GET /api/chat/status` também exigem sessão; listagem e mensagens têm paginação. Sem MySQL, o histórico é temporário em memória.
+
+O modelo recebe campos técnicos permitidos, perfil em cultura reconhecida/limite, clima disponível e documentos relevantes, nunca objetos de sessão/usuário. Dados vencidos são “sem dados”; origem SIMULAÇÃO é declarada. Sanitização remove identificadores conhecidos e padrões de e-mail/credenciais/documentos; não envie informações pessoais ou sensíveis em texto livre. Prompt injection é tratado como risco: dados são separados das regras fixas, não há ferramentas, e a segurança de comandos não depende da obediência do modelo.
+
+A IA não envia comandos. **Aplicar sugestão** é uma revisão manual de proposta determinística do backend, somente para master em SIMULAÇÃO, limitada à bomba 3 por até 4 s quando a checagem permite. Confirmação explícita chama a mesma `/api/bombas/3`, com CSRF, travas e ACK; bloqueio exibe motivo legível. Receitas/números do texto gerado não são interpretados. O modo AUTO local continua independente do chat.
+
+Os limites `ASSISTANT_MESSAGES_PER_HOUR`, `ASSISTANT_MESSAGES_PER_DAY`, `ASSISTANT_MESSAGE_MAX_CHARS`, `ASSISTANT_MAX_TOKENS`, `ASSISTANT_HISTORY_MAX_CHARS` e `ASSISTANT_TIMEOUT_SECONDS` estão no `.env.example`. Janelas móveis por usuário: padrão 20/h e 100/24 h; histórico enviado até 6.000 caracteres, pergunta até 2.000, resposta até 700 tokens, geração até 30 s. Tentativas aceitas, incluindo erro/cancelamento, contam. MySQL preserva cotas após reinício; modo memória não. SDK sem retries automáticos, logs/conteúdo de telemetria desabilitados. Uma geração simultânea por usuário, em instância única local.
+
+O renderizador local oferece Markdown simples por criação de nós DOM; HTML, imagens e links não são executados. Os sete documentos iniciais têm fontes e a busca relê `.md` privados a cada pergunta. Veja `knowledge/README.md` para acrescentar conteúdo. RAG e testes de software não validam todas as respostas de um modelo real nem substituem agrônomo/análise de solo.
