@@ -4,7 +4,7 @@ const { adminCredentials } = require('../../db/seed');
 const publicUser = row => ({id: row.id, nome: row.nome, usuario: row.usuario, user: row.usuario, nivel: row.nivel, plano: row.plano, ativo: !!row.ativo, criado_em: row.criado_em, ultimo_login: row.ultimo_login});
 const {OperationalStore}=require('./operational-store');
 class Store extends OperationalStore {
-  constructor(cfg) { super();this.actions=[];this.eventLog=[];this.cfg = cfg; this.users = []; this.profiles = []; this.schedules = []; this.readings = []; this.mode = 'memory'; this.pool = null; this.message = 'Demonstração em memória: dados perdidos ao reiniciar.'; }
+  constructor(cfg) { super();this.nextUserId=1;this.actions=[];this.eventLog=[];this.cfg = cfg; this.users = []; this.profiles = []; this.schedules = []; this.readings = []; this.mode = 'memory'; this.pool = null; this.message = 'Demonstração em memória: dados perdidos ao reiniciar.'; }
   async init() {
     if (this.cfg.dbMode === 'mysql') {
       this.pool = mysql.createPool(databaseOptions());
@@ -17,11 +17,11 @@ class Store extends OperationalStore {
         const [profiles] = await this.pool.execute('SELECT * FROM perfis_planta');
         const [schedules] = await this.pool.execute('SELECT * FROM configuracao_rega');
         this.users = users; this.profiles = profiles; this.schedules = schedules;
-        this.mode = 'mysql'; this.message = ''; return;
+        this.nextUserId=Math.max(0,...users.map(u=>u.id))+1;this.mode = 'mysql'; this.message = ''; return;
       } catch { await this.pool.end(); this.pool = null; this.message = 'Banco indisponível ou não preparado. Modo memória: dados perdidos ao reiniciar; execute db:setup e reinicie para recuperar o banco.'; }
     }
     const admin = await adminCredentials();
-    this.users = [{...admin, id: 1, criado_em: new Date()}];
+    this.users = [{...admin, id: 1, criado_em: new Date()}];this.nextUserId=2;
   }
   status() { return {mode: this.mode, warning: this.message}; }
   // Após falha, não reaplica escritas na reconexão: evita divergências silenciosas.
@@ -39,8 +39,8 @@ class Store extends OperationalStore {
   async createUser(data) {
     if (this.findUser(data.usuario)) throw Object.assign(new Error('Usuário já existe.'), {status: 409});
     const result = await this.write('INSERT INTO usuarios (nome, usuario, senha_hash, nivel, plano, ativo) VALUES (?, ?, ?, ?, ?, ?)', [data.nome, data.usuario, data.senha_hash, data.nivel, data.plano, data.ativo]);
-    const row = {...data, id: result?.insertId || Math.max(0, ...this.users.map(u=>u.id)) + 1, criado_em: new Date()};
-    this.users.push(row); return publicUser(row);
+    const row = {...data, id: result?.insertId || this.nextUserId++, criado_em: new Date()};
+    this.nextUserId=Math.max(this.nextUserId,row.id+1);this.users.push(row); return publicUser(row);
   }
   async updateUser(id, data) {
     const row = this.byId(id);
@@ -54,7 +54,7 @@ class Store extends OperationalStore {
     const row = this.byId(id);
     if (!row) throw Object.assign(new Error('Usuário não encontrado.'), {status:404});
     if (row.nivel === 'master' && row.ativo && this.users.filter(u=>u.ativo && u.nivel === 'master').length === 1) throw Object.assign(new Error('Não é possível excluir o último master ativo.'), {status:409});
-    await this.write('DELETE FROM usuarios WHERE id = ?', [row.id]); this.users = this.users.filter(u=>u.id !== row.id);
+    await this.write('DELETE FROM usuarios WHERE id = ?', [row.id]); this.users = this.users.filter(u=>u.id !== row.id);this.profiles=this.profiles.filter(p=>p.usuario_id!==row.id);this.schedules=this.schedules.filter(s=>s.usuario_id!==row.id);this.chatRows=(this.chatRows||[]).filter(m=>m.usuario_id!==row.id);
   }
   async lastLogin(user) { const at = new Date(); await this.write('UPDATE usuarios SET ultimo_login = ? WHERE id = ?', [at,user.id]); user.ultimo_login = at; }
   async saveProfiles(id, profiles) {

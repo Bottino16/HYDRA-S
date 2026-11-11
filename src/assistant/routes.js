@@ -4,7 +4,7 @@ function nextChunk(iterator,signal){return new Promise((resolve,reject)=>{const 
 function assistantRoutes(service){
  const router=Router();service.controllers=new Set();
  router.get('/chat/status',(req,res)=>res.json(service.status()));
- router.get('/conversas',wrap(async(req,res)=>res.json({conversas:await service.store.chatList(req.user.id)})));
+ router.get('/conversas',wrap(async(req,res)=>{const offset=Number(req.query.offset||0);if(!Number.isSafeInteger(offset)||offset<0||offset>1000000)return res.status(400).json({mensagem:'Paginação inválida.'});const rows=await service.store.chatList(req.user.id,{offset});res.json({conversas:rows,nextOffset:rows.length===100?offset+100:null});}));
  router.post('/conversas',wrap(async(req,res)=>res.status(201).json({conversaId:await service.store.chatNew(req.user.id,service.cfg.demo)})));
  router.get('/conversas/:id',wrap(async(req,res)=>{const before=req.query.before===undefined?Number.MAX_SAFE_INTEGER:Number(req.query.before);if(!Number.isSafeInteger(before)||before<1)return res.status(400).json({mensagem:'Paginação inválida.'});const rows=await service.store.chatMessages(req.user.id,req.params.id,{before});if(!rows.length)return res.status(404).json({mensagem:'Conversa não encontrada.'});res.json({mensagens:rows,nextBefore:rows.length===100?rows[0].id:null});}));
  router.post('/chat',wrap(async(req,res)=>{
