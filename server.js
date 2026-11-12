@@ -69,7 +69,7 @@ async function createApplication(options={}) {
   const apiLimit=rateLimit({windowMs:60000,limit:300,legacyHeaders:false,standardHeaders:'draft-8'});app.use('/api',apiLimit);
   const sim=simulation(io,store,cfg,options.deviceOptions||{});await sim.ready;
   const weather=options.weather||new WeatherService(cfg);
-  const assistant=new AssistantService({store,device:sim,weather,config:cfg.assistant,provider:options.assistantProvider});
+  const assistant=new AssistantService({store,device:sim,weather,config:cfg.assistant,provider:options.assistantProvider,simulate:cfg.simulate});
   app.use('/api',assistantRoutes(assistant));
   async function revoke(userId){
     const sessions=await new Promise((resolve,reject)=>sessionStore.all((error,data)=>error?reject(error):resolve(data)));

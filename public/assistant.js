@@ -19,9 +19,10 @@ document.addEventListener('DOMContentLoaded',async()=>{
  const submit=el('button','Enviar',form);submit.type='submit';const cancel=el('button','Interromper resposta',form);cancel.type='button';cancel.hidden=true;
  let conversationId=null,busy=false,abort=null,nextBefore=null,nextOffset=null;
  function setBusy(value){busy=value;submit.disabled=value;fresh.disabled=value;select.disabled=value;older.disabled=value;more.disabled=value;quickButtons.forEach(b=>b.disabled=value);cancel.hidden=!value;}
+ function engineLabel(data){return data.demo?'Resposta de demonstração, sem IA real.':data.provider==='ollama'?'Ollama local • '+data.model:data.provider==='claude'?'Claude • '+data.model:'Resposta de IA • confira antes de aplicar';}
  function message(role,text,metadata={}){
   const card=el('article',undefined,messages);card.className='assistant-message';card.dataset.role=role;el('strong',role==='user'?'Você':'Assistente do Solo',card);
-  if(role==='assistant')el('small',metadata.demo?'Resposta de demonstração, sem IA real.':'Resposta de IA • confira antes de aplicar',card).className='assistant-meta';
+  if(role==='assistant')el('small',engineLabel(metadata),card).className='assistant-meta';
   const content=el('div',undefined,card);window.sdaMarkdown(content,text);
   if(role==='assistant'){
    const copy=el('button','Copiar resposta',card);copy.type='button';copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(content.textContent);status.textContent='Resposta copiada.';}catch{status.textContent='Não foi possível copiar. Selecione o texto manualmente.';}});
@@ -49,7 +50,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
    if(!response.ok){status.textContent=(await response.json()).mensagem;return;}
    const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
    function frame(value){let type='',data='';for(const line of value.split('\n')){if(line.startsWith('event: '))type=line.slice(7);if(line.startsWith('data: '))data+=line.slice(6);}if(!data)return;const payload=JSON.parse(data);
-    if(type==='meta'){conversationId=payload.conversaId;target=message('assistant','',{demo:payload.demo,sources:payload.sources});el('small',payload.fonte+' • '+payload.telemetria,target.card).className='assistant-meta';}
+    if(type==='meta'){conversationId=payload.conversaId;target=message('assistant','',{demo:payload.demo,provider:payload.provider,model:payload.model,sources:payload.sources});el('small',payload.fonte+' • '+payload.telemetria,target.card).className='assistant-meta';}
     if(type==='delta'&&target){text+=payload.text;window.sdaMarkdown(target.content,text);messages.scrollTop=messages.scrollHeight;}
     if(type==='error'){status.textContent=payload.mensagem;if(target)el('small','Resposta parcial/interrompida.',target.card).className='assistant-meta';done=true;}
     if(type==='done'){status.textContent=payload.limited?'Resposta limitada pelo tamanho máximo.':'Resposta concluída. Revise antes de aplicar.';done=true;if(target)applyButton(target.card,payload.suggestion);}
@@ -59,5 +60,5 @@ document.addEventListener('DOMContentLoaded',async()=>{
   }catch(error){status.textContent=error.name==='AbortError'?'Resposta interrompida pelo usuário.':'Assistente indisponível. O painel continua funcionando.';}
   finally{setBusy(false);abort=null;await list().catch(()=>{});}
  });
- try{const config=await (await window.sdaRequest('/api/chat/status')).json();badge.textContent=config.demo?'DEMONSTRAÇÃO — sem IA real':config.configured?('Claude via backend • '+(session.simulate?'SIMULAÇÃO de sensores':'HARDWARE não validado')):'Assistente sem configuração • use demonstração ou configure o backend';input.maxLength=config.messageMaxChars;await list();}catch{badge.textContent='Assistente indisponível; telemetria preservada.';}
+ try{const config=await (await window.sdaRequest('/api/chat/status')).json();badge.textContent=config.demo?'DEMONSTRAÇÃO — sem IA real':config.configured?((config.provider==='ollama'?'Ollama local':'Claude via backend')+' • '+(config.model||'modelo não definido')+' • '+(session.simulate?'SIMULAÇÃO de sensores':'HARDWARE não validado')):'Assistente sem configuração • use demonstração ou configure o backend';input.maxLength=config.messageMaxChars;await list();}catch{badge.textContent='Assistente indisponível; telemetria preservada.';}
 });
