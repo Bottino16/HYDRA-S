@@ -131,9 +131,9 @@ Preserve `.data/schedule-occurrences` e `.data/device-settings.json` entre rein�
 
 ## Assistente do Solo — Fase 3
 
-Mantenha `SIMULATE=true`. Para a banca sem API use `ASSISTANT_DEMO=true`: a aba Assistente do Solo apresenta respostas pré-definidas, sempre rotuladas **resposta de demonstração, sem IA real**. Não existe fallback silencioso de Claude para demo. Firmware continua NÃO VALIDADO e não foi alterado.
+Mantenha `SIMULATE=true`. Para a banca com respostas prontas use `ASSISTANT_PROVIDER=demo` (legado sem seleção explícita: `ASSISTANT_DEMO=true`): a aba Assistente do Solo apresenta respostas pré-definidas, sempre rotuladas **resposta de demonstração, sem IA real**. Não existe fallback silencioso de Claude para demo. Firmware continua NÃO VALIDADO e não foi alterado.
 
-Para Claude real, use `ASSISTANT_DEMO=false` e configure `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL` exclusivamente no `.env`. Modelo não tem valor padrão no código. O SDK oficial `@anthropic-ai/sdk` fica apenas no backend; streaming por `POST /api/chat` exige sessão e CSRF. Sem chave/modelo, somente o assistente fica indisponível. Siga o roteiro manual antes de usar uma conta real: essas chamadas podem ser cobradas e não foram feitas pelo agente.
+Para Claude real, selecione explicitamente `ASSISTANT_PROVIDER=claude`, use `ASSISTANT_DEMO=false` e configure `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL` exclusivamente no `.env`. Modelo não tem valor padrão no código. O SDK oficial `@anthropic-ai/sdk` fica apenas no backend; streaming por `POST /api/chat` exige sessão e CSRF. Sem chave/modelo, somente o assistente fica indisponível. Siga o roteiro manual antes de usar uma conta real: essas chamadas podem ser cobradas e não foram feitas pelo agente.
 
 `src/assistant/` reúne prompt, privacidade, seleção de contexto, busca em `/knowledge`, provedores e rotas. `src/db/chat-store.js` guarda mensagens na tabela existente `conversas_ia` (sem oitava tabela), agrupadas por UUID e usuário. A migração preserva mensagens anteriores. `GET/POST /api/conversas`, `GET /api/conversas/:id` e `GET /api/chat/status` também exigem sessão; listagem e mensagens têm paginação. Sem MySQL, o histórico é temporário em memória.
 
@@ -144,3 +144,12 @@ A IA não envia comandos. **Aplicar sugestão** é uma revisão manual de propos
 Os limites `ASSISTANT_MESSAGES_PER_HOUR`, `ASSISTANT_MESSAGES_PER_DAY`, `ASSISTANT_MESSAGE_MAX_CHARS`, `ASSISTANT_MAX_TOKENS`, `ASSISTANT_HISTORY_MAX_CHARS` e `ASSISTANT_TIMEOUT_SECONDS` estão no `.env.example`. Janelas móveis por usuário: padrão 20/h e 100/24 h; histórico enviado até 6.000 caracteres, pergunta até 2.000, resposta até 700 tokens, geração até 30 s. Tentativas aceitas, incluindo erro/cancelamento, contam. MySQL preserva cotas após reinício; modo memória não. SDK sem retries automáticos, logs/conteúdo de telemetria desabilitados. Uma geração simultânea por usuário, em instância única local.
 
 O renderizador local oferece Markdown simples por criação de nós DOM; HTML, imagens e links não são executados. Os sete documentos iniciais têm fontes e a busca relê `.md` privados a cada pergunta. Veja `knowledge/README.md` para acrescentar conteúdo. RAG e testes de software não validam todas as respostas de um modelo real nem substituem agrônomo/análise de solo.
+
+
+## Ollama local — Fase 3.5, Etapa 1
+
+A integração básica foi adicionada e ensaiada com o Ollama já instalado e `llama3.2:3b`, sem chave paga. Use `ASSISTANT_PROVIDER=ollama`, `OLLAMA_BASE_URL=http://127.0.0.1:11434`, `OLLAMA_MODEL=llama3.2:3b` e mantenha `SIMULATE=true`. O `.env.example` agora sugere essa seleção; nenhum `.env` real foi alterado. Seleção explícita prevalece sobre a opção demo legada. Falhas não trocam de provedor.
+
+Para Ollama, os limites adicionais são `OLLAMA_NUM_CTX=4096`, `OLLAMA_NUM_PREDICT=128` e timeout padrão de 60 s. Há uma geração global por processo, sem fila. Instruções de segurança e contexto atual são preservados; RAG/histórico são reduzidos para caber. O modelo é descarregado após cada resposta para economizar RAM. O ensaio curto levou 12,6 s e a RAM livre chegou a 387 MiB: começar com um usuário, sem aumentar concorrência.
+
+Leia [ativação e teste manual](docs/TESTE-MANUAL-OLLAMA.md) e [relatório da etapa](docs/RELATORIO-FASE-3-5-ETAPA-1.md). Firmware, protocolo, segurança e permissões permanecem inalterados. Rede local/QR e fila continuam pendentes de aprovação.
