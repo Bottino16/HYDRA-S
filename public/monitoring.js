@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  const applyState=state=>{status.textContent=state.connected?(state.simulate?'SIMULAÇÃO conectada':'Arduino conectado'):(state.simulate?'SIMULAÇÃO sem dados':'Arduino desconectado — sem dados');};
  socket.on('estado_sistema',applyState);
  socket.on('disconnect',()=>{status.textContent='Servidor desconectado — sem dados';if(typeof setBombaStatus==='function')setBombaStatus(null);document.getElementById('texto-bomba').textContent='STATUS: DESCONHECIDO';for(const id of ['texto-umidade','texto-temp','texto-umid-ar','texto-agua'])document.getElementById(id).textContent='sem dados';for(const id of ['prog-umidade','prog-temp','prog-umid-ar','prog-agua'])document.getElementById(id).style.width='0%';});
- const current=await window.sdaRequest('/api/estado');if(current.ok)applyState(await current.json());
+ try{const current=await window.sdaRequest('/api/estado');if(current.ok)applyState(await current.json());else status.textContent='Telemetria indisponível · consulte os registros históricos.';}catch{status.textContent='Telemetria indisponível · consulte os registros históricos.';}
  const message=node('p','',panel);message.id='history-feedback';message.setAttribute('role','status');
  const filters=node('div',undefined,panel);filters.className='history-period';filters.setAttribute('role','group');filters.setAttribute('aria-label','Período do histórico');const fromLabel=node('label','De',filters),toLabel=node('label','Até',filters);
  const from=node('input',undefined,fromLabel),to=node('input',undefined,toLabel);from.type=to.type='datetime-local';from.setAttribute('aria-label','Início do histórico');to.setAttribute('aria-label','Fim do histórico');
