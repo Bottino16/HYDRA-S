@@ -10,7 +10,7 @@ async function fazerLogin(){
   const data=await response.json();
   if(!response.ok)throw new Error(data.mensagem||'Não foi possível entrar.');
   sessionStorage.clear();location.replace('/arthur.html');
- }catch(e){error.textContent=e.message;error.style.display='block';}
+ }catch(e){error.textContent=e instanceof TypeError?'Não foi possível conectar ao servidor. Tente novamente.':e.message;error.style.display='block';}
  finally{button.disabled=false;button.textContent='Entrar';form.setAttribute('aria-busy','false');progress.textContent='';}
 }
 document.getElementById('login-form').addEventListener('submit',e=>{e.preventDefault();fazerLogin();});
