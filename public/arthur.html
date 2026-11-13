@@ -429,22 +429,22 @@
             </div>
         </div>
 
-        <div class="bento-card col-span-4" style="display: flex; flex-direction: column; justify-content: center;">
-            <div class="bento-card-header"><i class="ph ph-game-controller"></i> Override Manual</div>
+        <details class="bento-card col-span-4 legacy-manual"><summary>Ações adicionais • bomba 3</summary>
+            <div class="bento-card-header"><i class="ph ph-game-controller"></i> Comandos legados • mesma rota protegida</div>
             
             <div style="display: flex; gap: 14px; align-items: center; margin-bottom: 24px;">
                 <input type="number" id="tempo-manual" value="2" style="margin: 0; flex: 1; text-align: center; font-size: 24px; font-weight: 300;">
                 <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary); letter-spacing: 1px;">MINUTOS</span>
             </div>
             
-            <button class="btn btn-primary" onclick="regarManual()" style="padding: 18px; font-size: 15px;"><i class="ph-fill ph-power" style="font-size: 22px;"></i> Forçar Irrigação Agora</button>
-            <button class="btn btn-danger" onclick="pararRega()"><i class="ph-fill ph-stop-circle" style="font-size: 20px;"></i> Corte de Fluxo Emergencial</button>
+            <button class="btn btn-primary" onclick="regarManual()" style="padding: 18px; font-size: 15px;"><i class="ph-fill ph-power" style="font-size: 22px;"></i> Solicitar irrigação • bomba 3</button>
+            <button class="btn btn-danger" onclick="pararRega()"><i class="ph-fill ph-stop-circle" style="font-size: 20px;"></i> Solicitar parada • bomba 3</button>
             
             <div style="text-align: center; margin-top: 36px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
                 <i id="icone-bomba" class="ph-fill ph-engine" style="font-size: 54px; color: var(--text-secondary); transition: all 0.3s;"></i>
-                <div id="texto-bomba" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); letter-spacing: 1.5px;">STATUS: STANDBY</div>
+                <div id="texto-bomba" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); letter-spacing: 1.5px;">STATUS: DESCONHECIDO</div>
             </div>
-        </div>
+        </details>
 
         <div class="bento-card col-span-4 recurso-premium">
             <div class="bento-card-header"><i class="ph ph-cloud-sun"></i> Clima & IA (API)</div>
@@ -671,8 +671,8 @@
         if(isPumping===null){document.getElementById('texto-bomba').textContent='STATUS: DESCONHECIDO';document.getElementById('icone-bomba').classList.remove('spin-anim');return;}
         const icone = document.getElementById('icone-bomba');
         const texto = document.getElementById('texto-bomba');
-        if(isPumping) { icone.classList.add('spin-anim'); texto.textContent = "STATUS: BOMBEANDO..."; texto.classList.add('text-pumping'); } 
-        else { icone.classList.remove('spin-anim'); texto.textContent = "STATUS: STANDBY"; texto.classList.remove('text-pumping'); }
+        if(isPumping) { icone.classList.remove('spin-anim'); texto.textContent = "BOMBA 3: SAÍDA LIGADA (confirmada)"; texto.classList.add('text-pumping'); } 
+        else { icone.classList.remove('spin-anim'); texto.textContent = "BOMBA 3: SAÍDA DESLIGADA (confirmada)"; texto.classList.remove('text-pumping'); }
     }
 
     // --- SISTEMA DE PERFIS ---
