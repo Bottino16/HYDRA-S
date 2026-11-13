@@ -1,38 +1,47 @@
-// Estados exibidos vêm de telemetria/ACK validado; clique nunca presume acionamento.
+// UI-3: somente apresentação. Estados de saída vêm da telemetria confirmada.
 document.addEventListener('DOMContentLoaded',async()=>{
  const session=await window.sdaReady,master=session.usuario.nivel==='master',socket=window.sdaSocket||window.socket;
- const panel=document.createElement('section');panel.style.cssText='border:1px solid #587080;border-radius:12px;padding:20px;margin-bottom:24px';
- const title=document.createElement('h3');title.textContent='Maquete • Rio → Poço → Caixa → Plantação';panel.append(title);
- const safety=document.createElement('p');panel.append(safety);
- const connection=document.createElement('p'),levels=document.createElement('p'),floats=document.createElement('p'),alerts=document.createElement('p'),mode=document.createElement('p'),feedback=document.createElement('p');feedback.setAttribute('role','status');panel.append(connection,levels,floats,alerts,mode);
- const durationLabel=document.createElement('label');durationLabel.textContent='Duração manual (segundos): ';
- const duration=document.createElement('input');duration.type='number';duration.min='1';duration.max='120';duration.value='4';duration.style.width='90px';durationLabel.append(duration);panel.append(durationLabel);
- const labels=[],buttons=[];let current={pumps:[null,null,null],connected:false};
+ const node=(tag,text,parent,cls)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;if(parent)parent.append(el);return el;};
+ const panel=node('section');panel.id='hydra-console';panel.className='hydra-console';panel.setAttribute('aria-label','Central de controle hídrico');
+ const heading=node('header',undefined,panel,'hydra-heading'),titles=node('div',undefined,heading);node('span','HYDRA-S / CONTROLE EM TEMPO REAL',titles,'hydra-eyebrow');node('h2','Cada gota, sob controle.',titles);node('p','Rio → Poço → Caixa → Plantação',titles);const connection=node('span','Sem dados',heading,'hydra-chip');connection.id='controller-connection';
+ const circuit=node('div',undefined,panel,'water-circuit'),caption=node('div',undefined,circuit,'circuit-caption');node('strong','Circuito hídrico',caption);node('span','SIMULAÇÃO • firmware NÃO VALIDADO',caption);
+ const track=node('div',undefined,circuit,'circuit-track'),tanks=[],floatNodes=[],links=[];
+ const floatNames=['Rio / presença','Poço / mínima','Poço / máxima','Caixa / mínima','Caixa / máxima'];
+ const svg='<svg viewBox="0 0 200 100" fill="none" aria-hidden="true"><path d="M0 62 Q25 48 50 62 T100 62 T150 62 T200 62 M0 76 Q25 62 50 76 T100 76 T150 76 T200 76" stroke="currentColor" stroke-width="1.5"/></svg>';
+ for(const [i,name] of ['Rio','Poço','Caixa','Plantação'].entries()){
+  const card=node('article',undefined,track,'water-node');card.dataset.known='false';const head=node('header',undefined,card);node('h3',name,head);node('small',i===3?'Solo · escala relativa':'Nível disponível',head);
+  const vessel=node('div',undefined,card,'vessel'),fill=node('div',undefined,vessel,'vessel-fill');vessel.insertAdjacentHTML('beforeend',svg);const value=node('strong','Sem dados',vessel,'level-value');value.id='circuit-level-'+i;
+  const floats=node('div',undefined,card,'float-list');for(const index of [[0],[1,2],[3,4],[]][i]){const item=node('span',floatNames[index]+': Sem dados',floats,'float-pill');item.id='float-'+index;floatNodes[index]=item;}if(i===3)node('small','Sensor capacitivo',floats);
+  tanks.push({card,fill,value});if(i<3){const link=node('div',undefined,track,'circuit-link');node('b','B'+(i+1),link);node('span',undefined,link,'pipe');link.title='Saída confirmada; vazão não medida';links.push(link);}
+ }
+ node('p','Conexões indicam o percurso. Saída ligada não comprova vazão; nenhum fluxo de água é medido.',circuit,'circuit-footnote');
+ const alerts=node('div','Aguardando telemetria',panel,'controller-alert');alerts.id='controller-alerts';alerts.setAttribute('role','status');
+ const bar=node('div',undefined,panel,'operating-bar'),controlTitle=node('div',undefined,bar);node('h3','Controle das bombas',controlTitle);const mode=node('p','Modo confirmado: Sem dados',controlTitle);const modes=node('div',undefined,bar,'mode-switch');modes.setAttribute('role','group');modes.setAttribute('aria-label','Modo de operação');
+ const grid=node('div',undefined,panel,'pump-grid'),labels=[],buttons=[],modeButtons=[],pumpCards=[];let current={pumps:[null,null,null],connected:false};
+ const paths=['Rio → Poço','Poço → Caixa','Caixa → Plantação'];
  for(let i=1;i<=3;i++){
-  const row=document.createElement('div');row.style.cssText='display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:8px 0';
-  const label=document.createElement('span');labels.push(label);row.append(label);
-  for(const on of [true,false]){const button=document.createElement('button');button.textContent=on?'Ligar':'Desligar';button.className='btn-outline';button.disabled=!master;buttons.push(button);row.append(button);
-   button.addEventListener('click',async()=>{const ms=on?Number(duration.value)*1000:0;const max=current.limites?.cycles[i-1]??60000;if(on&&(!Number.isInteger(ms)||ms<1000||ms>max)){feedback.textContent='Duração inválida; máximo desta bomba: '+max/1000+' s.';return;}if(on&&!confirm('Confirmar bomba '+i+'? As travas do controlador continuam obrigatórias.'))return;
-    feedback.textContent='Aguardando confirmação do controlador…';button.disabled=true;
-    try{const response=await window.sdaRequest('/api/bombas/'+i,{method:'POST',body:JSON.stringify({on,ms})});const data=await response.json();feedback.textContent=response.ok?(data.ack.pumps[i-1]?'Estado ligado confirmado.':'Comando confirmado; bomba desligada ou aguardando vaga/intervalo.'):(data.mensagem||'Comando não confirmado.');}
-    catch{feedback.textContent='Sem confirmação. Confira o estado recebido.';}finally{button.disabled=!master||!current.connected;}
+  const card=node('article',undefined,grid,'pump-card');card.id='pump-card-'+i;const head=node('header',undefined,card);node('span','B0'+i,head,'pump-index');const chip=node('span','Sem dados',head,'hydra-chip');node('h4','Bomba '+i,card);node('p',paths[i-1],card,'pump-path');const label=node('span','Bomba '+i+': DESCONHECIDA',card,'pump-state');labels.push(label);
+  const durationLabel=node('label','Duração manual (s)',card),duration=node('input',undefined,durationLabel);duration.type='number';duration.min='1';duration.max='120';duration.value='4';duration.setAttribute('aria-label','Duração manual da bomba '+i+' em segundos');
+  const actions=node('div',undefined,card,'pump-actions'),feedback=node('p',master?'Comandos sujeitos às travas do controlador.':'Somente leitura • operação exclusiva do MASTER.',card,'pump-feedback');feedback.setAttribute('role','status');pumpCards.push({card,chip,feedback,duration,pending:false});
+  for(const on of [true,false]){const button=node('button',on?'Ligar':'Desligar',actions,on?'pump-start':'pump-stop');button.type='button';button.disabled=true;button.setAttribute('aria-label',(on?'Ligar':'Desligar')+' bomba '+i);buttons.push(button);
+   button.addEventListener('click',async()=>{const ms=on?Number(duration.value)*1000:0,max=current.limites?.cycles[i-1]??60000;if(on&&(!Number.isInteger(ms)||ms<1000||ms>max)){feedback.textContent='Duração inválida; máximo desta bomba: '+max/1000+' s.';feedback.dataset.state='error';return;}if(on&&!confirm('Confirmar bomba '+i+'? As travas do controlador continuam obrigatórias.'))return;
+    feedback.textContent='Aguardando confirmação do controlador…';feedback.dataset.state='pending';button.disabled=true;
+    try{const response=await window.sdaRequest('/api/bombas/'+i,{method:'POST',body:JSON.stringify({on,ms})});const data=await response.json();feedback.textContent=response.ok?(data.ack.pumps[i-1]?'Estado ligado confirmado pelo ACK; aguarde a telemetria.':'Comando confirmado; bomba desligada ou aguardando vaga/intervalo.'):(data.mensagem||'Comando não confirmado.');feedback.dataset.state=response.ok?'confirmed':'error';}
+    catch{feedback.textContent='Sem confirmação. Confira o estado recebido.';feedback.dataset.state='error';}finally{button.disabled=!master||!current.connected;}
    });
   }
-  panel.append(row);
  }
- for(const value of ['AUTO','MANUAL']){const button=document.createElement('button');button.textContent='Modo '+value;button.disabled=!master;buttons.push(button);panel.append(button);button.addEventListener('click',async()=>{const response=await window.sdaRequest('/api/modo',{method:'POST',body:JSON.stringify({mode:value})});feedback.textContent=response.ok?'Modo confirmado.':(await response.json()).mensagem;});}
- panel.append(feedback);document.querySelector('main').prepend(panel);
- const percent=value=>value===null||value===undefined?'—':value+'%';
- function render(state){current=state;const valid=state.connected;
-  if(state.limites){safety.textContent='Proteção: até '+state.limites.max+' bomba(s) simultânea(s), partidas espaçadas em '+state.limites.gap/1000+' s.';
-   for(const id of ['input-duracao','tempo-manual']){const input=document.getElementById(id);if(input)input.max=Math.max(1,Math.floor(state.limites.cycles[2]/60000));}}
-
-  connection.textContent=valid?(state.simulate?'SIMULAÇÃO':'Arduino')+' conectado • protocolo v'+state.v+' • seq '+state.seq:(state.simulate?'SIMULAÇÃO sem dados. Bombas desconhecidas.':'Arduino desconectado — sem dados. Bombas desconhecidas.');
-  levels.textContent=valid?'Rio '+percent(state.rio)+' • Poço '+percent(state.poco)+' • Caixa '+percent(state.caixa):'Níveis indisponíveis';
-  floats.textContent=valid?'Boias [rio, poço mín/máx, caixa mín/máx]: '+state.boias.map(v=>v===null?'inválida':v?'ativa':'inativa').join(' | '):'';
-  alerts.textContent=valid?'Alertas (máscara): '+state.alertas:'';
-  mode.textContent='Modo confirmado: '+(valid?state.modo:'desconhecido');
-  labels.forEach((label,i)=>{label.textContent='Bomba '+(i+1)+': '+(!valid||state.pumps[i]===null?'DESCONHECIDA':state.pumps[i]?'LIGADA (confirmada)':'DESLIGADA (confirmada)');});
+ for(const value of ['AUTO','MANUAL']){const button=node('button','Modo '+value,modes);button.type='button';button.disabled=true;button.setAttribute('aria-pressed','false');buttons.push(button);modeButtons.push({button,value});button.addEventListener('click',async()=>{try{const response=await window.sdaRequest('/api/modo',{method:'POST',body:JSON.stringify({mode:value})});mode.textContent=response.ok?'Comando de modo confirmado; aguardando telemetria.':(await response.json()).mensagem;}catch{mode.textContent='Modo sem confirmação. Confira a conexão.';}});}
+ const safety=node('p','Travas locais preservadas. Firmware NÃO VALIDADO fisicamente.',panel,'controller-safety');
+ const main=document.querySelector('main'),banner=document.getElementById('sda-system-banner');if(banner?.parentElement===main)banner.after(panel);else main.prepend(panel);
+ function render(state){current=state;const valid=state.connected===true;
+  connection.textContent=valid?(state.simulate?'SIMULAÇÃO conectada':'Arduino conectado'):'Sem dados • controlador desconectado';connection.dataset.state=valid?'on':'error';
+  if(state.limites){safety.textContent='Proteções ativas: até '+state.limites.max+' bomba(s) simultânea(s) • partidas espaçadas em '+state.limites.gap/1000+' s • firmware NÃO VALIDADO.';for(const id of ['input-duracao','tempo-manual']){const input=document.getElementById(id);if(input)input.max=Math.max(1,Math.floor(state.limites.cycles[2]/60000));}}
+  [state.rio,state.poco,state.caixa,state.solo].forEach((value,i)=>{const known=valid&&typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=100;tanks[i].card.dataset.known=String(known);tanks[i].value.textContent=known?value+'%':'Sem dados';tanks[i].fill.style.height=known?value+'%':'0%';});
+  floatNodes.forEach((item,i)=>{const value=valid?state.boias?.[i]:null;item.textContent=floatNames[i]+': '+(typeof value==='boolean'?(value?'Ativa':'Inativa'):'Sem dados');item.dataset.state=typeof value==='boolean'?(value?'on':'off'):'error';});
+  alerts.textContent=valid?'Alertas do controlador • máscara '+state.alertas:'Sem dados recentes. Estados das bombas desconhecidos.';alerts.dataset.state=valid&&state.alertas===0?'normal':'error';
+  mode.textContent='Modo confirmado: '+(valid&&['AUTO','MANUAL'].includes(state.modo)?state.modo:'Sem dados');modeButtons.forEach(({button,value})=>button.setAttribute('aria-pressed',String(valid&&state.modo===value)));
+  labels.forEach((label,i)=>{const value=valid?state.pumps?.[i]:null,known=typeof value==='boolean',status=known?(value?'on':'off'):'unknown';label.textContent='Bomba '+(i+1)+': '+(!known?'DESCONHECIDA':value?'LIGADA (confirmada)':'DESLIGADA (confirmada)');pumpCards[i].card.dataset.state=status;pumpCards[i].chip.dataset.state=status;pumpCards[i].chip.textContent=!known?'Sem dados':value?'Ligada':'Desligada';links[i].dataset.state=status;pumpCards[i].duration.disabled=!master||!valid;});
   buttons.forEach(button=>button.disabled=!master||!valid);
  }
  socket.on('estado_sistema',render);socket.on('disconnect',()=>render({connected:false,pumps:[null,null,null]}));
