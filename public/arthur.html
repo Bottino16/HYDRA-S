@@ -319,21 +319,30 @@
         @media (max-width: 1024px) { .bento-grid { grid-template-columns: repeat(8, 1fr); } .col-span-4 { grid-column: span 8; } .sidebar { width: 220px; } }
         @media (max-width: 768px) { body { flex-direction: column; overflow: auto; } .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); padding: 20px; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; box-sizing: border-box;} .brand { margin-bottom: 0; } .nav-menu { flex-direction: row; width: 100%; gap: 8px; flex-wrap: wrap; margin-top: 20px; } .nav-btn { width: auto; padding: 10px 14px; flex: 1; justify-content: center;} .nav-btn span { display: none; } .status-badge { width: 100%; margin-top: 20px; justify-content: center; } .main-wrapper { padding: 20px; } .bento-grid { grid-template-columns: 1fr; display: flex; flex-direction: column; } .col-span-3, .col-span-8, .col-span-4 { grid-column: span 1; } }
     </style>
+<link rel="stylesheet" href="/assistant.css">
+<link rel="stylesheet" href="/ui-foundation.css">
 </head>
 <body>
 
 <div id="toast-container"></div>
 
-<aside class="sidebar">
+<a class="skip-link" href="#main-content">Ir ao conteúdo</a>
+<header class="mobile-header"><span class="mobile-brand">◈ HYDRA-S</span><button id="menu-toggle" type="button" aria-controls="app-sidebar" aria-expanded="false">☰ Menu</button></header>
+<button id="menu-backdrop" class="menu-backdrop" aria-label="Fechar menu" hidden></button>
+<aside class="sidebar" id="app-sidebar" aria-label="Navegação principal">
     <div class="brand">
         <div class="brand-icon"><i class="ph-fill ph-drop"></i></div>
         <div class="brand-text">
-            <h1>SDA Dashboard</h1>
-            <p>Controle Hídrico</p>
+            <h1>HYDRA-S</h1>
+            <p>INTELIGÊNCIA HÍDRICA</p>
         </div>
     </div>
 
-    <nav class="nav-menu">
+    <nav class="nav-menu" aria-label="Áreas do sistema">
+        <span class="nav-caption">ESPAÇO DE OPERAÇÃO</span>
+        <button type="button" class="nav-btn is-active" id="dashboard-nav" aria-current="page"><span class="nav-symbol" aria-hidden="true">▦</span><span>Painel principal</span></button>
+        <div id="assistant-nav-slot"></div>
+        <span class="nav-caption">FERRAMENTAS E CONTA</span>
         <button class="nav-btn" onclick="abrirDoc()">
             <i class="ph ph-book-open-text"></i> <span>Documentação</span>
         </button>
@@ -341,18 +350,15 @@
         <button class="nav-btn" onclick="toggleTema()">
             <i class="ph ph-moon" id="icone-tema"></i> <span>Alternar Tema</span>
         </button>
-        <button class="nav-btn relative" onclick="toggleNotificacoes()">
-            <i class="ph ph-bell"></i> <span>Notificações</span>
-            <span class="badge" id="notif-badge" style="display: none;">0</span>
-            
-            <div class="notification-panel" id="painel-notif">
-                <div class="notif-header">
-                    <span>Alertas do Sistema</span>
-                    <span style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:12px; font-weight:600;" onclick="event.stopPropagation(); limparNotificacoes()">Limpar Tudo</span>
-                </div>
-                <div id="lista-notif"></div>
-            </div>
+        <div class="notification-wrapper">
+        <button type="button" class="nav-btn" id="notification-toggle" aria-expanded="false" aria-controls="painel-notif" onclick="toggleNotificacoes()">
+            <span class="nav-symbol" aria-hidden="true">◉</span><span>Notificações</span><span class="badge" id="notif-badge" style="display:none">0</span>
         </button>
+        <section class="notification-panel" id="painel-notif" aria-label="Alertas do sistema">
+            <div class="notif-header"><strong>Alertas do sistema</strong><button type="button" onclick="limparNotificacoes()">Limpar tudo</button></div>
+            <div id="lista-notif"></div>
+        </section>
+        </div>
         <button class="nav-btn" onclick="toggleFullScreen()">
             <i class="ph ph-corners-out" id="icone-fullscreen"></i> <span>Tela Cheia</span>
         </button>
@@ -370,7 +376,7 @@
     </div>
 </aside>
 
-<main class="main-content main-wrapper">
+<main class="main-content main-wrapper" id="main-content" tabindex="-1">
     
     <header class="page-header">
         <div>
@@ -582,6 +588,7 @@
     function toggleNotificacoes() {
         const painel = document.getElementById('painel-notif');
         painel.style.display = painel.style.display === 'block' ? 'none' : 'block';
+        document.getElementById('notification-toggle').setAttribute('aria-expanded',String(painel.style.display === 'block'));
     }
     function limparNotificacoes() { notificacoes = []; localStorage.setItem('sda_notificacoes_v2', JSON.stringify(notificacoes)); atualizarPainelNotificacoes(); }
     atualizarPainelNotificacoes();
@@ -915,8 +922,8 @@
 </script>
 <script src="/maquete.js"></script>
 <script src="/monitoring.js"></script>
-<link rel="stylesheet" href="/assistant.css">
 <script src="/assistant-markdown.js"></script>
 <script src="/assistant.js"></script>
+<script src="/ui-navigation.js"></script>
 </body>
 </html>

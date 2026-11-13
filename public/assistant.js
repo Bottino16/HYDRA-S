@@ -2,12 +2,12 @@ document.addEventListener('DOMContentLoaded',async()=>{
  const session=await window.sdaReady,master=session.usuario.nivel==='master',main=document.querySelector('main');
  const el=(tag,text,parent)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(parent)parent.append(node);return node;};
  const panel=el('section');panel.id='soil-assistant';panel.hidden=true;main.append(panel);
- const nav=document.querySelector('aside nav')||document.querySelector('nav');const open=el('button','Assistente do Solo',nav);open.className='nav-btn';open.type='button';open.setAttribute('aria-controls',panel.id);
- const previous=new Map();let viewing=false;
+ const nav=document.getElementById('assistant-nav-slot')||document.querySelector('aside nav')||document.querySelector('nav');const open=el('button','Assistente do Solo',nav);open.className='nav-btn';open.type='button';open.setAttribute('aria-controls',panel.id);
+ const previous=new Map();let viewing=false;const dashboard=document.getElementById('dashboard-nav');open.id='assistant-nav';open.setAttribute('aria-expanded','false');
  function hideOthers(){for(const child of main.children)if(child!==panel&&child.id!=='sda-system-banner'){if(!previous.has(child))previous.set(child,child.hidden);child.hidden=true;}}
- function view(value){viewing=value;panel.hidden=!value;open.setAttribute('aria-expanded',String(value));if(value)hideOthers();else{for(const [child,hidden] of previous)child.hidden=hidden;previous.clear();}}
+ function view(value){viewing=value;panel.hidden=!value;open.setAttribute('aria-expanded',String(value));if(value)hideOthers();else{for(const [child,hidden] of previous)child.hidden=hidden;previous.clear();}open.classList.toggle('is-active',value);dashboard?.classList.toggle('is-active',!value);if(value){open.setAttribute('aria-current','page');dashboard?.removeAttribute('aria-current');}else{open.removeAttribute('aria-current');dashboard?.setAttribute('aria-current','page');}document.dispatchEvent(new CustomEvent('sda:viewchange',{detail:{assistant:value}}));}
  const observer=new MutationObserver(()=>{if(viewing)hideOthers();});observer.observe(main,{childList:true});open.addEventListener('click',()=>view(true));
- el('h2','Assistente do Solo',panel);const back=el('button','Voltar à telemetria',panel);back.addEventListener('click',()=>view(false));
+ const heading=el('div',undefined,panel);heading.className='assistant-heading';el('h2','Assistente do Solo',heading);const back=el('button','Voltar ao painel',heading);back.type='button';back.className='back-to-dashboard';back.addEventListener('click',()=>{view(false);const target=main.querySelector('.page-header h2')||dashboard;target?.setAttribute('tabindex','-1');target?.focus();});dashboard?.addEventListener('click',()=>view(false));
  const badge=el('p','Carregando assistente…',panel);badge.id='assistant-mode';
  el('p','A IA pode errar. Confirme orientações com análise de solo e agrônomo. Firmware NÃO VALIDADO. Nenhuma bomba é acionada pelo chat.',panel).className='assistant-notice';
  el('p','Não envie nomes, e-mails, senhas, tokens ou outros dados pessoais. O envio à IA usa somente contexto sanitizado.',panel).className='assistant-notice';
