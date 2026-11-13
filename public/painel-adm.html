@@ -25,33 +25,26 @@
         // ==========================================
         // CARREGAR E LISTAR USUÁRIOS
         // ==========================================
+        function tableMessage(message){const body=document.getElementById('tabela-usuarios');body.replaceChildren();const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=5;cell.className='admin-empty';cell.textContent=message;row.append(cell);body.append(row);}
         async function carregarUsuarios() {
-            try {
-                const resposta = await window.sdaRequest('/api/usuarios');
-                if(!resposta.ok) throw new Error("Erro ao buscar dados na API.");
-                const usuarios = await resposta.json();
-                renderizarTabela(usuarios);
-            } catch (erro) {
-                mostrarToast('Erro ao conectar com o banco de dados.', 'error');
-            }
+            const feedback=document.getElementById('users-feedback');feedback.textContent='Consultando contas…';feedback.dataset.state='loading';document.querySelector('.admin-table-wrap').setAttribute('aria-busy','true');tableMessage('Carregando contas…');
+            try {const resposta=await window.sdaRequest('/api/usuarios');if(!resposta.ok)throw new Error('Consulta indisponível.');const usuarios=await resposta.json();if(!Array.isArray(usuarios))throw new Error('Resposta inválida.');renderizarTabela(usuarios);feedback.textContent=usuarios.length?'Contas carregadas.':'Nenhuma conta retornada pelo servidor.';feedback.dataset.state='success';}
+            catch {tableMessage('Não foi possível consultar as contas. Atualize a página para tentar novamente.');feedback.textContent='Consulta indisponível. Nenhum dado antigo é apresentado como atual.';feedback.dataset.state='error';mostrarToast('Não foi possível carregar as contas do servidor.','error');}
+            finally{document.querySelector('.admin-table-wrap').setAttribute('aria-busy','false');}
         }
-
         function renderizarTabela(usuarios) {
-            const tbody=document.getElementById('tabela-usuarios');tbody.replaceChildren();
+            const tbody=document.getElementById('tabela-usuarios');tbody.replaceChildren();if(!usuarios.length){tableMessage('Nenhuma conta cadastrada.');return;}
             for(const user of usuarios){
                 const tr=document.createElement('tr');
-                for(const value of [user.usuario,'*** (Oculto)',user.nivel,user.plano]){
-                    const td=document.createElement('td');td.textContent=String(value);tr.append(td);
-                }
-                const actions=document.createElement('td');actions.className='actions-cell';
-                const edit=document.createElement('button');edit.className='btn-action';edit.textContent='Editar / redefinir senha';
-                edit.addEventListener('click',()=>abrirModalEdicao(user.id,user.usuario,user.nivel,user.plano));
-                const remove=document.createElement('button');remove.className='btn-action';remove.textContent='Excluir';
-                remove.addEventListener('click',()=>deletarUsuario(user.id,user.usuario));
-                actions.append(edit,remove);tr.append(actions);tbody.append(tr);
+                const values=[['Usuário',user.usuario],['Acesso',user.nivel],['Classificação legada',user.plano],['Estado',user.ativo===true||user.ativo===1?'Ativa':user.ativo===false||user.ativo===0?'Desativada':'Não informado']];
+                values.forEach(([label,value],index)=>{const td=document.createElement('td');td.dataset.label=label;const content=document.createElement('span');content.textContent=value==null?'Não informado':String(value);if(index===1||index===3){content.className='admin-badge';if(index===1&&user.nivel==='master')content.classList.add('is-master');if(index===3&&content.textContent==='Ativa')content.classList.add('is-active');if(index===3&&content.textContent==='Desativada')content.classList.add('is-inactive');}td.append(content);tr.append(td);});
+                const actions=document.createElement('td');actions.className='actions-cell';actions.dataset.label='Ações';const group=document.createElement('div');
+                const edit=document.createElement('button');edit.type='button';edit.className='btn-action';edit.textContent='Editar / redefinir senha';edit.setAttribute('aria-label','Editar conta '+user.usuario);edit.addEventListener('click',()=>abrirModalEdicao(user.id,user.usuario,user.nivel,user.plano));
+                const remove=document.createElement('button');remove.type='button';remove.className='btn-action delete-action';remove.textContent='Excluir';remove.setAttribute('aria-label','Excluir conta '+user.usuario);remove.addEventListener('click',()=>deletarUsuario(user.id,user.usuario));group.append(edit,remove);actions.append(group);tr.append(actions);tbody.append(tr);
             }
         }
-
+        const pendingForms=new Set();
+        function formBusy(id,busy){const form=document.getElementById(id);form.setAttribute('aria-busy',String(busy));form.querySelectorAll('button,input,select').forEach(el=>el.disabled=busy);}
         async function adicionarUsuario() {
             const user = document.getElementById('novo-usuario').value.trim();
             const pass = document.getElementById('nova-senha').value;
@@ -63,6 +56,7 @@
                 return;
             }
 
+            if(pendingForms.has('create'))return;pendingForms.add('create');formBusy('create-user-form',true);document.getElementById('admin-feedback').textContent='Criando conta…';
             try {
                 const resposta = await window.sdaRequest('/api/usuarios', {
                     method: 'POST',
@@ -81,12 +75,13 @@
                 }
             } catch (erro) {
                 mostrarToast('Falha na comunicação com o servidor.', 'error');
-            }
+            } finally {pendingForms.delete('create');formBusy('create-user-form',false);}
         }
 
         // ==========================================
         // LÓGICA DO MODAL DE EDIÇÃO
         // ==========================================
+        let modalReturnFocus;
         function abrirModalEdicao(id, nome, nivel, plano) {
             // Preenche os inputs do modal com os dados atuais do usuário
             document.getElementById('edit-id').value = id;
@@ -96,12 +91,12 @@
             document.getElementById('edit-plano').value = plano;
 
             // Mostra o Modal
-            document.getElementById('modalEdicao').classList.add('active');
+            modalReturnFocus=document.activeElement;document.getElementById('edit-feedback').textContent='';document.getElementById('modalEdicao').hidden=false;document.getElementById('modalEdicao').classList.add('active');document.getElementById('edit-nome').focus();
         }
 
         function fecharModal() {
             // Esconde o modal
-            document.getElementById('modalEdicao').classList.remove('active');
+            document.getElementById('modalEdicao').classList.remove('active');document.getElementById('modalEdicao').hidden=true;modalReturnFocus?.focus();
         }
 
         async function salvarEdicao() {
@@ -117,6 +112,7 @@
                 return;
             }
 
+            if(pendingForms.has('edit'))return;pendingForms.add('edit');formBusy('edit-user-form',true);document.getElementById('edit-feedback').textContent='Salvando alterações…';
             try {
                 const resposta = await window.sdaRequest(`/api/usuarios/${id}`, {
                     method: 'PUT',
@@ -134,7 +130,7 @@
                 }
             } catch (erro) {
                 mostrarToast('Falha de conexão com o servidor.', 'error');
-            }
+            } finally {pendingForms.delete('edit');formBusy('edit-user-form',false);}
         }
 
         async function deletarUsuario(id, nome) {
@@ -154,9 +150,9 @@
         }
 
         function limparLogs() {
-            if(confirm("Deseja realmente limpar os logs?")) {
-                document.getElementById('tabela-logs').innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Sem logs recentes.</td></tr>';
-                mostrarToast('Logs limpos.', 'success');
+            if(confirm("Limpar o registro temporário desta tela? Nenhum registro do servidor será apagado.")) {
+                document.getElementById('tabela-logs').innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Sem registro local nesta tela.</td></tr>';
+                mostrarToast('Registro local limpo.', 'success');
             }
         }
 
@@ -170,10 +166,17 @@
             const icone = tipo === 'success' ? 'ph-fill ph-check-circle' : 'ph-fill ph-warning-circle';
             toast.textContent = mensagem;
             container.appendChild(toast);
+            const feedback=document.getElementById('admin-feedback');feedback.textContent=mensagem;feedback.dataset.state=tipo;const editFeedback=document.getElementById('edit-feedback');if(!document.getElementById('modalEdicao').hidden){editFeedback.textContent=mensagem;editFeedback.dataset.state=tipo;}
             setTimeout(() => {
                 toast.style.animation = 'fadeOut 0.3s ease-out forwards';
                 setTimeout(() => { toast.remove(); }, 300);
             }, 3000);
         }
+        document.getElementById('create-user-form').addEventListener('submit',event=>{event.preventDefault();adicionarUsuario();});
+        document.getElementById('edit-user-form').addEventListener('submit',event=>{event.preventDefault();salvarEdicao();});
+        document.getElementById('modalEdicao').addEventListener('keydown',event=>{
+            if(event.key==='Escape'&&!pendingForms.has('edit')){fecharModal();return;}
+            if(event.key!=='Tab')return;const controls=[...event.currentTarget.querySelectorAll('button:not(:disabled),input:not([type=hidden]):not(:disabled),select:not(:disabled)')];const first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}
+        });
     </script>
 </body></html>
