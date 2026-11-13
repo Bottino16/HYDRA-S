@@ -3,7 +3,7 @@ window.sdaHistoryView=function(panel){
  const node=(tag,text,parent,cls)=>{const element=document.createElement(tag);if(text!==undefined)element.textContent=text;if(cls)element.className=cls;if(parent)parent.append(element);return element;};
  const text=value=>value===null||value===undefined||value===''?'Sem dados':String(value);
  const date=value=>value&&Number.isFinite(Date.parse(value))?new Date(value).toLocaleString('pt-BR'):'Sem data';
- const number=(value,min=0,max=Infinity)=>value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value))&&Number(value)>=min&&Number(value)<=max;
+ const number=(value,min=0,max=Infinity)=>(typeof value==='number'||typeof value==='string'&&value.trim()!=='')&&Number.isFinite(Number(value))&&Number(value)>=min&&Number(value)<=max;
  const measure=(value,unit,max=100)=>number(value,0,max)?Number(value).toLocaleString('pt-BR')+unit:'Sem dados';
  const pumps=values=>[0,1,2].map(i=>'B'+(i+1)+': '+(typeof values?.[i]==='boolean'?(values[i]?'Ligada':'Desligada'):'Sem dados')).join(' · ');
  const source=row=>row.simulado===true||row.simulado===1?'SIMULAÇÃO':row.simulado===false||row.simulado===0?'HARDWARE':'Fonte não informada';
@@ -47,7 +47,7 @@ window.sdaHistoryView=function(panel){
  function renderEvents(rows){loadedEvents=rows;options(typeFilter,rows.map(e=>e.tipo));options(severityFilter,rows.map(e=>e.severidade));renderFiltered();}
  typeFilter.addEventListener('change',renderFiltered);severityFilter.addEventListener('change',renderFiltered);
  const realtime=node('details',undefined,eventCard,'history-realtime'),liveHeading=node('summary','Em tempo real · 0 recebidos',realtime);node('p','Últimos 100 eventos recebidos desde a abertura. Independentes do período e dos filtros locais acima.',realtime,'history-scope');const liveEvents=node('ul',undefined,realtime,'history-events');liveEvents.id='history-live-events';
- function addEvent(event){liveEvents.prepend(eventItem(event));while(liveEvents.children.length>100)liveEvents.lastChild.remove();liveHeading.textContent='Em tempo real · '+liveEvents.children.length+' recebidos (até 100)';}
+ function addEvent(event){liveEvents.prepend(eventItem(event));while(liveEvents.children.length>100)liveEvents.lastChild.remove();liveHeading.textContent='Em tempo real · '+liveEvents.children.length+' exibidos (últimos 100 recebidos)';}
  function reset(message){readingCount.textContent='—';actionCount.textContent='—';volume.textContent='Indisponível';coverage.textContent='Sem consulta concluída. Resumos limitados aos registros carregados; consumo sempre ESTIMATIVA.';empty(readings,message);empty(actions,message);loadedEvents=[];renderEvents([]);events.replaceChildren();node('li',message,events,'history-empty');}
  reset('Aguardando consulta.');return {renderReadings,renderActions,renderEvents,addEvent,reset};
 };
