@@ -322,6 +322,7 @@
 <link rel="stylesheet" href="/ui-foundation.css">
 <link rel="stylesheet" href="/dashboard.css">
 <link rel="stylesheet" href="/history.css">
+<link rel="stylesheet" href="/settings.css">
 <link rel="stylesheet" href="/assistant.css">
 </head>
 <body>
@@ -465,30 +466,23 @@
             </div>
         </div>
 
-        <div class="bento-card col-span-4 recurso-premium" data-section-target="settings">
-            <div class="bento-card-header"><i class="ph ph-faders"></i> Perfis de Operação</div>
-            <select id="seletorPlanta" onchange="atualizarLimiteIdeal()" style="padding: 16px; font-size: 16px; margin-bottom: 20px; font-weight: 500;"></select>
-            <div style="display: flex; gap: 12px;">
-                <button class="btn btn-success" onclick="abrirModalPerfil(false)"><i class="ph ph-plus"></i> Novo</button>
-                <button class="btn btn-outline" onclick="abrirModalPerfil(true)" style="color: var(--warning); border-color: rgba(245, 158, 11, 0.3);"><i class="ph ph-pencil-simple"></i> Editar</button>
-                <button class="btn btn-danger" onclick="excluirPerfil()"><i class="ph ph-trash"></i></button>
-            </div>
-            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 20px; line-height: 1.6;">O sistema ajustará dinamicamente o gatilho de umidade da bomba baseado no perfil selecionado.</div>
-        </div>
-
-        <div class="bento-card col-span-4" data-section-target="settings">
-            <div class="bento-card-header"><i class="ph ph-clock-user"></i> Cronograma de Automação</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-                <input type="time" id="input-hora" style="margin: 0;">
-                <input type="number" id="input-duracao" placeholder="Duração (min)" style="margin: 0;">
-            </div>
-            <select id="input-ativo">
-                <option value="on">🟢 Robô Ativado</option>
-                <option value="off">🔴 Robô Desativado</option>
-            </select>
-            <button class="btn btn-outline" onclick="abrirCalendario()"><i class="ph ph-calendar-blank"></i> Definir Dias no Mês</button>
-            <button class="btn btn-primary" onclick="salvarAgendamento()" style="margin-top: 14px; margin-bottom: 0;"><i class="ph ph-floppy-disk"></i> Gravar Configuração</button>
-        </div>
+        <section class="settings-card settings-profiles recurso-premium" data-section-target="settings" aria-labelledby="profiles-heading">
+            <header class="settings-card-heading"><span class="settings-icon" aria-hidden="true">♧</span><div><span class="hydra-eyebrow">01 · CULTIVO</span><h3 id="profiles-heading">Perfis de plantas</h3><p>Organize os limites de umidade para cada cultivo.</p></div></header>
+            <label class="settings-field" for="seletorPlanta">Perfil selecionado<select id="seletorPlanta" onchange="atualizarLimiteIdeal()"></select></label>
+            <p class="settings-note">A seleção é salva imediatamente e carrega o agendamento do perfil.</p>
+            <div id="settings-profile-cards" class="settings-profile-list" aria-label="Perfis disponíveis"></div>
+            <div class="settings-actions"><button class="btn btn-primary" onclick="abrirModalPerfil(false)">Novo perfil</button><button class="btn btn-outline" onclick="abrirModalPerfil(true)">Editar perfil</button><button class="btn btn-danger" onclick="excluirPerfil()">Excluir perfil</button></div>
+            <p id="profiles-feedback" class="settings-feedback" role="status"></p>
+        </section>
+        <section class="settings-card settings-schedule" data-section-target="settings" aria-labelledby="schedule-heading">
+            <header class="settings-card-heading"><span class="settings-icon" aria-hidden="true">◷</span><div><span class="hydra-eyebrow">02 · ROTINA</span><h3 id="schedule-heading">Agendamento de irrigação</h3><p>Uma rotina vinculada ao perfil selecionado.</p></div></header>
+            <p id="settings-schedule-profile" class="settings-context"></p>
+            <div class="settings-fields"><label class="settings-field" for="input-hora">Horário<input type="time" id="input-hora"></label><label class="settings-field" for="input-duracao">Duração (min)<input type="number" id="input-duracao" placeholder="Duração (min)"></label></div>
+            <label class="settings-field" for="input-ativo">Automação<select id="input-ativo"><option value="on">Ativada</option><option value="off">Desativada</option></select></label>
+            <div class="settings-calendar"><div><strong>Dias do mês</strong><p id="settings-days" class="settings-note">Consulte os dias no calendário.</p></div><button class="btn btn-outline" onclick="abrirCalendario()">Selecionar dias</button></div>
+            <p class="settings-note">Confirmar os dias prepara a seleção. Use Gravar configuração para enviar o agendamento. Todas as travas continuam obrigatórias.</p>
+            <div class="settings-actions"><button class="btn btn-primary" onclick="salvarAgendamento()">Gravar configuração</button></div><p id="schedule-feedback" class="settings-feedback" role="status"></p>
+        </section>
 
     </div>
 </section>
@@ -496,7 +490,7 @@
 <header class="section-heading"><span class="hydra-eyebrow">REGISTROS E RASTREABILIDADE</span><h2 id="history-heading" tabindex="-1">Histórico e Eventos</h2><p>Leituras, acionamentos e consumo estimado do período.</p></header>
 </section>
 <section id="settings-section" data-app-section="settings" class="app-section" aria-labelledby="settings-heading" hidden>
-<header class="section-heading"><span class="hydra-eyebrow">SEU AMBIENTE DE OPERAÇÃO</span><h2 id="settings-heading" tabindex="-1">Configurações</h2><p>Perfis, agendamento e opções existentes. Alterações só são enviadas pelos controles de salvar.</p></header><div class="section-content settings-grid"></div>
+<header class="section-heading"><span class="hydra-eyebrow">SEU AMBIENTE DE OPERAÇÃO</span><h2 id="settings-heading" tabindex="-1">Configurações</h2><p>Seu cultivo, sua rotina e os parâmetros da simulação, em um só lugar.</p></header><p class="settings-banner">SIMULAÇÃO · sensores virtuais. Firmware NÃO VALIDADO fisicamente.</p><div class="section-content settings-grid"></div>
 </section>
 </main>
 
@@ -526,21 +520,21 @@
     </div>
 </div>
 
-<div id="modal-calendario" class="modal">
+<div id="modal-calendario" class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="calendar-title">
     <div class="modal-content">
-        <h3 style="margin-top: 0; font-size: 20px; display: flex; align-items: center; gap: 10px;"><i class="ph ph-calendar-check" style="color: var(--accent);"></i> Dias de Ativação</h3>
+        <h3 id="calendar-title" style="margin-top: 0; font-size: 20px; display: flex; align-items: center; gap: 10px;"><i class="ph ph-calendar-check" style="color: var(--accent);"></i> Dias de Ativação</h3>
         <p style="font-size: 14px; color: var(--text-secondary);">Selecione em quais dias do mês a automação deve atuar.</p>
         <div class="month-picker" id="calendario-dias-mes"></div>
         <button class="btn btn-primary" style="margin-top: 28px;" onclick="fecharCalendario()">Confirmar Seleção</button>
     </div>
 </div>
 
-<div id="modal-perfil" class="modal">
+<div id="modal-perfil" class="modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-perfil">
     <div class="modal-content">
         <h3 id="titulo-modal-perfil" style="margin-top: 0; font-size: 20px; display: flex; align-items: center; gap: 10px;"><i class="ph ph-plant" style="color: var(--success);"></i> Novo Perfil</h3>
-        <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;">ÍCONE E NOME DO PERFIL</label>
+        <label for="nome-perfil" style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block;">ÍCONE E NOME DO PERFIL</label>
         <input type="text" id="nome-perfil" placeholder="Ex: 🌺 Modo Orquídeas">
-        <label style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block; margin-top: 16px;">LIMITE IDEAL DE UMIDADE (%)</label>
+        <label for="limite-perfil" style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; display: block; margin-top: 16px;">LIMITE IDEAL DE UMIDADE (%)</label>
         <input type="number" id="limite-perfil" placeholder="Ex: 20">
         <input type="hidden" id="id-perfil-editando" value="">
         <div style="display: flex; gap: 14px; margin-top: 28px;">
@@ -550,6 +544,7 @@
     </div>
 </div>
 
+<script src="/settings-view.js"></script>
 <script>
     const socket = window.sdaSocket = io({auth: async callback => { try { const data=await window.sdaReady;callback({csrfToken:data.csrfToken}); } catch { location.replace('/login.html'); } }});
     socket.on('system_status', renderStatus);
@@ -703,12 +698,14 @@
             if(p.id === perfilAtivoId) opcao.selected = true;
             select.appendChild(opcao);
         });
-        atualizarLimiteIdeal(false); 
+        atualizarLimiteIdeal(false);
+        window.sdaSettings?.profiles(meusPerfis, perfilAtivoId); 
     }
 
     function atualizarLimiteIdeal(mostrarAviso = true) {
         perfilAtivoId = document.getElementById("seletorPlanta").value;
         const perfilEscolhido = meusPerfis.find(p => p.id === perfilAtivoId);
+        window.sdaSettings?.profiles(meusPerfis, perfilAtivoId);
         if(perfilEscolhido) {
             limiteUmidadeIdeal = parseInt(perfilEscolhido.limite);
 
@@ -766,7 +763,7 @@
     async function carregarAgendamentoPerfil() {
         if(!Number.isInteger(Number(perfilAtivoId)))return;
         const response=await window.sdaRequest('/api/agendamento?perfil='+encodeURIComponent(perfilAtivoId));
-        if(response.ok){const c=await response.json();document.getElementById('input-hora').value=c.hora;document.getElementById('input-duracao').value=c.duracao;document.getElementById('input-ativo').value=c.ativo?'on':'off';diasMesSelecionados=c.diasMes||[];}
+        if(response.ok){const c=await response.json();document.getElementById('input-hora').value=c.hora;document.getElementById('input-duracao').value=c.duracao;document.getElementById('input-ativo').value=c.ativo?'on':'off';diasMesSelecionados=c.diasMes||[];window.sdaSettings?.days(diasMesSelecionados);}
     }
     async function persistirPerfis() {
         const response=await window.sdaRequest('/api/perfis',{method:'PUT',body:JSON.stringify(meusPerfis.map(p=>({...p,selecionado:p.id===perfilAtivoId})))});
@@ -793,6 +790,7 @@
         document.getElementById('input-duracao').value = config.duracao;
         document.getElementById('input-ativo').value = config.ativo ? "on" : "off";
         diasMesSelecionados = config.diasMes || [];
+        window.sdaSettings?.days(diasMesSelecionados);
     });
 
     socket.on('connect', () => {
@@ -826,7 +824,7 @@
 
     // --- CALENDÁRIO ---
     function abrirCalendario() { gerarCalendarioMes(); document.getElementById("modal-calendario").style.display = "flex"; }
-    function fecharCalendario() { document.getElementById("modal-calendario").style.display = "none"; }
+    function fecharCalendario() { document.getElementById("modal-calendario").style.display = "none"; window.sdaSettings?.days(diasMesSelecionados); }
     function gerarCalendarioMes() {
         const data = new Date(); const ultimoDia = new Date(data.getFullYear(), data.getMonth() + 1, 0).getDate();
         const container = document.getElementById('calendario-dias-mes'); container.innerHTML = "";
