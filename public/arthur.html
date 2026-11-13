@@ -762,25 +762,38 @@
     carregarSelectPerfis();
     async function carregarAgendamentoPerfil() {
         if(!Number.isInteger(Number(perfilAtivoId)))return;
+        window.sdaSettings?.feedback('schedule-feedback','Carregando agendamento…','loading');
+        try {
         const response=await window.sdaRequest('/api/agendamento?perfil='+encodeURIComponent(perfilAtivoId));
-        if(response.ok){const c=await response.json();document.getElementById('input-hora').value=c.hora;document.getElementById('input-duracao').value=c.duracao;document.getElementById('input-ativo').value=c.ativo?'on':'off';diasMesSelecionados=c.diasMes||[];window.sdaSettings?.days(diasMesSelecionados);}
+        if(response.ok){const c=await response.json();document.getElementById('input-hora').value=c.hora;document.getElementById('input-duracao').value=c.duracao;document.getElementById('input-ativo').value=c.ativo?'on':'off';diasMesSelecionados=c.diasMes||[];window.sdaSettings?.days(diasMesSelecionados);window.sdaSettings?.feedback('schedule-feedback','Agendamento carregado.');}
+        else window.sdaSettings?.feedback('schedule-feedback',(await response.json()).mensagem||'Agendamento indisponível.','error');
+        } catch { window.sdaSettings?.feedback('schedule-feedback','Não foi possível consultar o agendamento.','error'); }
     }
     async function persistirPerfis() {
+        window.sdaSettings?.feedback('profiles-feedback','Salvando perfis…','loading');
+        try {
         const response=await window.sdaRequest('/api/perfis',{method:'PUT',body:JSON.stringify(meusPerfis.map(p=>({...p,selecionado:p.id===perfilAtivoId})))});
-        if(!response.ok){showToast((await response.json()).mensagem,'error');throw new Error('Falha ao salvar perfis.');}
+        if(!response.ok){const message=(await response.json()).mensagem;showToast(message,'error');window.sdaSettings?.feedback('profiles-feedback',message,'error');throw new Error('Falha ao salvar perfis.');}
         const fresh=await (await window.sdaRequest('/api/perfis')).json();
         meusPerfis=fresh;perfilAtivoId=String((fresh.find(p=>p.selecionado)||fresh[0]).id);carregarSelectPerfis();carregarAgendamentoPerfil();
+        window.sdaSettings?.feedback('profiles-feedback','Perfis salvos.','success');
+        } catch(error) { window.sdaSettings?.feedback('profiles-feedback','Não foi possível salvar os perfis. Confira a conexão e a mensagem do sistema.','error');throw error; }
     }
     window.sdaReady.then(async data=>{
         if(data.usuario.nivel!=='master'){
             document.getElementById('admin-link').hidden=true;
             document.querySelectorAll('[onclick="regarManual()"], [onclick="pararRega()"]').forEach(el=>el.disabled=true);
         }
+        window.sdaSettings?.feedback('profiles-feedback','Carregando perfis…','loading');
+        try {
         const response=await window.sdaRequest('/api/perfis');
+        if(!response.ok)throw new Error('Perfis indisponíveis.');
         const profiles=await response.json();
         if(profiles.length){meusPerfis=profiles;perfilAtivoId=String((profiles.find(p=>p.selecionado)||profiles[0]).id);carregarSelectPerfis();}
         else await persistirPerfis();
         carregarAgendamentoPerfil();
+        window.sdaSettings?.feedback('profiles-feedback','Perfis carregados.');
+        } catch { window.sdaSettings?.feedback('profiles-feedback','Não foi possível carregar os perfis. Valores exibidos podem ser os padrões locais.','error'); }
     });
 
     // --- SOCKETS REAIS ---
@@ -829,12 +842,13 @@
         const data = new Date(); const ultimoDia = new Date(data.getFullYear(), data.getMonth() + 1, 0).getDate();
         const container = document.getElementById('calendario-dias-mes'); container.innerHTML = "";
         for(let i = 1; i <= ultimoDia; i++) {
-            let div = document.createElement('div');
+            let div = document.createElement('button');div.type='button';div.setAttribute('aria-label','Dia '+i);div.setAttribute('aria-pressed',String(diasMesSelecionados.includes(i)));
             div.className = 'day-box-month' + (diasMesSelecionados.includes(i) ? ' selected' : ''); div.innerText = i;
             div.onclick = () => {
                 if(diasMesSelecionados.includes(i)) diasMesSelecionados = diasMesSelecionados.filter(d => d !== i);
                 else diasMesSelecionados.push(i);
                 gerarCalendarioMes();
+                container.querySelectorAll('button')[i-1]?.focus();
             };
             container.appendChild(div);
         }
@@ -842,8 +856,14 @@
 
     async function salvarAgendamento() {
         const dados={hora:document.getElementById('input-hora').value,duracao:Number(document.getElementById('input-duracao').value),ativo:document.getElementById('input-ativo').value==='on',diasMes:diasMesSelecionados,perfilPlantaId:Number(perfilAtivoId)};
+        window.sdaSettings?.feedback('schedule-feedback','Enviando agendamento…','loading');
+        try {
         const response=await window.sdaRequest('/api/agendamento',{method:'PUT',body:JSON.stringify(dados)});
-        showToast(response.ok?'Agendamento salvo.':(await response.json()).mensagem,response.ok?'success':'error');
+        const message=response.ok?'Agendamento salvo.':(await response.json()).mensagem;
+        showToast(message,response.ok?'success':'error');
+        window.sdaSettings?.feedback('schedule-feedback',message,response.ok?'success':'error');
+        } catch { window.sdaSettings?.feedback('schedule-feedback','Não foi possível enviar o agendamento. Seus valores continuam no formulário.','error'); }
+
     }
     async function regarManual() {
         if(!confirm('Confirmar irrigação? As travas do controlador continuam obrigatórias.'))return;
