@@ -1,0 +1,53 @@
+// F-3: apresentação somente. Nenhum endpoint, autorização ou operação neste componente.
+window.sdaHistoryView=function(panel){
+ const node=(tag,text,parent,cls)=>{const element=document.createElement(tag);if(text!==undefined)element.textContent=text;if(cls)element.className=cls;if(parent)parent.append(element);return element;};
+ const text=value=>value===null||value===undefined||value===''?'Sem dados':String(value);
+ const date=value=>value&&Number.isFinite(Date.parse(value))?new Date(value).toLocaleString('pt-BR'):'Sem data';
+ const number=(value,min=0,max=Infinity)=>value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value))&&Number(value)>=min&&Number(value)<=max;
+ const measure=(value,unit,max=100)=>number(value,0,max)?Number(value).toLocaleString('pt-BR')+unit:'Sem dados';
+ const pumps=values=>[0,1,2].map(i=>'B'+(i+1)+': '+(typeof values?.[i]==='boolean'?(values[i]?'Ligada':'Desligada'):'Sem dados')).join(' · ');
+ const source=row=>row.simulado===true||row.simulado===1?'SIMULAÇÃO':row.simulado===false||row.simulado===0?'HARDWARE':'Fonte não informada';
+ const summaries=node('div',undefined,panel,'history-summary');
+ function metric(label,id){const card=node('article',undefined,summaries,'history-metric');node('span',label,card);const value=node('strong','—',card);value.id=id;return value;}
+ const readingCount=metric('LEITURAS CARREGADAS','history-reading-count'),actionCount=metric('ACIONAMENTOS CARREGADOS','history-action-count'),volume=metric('ÁGUA · ESTIMATIVA','history-volume');
+ const coverage=node('p','Consulta de até 100 registros por categoria. Resumos representam apenas os registros carregados.',panel,'history-scope');
+ const records=node('div',undefined,panel,'history-records');
+ function table(title,id,columns){
+  const section=node('section',undefined,records,'history-card');node('h3',title,section);const wrapper=node('div',undefined,section,'history-table-region');wrapper.tabIndex=0;wrapper.setAttribute('role','region');wrapper.setAttribute('aria-label',title);const table=node('table',undefined,wrapper,'shared-table history-table');table.id=id;node('caption',title+' · registros carregados, até 100',table);const head=node('tr',undefined,node('thead',undefined,table));columns.forEach((column,i)=>{const th=node('th',column,head);th.scope='col';if(i>1&&i<columns.length-1)th.className='history-secondary';});return {section,body:node('tbody',undefined,table),columns:columns.length};
+ }
+ const readings=table('Leituras dos sensores','reading-history',['Data e hora','Solo','Temperatura','Ar','Níveis','Bombas','Detalhes']);
+ const actions=table('Acionamentos das bombas','water-estimate',['Data e hora','Bomba / resultado','Origem','Conta registrada','Volume estimado','Detalhes']);
+ function empty(table,message){table.body.replaceChildren();const td=node('td',message,node('tr',undefined,table.body),'history-empty');td.colSpan=table.columns;}
+ function details(row,title,pairs){const td=node('td',undefined,row,'history-detail-cell'),box=node('details',undefined,td);node('summary',title,box);const list=node('dl',undefined,box);pairs.forEach(([label,value])=>{node('dt',label,list);node('dd',value,list);});}
+ function cell(row,value,secondary=false){return node('td',value,row,secondary?'history-secondary':undefined);}
+ function renderReadings(rows){
+  readings.body.replaceChildren();readingCount.textContent=String(rows.length);if(!rows.length)return empty(readings,'Nenhuma leitura retornada para este período.');
+  for(const reading of rows){
+   const row=node('tr',undefined,readings.body);cell(row,date(reading.data_hora));cell(row,measure(reading.solo,'%'));cell(row,measure(reading.temperatura,' °C',60),true);cell(row,measure(reading.umidade_ar,'%',100),true);
+   const levels='Rio '+measure(reading.nivel_rio,'%')+' · Poço '+measure(reading.nivel_poco,'%')+' · Caixa '+measure(reading.nivel_caixa,'%');cell(row,levels,true);cell(row,pumps(reading.bombas),true);
+   const floats=['Rio','Poço mín.','Poço máx.','Caixa mín.','Caixa máx.'].map((label,i)=>label+': '+(typeof reading.boias?.[i]==='boolean'?(reading.boias[i]?'Ativa':'Inativa'):'Sem dados')).join(' · ');
+   details(row,'Ver leitura',[['Data e hora',date(reading.data_hora)],['Fonte',source(reading)],['Solo (escala relativa)',measure(reading.solo,'%')],['Temperatura',measure(reading.temperatura,' °C',60)],['Umidade do ar',measure(reading.umidade_ar,'%')],['Níveis',levels],['Saídas registradas',pumps(reading.bombas)],['Boias',floats],['Modo registrado',text(reading.modo)]]);
+  }
+ }
+ const statusLabels={concluida:'Concluído',iniciada:'Iniciado',reservada:'Reservado',incerta:'Incerto',bloqueada:'Bloqueado',cancelada:'Cancelado'};
+ function renderActions(rows){
+  actions.body.replaceChildren();actionCount.textContent=String(rows.length);const known=rows.filter(row=>number(row.volume_estimado_l));const sum=known.reduce((total,row)=>total+Number(row.volume_estimado_l),0);volume.textContent=known.length?sum.toLocaleString('pt-BR',{minimumFractionDigits:3,maximumFractionDigits:3})+' L':'Indisponível';
+  coverage.textContent='Resumos dos registros carregados (até 100 por categoria). ESTIMATIVA disponível em '+known.length+' de '+rows.length+' acionamento(s); não é medição real nem total garantido do período. CSV exporta as leituras do período, sem o limite visual de 100.';
+  if(!rows.length)return empty(actions,'Nenhum acionamento retornado para este período.');
+  for(const action of rows){const row=node('tr',undefined,actions.body);cell(row,date(action.inicio||action.fim));const result=cell(row,'Bomba '+text(action.bomba));const badge=node('span',statusLabels[action.status]||text(action.status),result,'history-badge');badge.dataset.state=action.status==='concluida'?'success':['incerta','bloqueada','cancelada'].includes(action.status)?'warning':'neutral';cell(row,text(action.origem),true);cell(row,action.usuario_id==null?'Não registrada':'Conta #'+text(action.usuario_id),true);cell(row,number(action.volume_estimado_l)?Number(action.volume_estimado_l).toLocaleString('pt-BR',{minimumFractionDigits:3,maximumFractionDigits:3})+' L · ESTIMATIVA':'Indisponível',true);
+   details(row,'Ver acionamento',[['Início',date(action.inicio)],['Fim',date(action.fim)],['Origem',text(action.origem)],['Conta registrada',action.usuario_id==null?'Não registrada':'#'+text(action.usuario_id)],['Resultado',statusLabels[action.status]||text(action.status)],['Confirmação registrada',action.confirmado===true||action.confirmado===1?'Sim':action.confirmado===false||action.confirmado===0?'Não':'Não informada'],['Motivo',text(action.motivo)],['Vazão configurada',number(action.vazao_l_min)?Number(action.vazao_l_min)+' L/min':'Não informada'],['Volume · ESTIMATIVA',number(action.volume_estimado_l)?Number(action.volume_estimado_l).toLocaleString('pt-BR')+' L':'Indisponível'],['Fonte',source(action)]]);
+  }
+ }
+ const eventCard=node('section',undefined,records,'history-card history-events-card');node('h3','Eventos e alertas',eventCard);const eventFilters=node('div',undefined,eventCard,'history-event-filters');
+ function filter(label,id){const wrapper=node('label',label,eventFilters),select=node('select',undefined,wrapper);select.id=id;return select;}
+ const typeFilter=filter('Categoria','history-event-type'),severityFilter=filter('Severidade','history-event-severity');node('p','Filtros locais: somente eventos consultados carregados (até 100). Não alteram consultas, CSV ou a lista em tempo real.',eventCard,'history-scope');const eventCount=node('p','',eventCard,'history-scope');const events=node('ul',undefined,eventCard,'history-events');events.id='operational-events';let loadedEvents=[];
+ function options(select,values){const selected=select.value;select.replaceChildren();const all=node('option','Todas',select);all.value='';for(const value of [...new Set(values.map(v=>text(v)))]){const option=node('option',value,select);option.value=value;}select.value=[...select.options].some(o=>o.value===selected)?selected:'';}
+ function eventItem(event,parent){const item=node('li',undefined,parent,'history-event');item.dataset.severity=['erro','aviso','info'].includes(event.severidade)?event.severidade:'unknown';const head=node('div',undefined,item,'history-event-heading');node('span',text(event.severidade),head,'history-badge');node('strong',text(event.tipo),head);node('time',date(event.data_hora),head);node('p',text(event.mensagem),item);node('small',source(event),item);return item;}
+ function renderFiltered(){events.replaceChildren();const filtered=loadedEvents.filter(event=>(!typeFilter.value||text(event.tipo)===typeFilter.value)&&(!severityFilter.value||text(event.severidade)===severityFilter.value));eventCount.textContent=filtered.length+' de '+loadedEvents.length+' eventos carregados';if(!filtered.length)node('li',loadedEvents.length?'Nenhum evento corresponde aos filtros locais.':'Nenhum evento retornado para este período.',events,'history-empty');else filtered.forEach(event=>eventItem(event,events));}
+ function renderEvents(rows){loadedEvents=rows;options(typeFilter,rows.map(e=>e.tipo));options(severityFilter,rows.map(e=>e.severidade));renderFiltered();}
+ typeFilter.addEventListener('change',renderFiltered);severityFilter.addEventListener('change',renderFiltered);
+ const realtime=node('details',undefined,eventCard,'history-realtime'),liveHeading=node('summary','Em tempo real · 0 recebidos',realtime);node('p','Últimos 100 eventos recebidos desde a abertura. Independentes do período e dos filtros locais acima.',realtime,'history-scope');const liveEvents=node('ul',undefined,realtime,'history-events');liveEvents.id='history-live-events';
+ function addEvent(event){liveEvents.prepend(eventItem(event));while(liveEvents.children.length>100)liveEvents.lastChild.remove();liveHeading.textContent='Em tempo real · '+liveEvents.children.length+' recebidos (até 100)';}
+ function reset(message){readingCount.textContent='—';actionCount.textContent='—';volume.textContent='Indisponível';coverage.textContent='Sem consulta concluída. Resumos limitados aos registros carregados; consumo sempre ESTIMATIVA.';empty(readings,message);empty(actions,message);loadedEvents=[];renderEvents([]);events.replaceChildren();node('li',message,events,'history-empty');}
+ reset('Aguardando consulta.');return {renderReadings,renderActions,renderEvents,addEvent,reset};
+};
