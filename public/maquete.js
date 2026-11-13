@@ -3,7 +3,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
  const session=await window.sdaReady,master=session.usuario.nivel==='master',socket=window.sdaSocket||window.socket;
  const node=(tag,text,parent,cls)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;if(parent)parent.append(el);return el;};
  const panel=node('section');panel.id='hydra-console';panel.className='hydra-console';panel.setAttribute('aria-label','Central de controle hídrico');
- const heading=node('header',undefined,panel,'hydra-heading'),titles=node('div',undefined,heading);node('span','HYDRA-S / CONTROLE EM TEMPO REAL',titles,'hydra-eyebrow');node('h2','Cada gota, sob controle.',titles);node('p','Rio → Poço → Caixa → Plantação',titles);const connection=node('span','Sem dados',heading,'hydra-chip');connection.id='controller-connection';
+ const heading=node('header',undefined,panel,'hydra-heading page-header'),titles=node('div',undefined,heading);node('span','HYDRA-S / CONTROLE EM TEMPO REAL',titles,'hydra-eyebrow');node('h2','Cada gota, sob controle.',titles);node('p','Rio → Poço → Caixa → Plantação',titles);const connection=node('span','Sem dados',heading,'hydra-chip');connection.id='controller-connection';
+ const metrics=node('div',undefined,panel,'telemetry-strip');metrics.setAttribute('aria-label','Telemetria atual');for(const card of [...document.querySelectorAll('.bento-grid > .bento-card')].slice(0,4))metrics.append(card);
  const circuit=node('div',undefined,panel,'water-circuit'),caption=node('div',undefined,circuit,'circuit-caption');node('strong','Circuito hídrico',caption);node('span','SIMULAÇÃO • firmware NÃO VALIDADO',caption);
  const track=node('div',undefined,circuit,'circuit-track'),tanks=[],floatNodes=[],links=[];
  const floatNames=['Rio / presença','Poço / mínima','Poço / máxima','Caixa / mínima','Caixa / máxima'];

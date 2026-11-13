@@ -381,8 +381,8 @@
     
     <header class="page-header">
         <div>
-            <h2>Visão Geral da Telemetria</h2>
-            <p>Monitoramento em tempo real dos sensores IoT.</p>
+            <h2>Análise e planejamento</h2>
+            <p>Histórico, perfis de planta e configuração da irrigação.</p>
         </div>
     </header>
 
@@ -412,8 +412,8 @@
         </div>
 
         <div class="bento-card col-span-3">
-            <div class="bento-card-header"><i class="ph ph-drop" style="color: #60a5fa;"></i> Nível do Tanque</div>
-            <span class="stat-value" id="texto-agua">0.0 L</span>
+            <div class="bento-card-header"><i class="ph ph-drop" style="color: #60a5fa;"></i> Nível da Caixa</div>
+            <span class="stat-value" id="texto-agua">sem dados</span>
             <div class="progress-bg"><div class="progress-fill" id="prog-agua" style="width: 0%; background: #60a5fa;"></div></div>
         </div>
 
@@ -447,17 +447,17 @@
         </details>
 
         <div class="bento-card col-span-4 recurso-premium">
-            <div class="bento-card-header"><i class="ph ph-cloud-sun"></i> Clima & IA (API)</div>
+            <div class="bento-card-header"><i class="ph ph-cloud-sun"></i> Condições do clima</div>
             <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 24px;">
                 <i id="icone-clima" class="ph-fill ph-sun" style="font-size: 64px; color: var(--warning); filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.3));"></i>
                 <div>
                     <div id="texto-clima" style="font-size: 26px; font-weight: 300; letter-spacing: -1px;">Carregando...</div>
-                    <div id="status-clima-rega" style="font-size: 13px; color: var(--success); font-weight: 600; text-transform: uppercase; margin-top: 4px;">Aguardando satélite</div>
+                    <div id="status-clima-rega" style="font-size: 13px; color: var(--success); font-weight: 600; text-transform: uppercase; margin-top: 4px;">Aguardando dados</div>
                 </div>
             </div>
             <div style="display: flex; gap: 12px;">
                 <button class="btn btn-outline" style="font-size: 13px; padding: 10px; flex: 1;" onclick="atualizarClimaSimulado()">🎮 Simular</button>
-                <button class="btn btn-primary" style="font-size: 13px; padding: 10px; flex: 1;" onclick="buscarClimaReal()">🛰️ Sync Real</button>
+                <button class="btn btn-primary" style="font-size: 13px; padding: 10px; flex: 1;" onclick="buscarClimaReal()">🛰️ Consultar clima</button>
             </div>
         </div>
 
@@ -805,7 +805,7 @@
     socket.on('estado_sistema', (state) => {
         const valid=state.connected;
         for(const [text,bar,value,unit] of [['texto-umidade','prog-umidade',state.solo,'%'],['texto-temp','prog-temp',state.temperatura,'°C'],['texto-umid-ar','prog-umid-ar',state.umidade_ar,'%'],['texto-agua','prog-agua',state.caixa,'%']]){
-            const known=valid&&typeof value==='number'&&Number.isFinite(value);
+            const known=valid&&typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=(text==='texto-temp'?60:100);
             document.getElementById(text).textContent=known?value.toFixed(1)+unit:'sem dados';
             document.getElementById(bar).style.width=known?Math.max(0,Math.min(100,value))+'%':'0%';
         }

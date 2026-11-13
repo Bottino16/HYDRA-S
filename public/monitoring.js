@@ -2,8 +2,8 @@
 document.addEventListener('DOMContentLoaded',async()=>{
  const session=await window.sdaReady,master=session.usuario.nivel==='master',socket=window.sdaSocket;
  const node=(tag,text,parent)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(parent)parent.append(el);return el;};
- const panel=node('section',undefined,document.querySelector('main'));panel.id='monitoring-panel';panel.style.cssText='border:1px solid #587080;border-radius:12px;padding:20px;margin:24px 0;overflow:auto';
- node('h3','Histórico, eventos e configuração',panel);
+ const panel=node('section',undefined,document.querySelector('main'));panel.id='monitoring-panel';panel.className='monitoring-workspace';
+ node('span','REGISTROS E RASTREABILIDADE',panel,'');node('h3','Histórico operacional',panel);
  const source=node('strong',session.simulate?'SIMULAÇÃO — dados virtuais':'HARDWARE — firmware NÃO VALIDADO',panel);source.id='data-source';
  const status=node('p','Aguardando telemetria',panel);status.id='telemetry-status';
  const applyState=state=>{status.textContent=state.connected?(state.simulate?'SIMULAÇÃO conectada':'Arduino conectado'):(state.simulate?'SIMULAÇÃO sem dados':'Arduino desconectado — sem dados');};
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  const local=date=>new Date(date-date.getTimezoneOffset()*60000).toISOString().slice(0,16);from.value=local(new Date(Date.now()-86400000));to.value=local(new Date(Date.now()+60000));
  window.sdaHistoryQuery=()=>'?de='+encodeURIComponent(new Date(from.value).toISOString())+'&ate='+encodeURIComponent(new Date(to.value).toISOString());
  const refresh=node('button','Consultar período',panel),csv=node('a','Exportar histórico completo CSV',panel);csv.style.margin='12px';
- const history=node('pre','',panel),actions=node('pre','',panel),events=node('ul',undefined,panel);history.id='reading-history';actions.id='water-estimate';events.id='operational-events';
+ const records=node('div',undefined,panel);records.className='monitoring-records';const readings=node('section',undefined,records),usage=node('section',undefined,records),logs=node('section',undefined,records);node('h4','Leituras do período',readings);node('h4','Consumo • ESTIMATIVA',usage);node('h4','Eventos e alertas',logs);const history=node('pre','',readings),actions=node('pre','',usage),events=node('ul',undefined,logs);history.id='reading-history';actions.id='water-estimate';events.id='operational-events';
  async function load(){try{const query=window.sdaHistoryQuery();csv.href='/api/leituras.csv'+query;
   const responses=await Promise.all(['/api/leituras','/api/acionamentos','/api/eventos'].map(url=>window.sdaRequest(url+query+'&limit=100')));
   const [h,a,e]=await Promise.all(responses.map(r=>r.json()));if(!responses.every(r=>r.ok))throw new Error(h.mensagem||a.mensagem||e.mensagem||'Consulta indisponível');
