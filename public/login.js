@@ -1,6 +1,8 @@
 let csrfToken;
 async function fazerLogin(){
  const button=document.getElementById('entrar'), error=document.getElementById('mensagem-erro');
+ if(button.disabled)return;
+ const form=document.getElementById('login-form'),progress=document.getElementById('login-progress');form.setAttribute('aria-busy','true');progress.textContent='Verificando suas credenciais…';
  error.style.display='none';button.disabled=true;button.textContent='Acessando...';
  try {
   if(!csrfToken){const response=await fetch('/api/auth/csrf',{cache:'no-store'});csrfToken=(await response.json()).csrfToken;}
@@ -9,7 +11,6 @@ async function fazerLogin(){
   if(!response.ok)throw new Error(data.mensagem||'Não foi possível entrar.');
   sessionStorage.clear();location.replace('/arthur.html');
  }catch(e){error.textContent=e.message;error.style.display='block';}
- finally{button.disabled=false;button.textContent='Entrar';}
+ finally{button.disabled=false;button.textContent='Entrar';form.setAttribute('aria-busy','false');progress.textContent='';}
 }
-document.getElementById('entrar').addEventListener('click',fazerLogin);
-for(const id of ['campo-usuario','campo-senha'])document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')fazerLogin();});
+document.getElementById('login-form').addEventListener('submit',e=>{e.preventDefault();fazerLogin();});

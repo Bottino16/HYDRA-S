@@ -1,63 +1,18 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SDA | Login do Sistema</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <style>
-        :root {
-            --bg-dark: #0d1117; --card-bg: #161b22; --border: #30363d;
-            --text-main: #e6edf3; --text-dim: #8b949e; --accent: #58a6ff;
-            --danger: #da3633;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif; background-color: var(--bg-dark); color: var(--text-main);
-            margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center;
-        }
-
-        .login-box {
-            background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
-            padding: 40px; width: 100%; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            text-align: center;
-        }
-
-        .logo-icon { font-size: 48px; color: var(--accent); margin-bottom: 10px; }
-        h2 { margin: 0 0 5px 0; font-size: 22px; font-weight: 600; }
-        p { color: var(--text-dim); font-size: 13px; margin-bottom: 30px; }
-
-        input {
-            width: 100%; background: var(--bg-dark); color: var(--text-main); border: 1px solid var(--border);
-            padding: 12px; border-radius: 6px; font-size: 14px; outline: none; box-sizing: border-box; margin-bottom: 15px;
-            transition: 0.2s;
-        }
-        input:focus { border-color: var(--accent); }
-
-        .btn-login {
-            width: 100%; background: var(--accent); color: #0d1117; font-weight: 700; border: none;
-            padding: 12px; border-radius: 6px; font-size: 14px; cursor: pointer; transition: 0.2s;
-        }
-        .btn-login:hover { background: #79c0ff; }
-
-        #mensagem-erro { color: var(--danger); font-size: 13px; margin-top: 15px; display: none; }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HYDRA-S | Acesso ao sistema</title>
+<link rel="stylesheet" href="/ui-foundation.css"><link rel="stylesheet" href="/access.css">
 </head>
-<body>
-
-    <div class="login-box">
-        <i class="ph ph-drop logo-icon"></i>
-        <h2>Acesso Restrito</h2>
-        <p>Sistema de Irrigação Inteligente</p>
-
-        <input type="text" id="campo-usuario" placeholder="Nome de Usuário" autocomplete="username" aria-label="Usuário">
-        <input type="password" id="campo-senha" autocomplete="current-password" aria-label="Senha" placeholder="Senha">
-        
-        <button class="btn-login" id="entrar">Entrar</button>
-
-        <div role="alert" id="mensagem-erro">Usuário ou senha incorretos.</div>
-    </div>
-
-    <script src="/login.js"></script>
+<body class="access-page login-page">
+<script src="/access-theme.js"></script>
+<header class="access-top"><a class="access-brand" href="/login.html"><span class="water-mark" aria-hidden="true">≈</span><span>HYDRA-S<small>INTELIGÊNCIA HÍDRICA</small></span></a><button type="button" class="access-theme" data-access-theme>Alternar tema</button></header>
+<main class="login-layout">
+<section class="login-story" aria-labelledby="identity-heading"><span class="access-eyebrow">ÁGUA · SOLO · AUTOMAÇÃO</span><h1 id="identity-heading">Mais clareza.<br>Em cada gota.</h1><p>Um ambiente para acompanhar seu cultivo, observar os sensores e cuidar da irrigação.</p><div class="water-visual" aria-hidden="true"><div class="water-ring ring-one"></div><div class="water-ring ring-two"></div><div class="water-core">H<span>HYDRA-S</span></div><span class="water-caption">MONITORAR · ENTENDER · CUIDAR</span></div><p class="access-footnote">Tecnologia a serviço do manejo da água.</p></section>
+<section class="login-box access-card" aria-labelledby="login-heading"><span class="access-eyebrow">SEU AMBIENTE DE OPERAÇÃO</span><h2 id="login-heading">Bem-vindo de volta</h2><p>Entre com a conta autorizada pelo responsável da sua instalação.</p>
+<form id="login-form" novalidate><label class="access-field" for="campo-usuario">Usuário<input type="text" id="campo-usuario" placeholder="Seu nome de usuário" autocomplete="username" autocapitalize="none" spellcheck="false"></label><label class="access-field" for="campo-senha">Senha<input type="password" id="campo-senha" autocomplete="current-password" placeholder="Sua senha"></label><button type="submit" class="access-primary btn-login" id="entrar">Entrar</button><p id="login-progress" role="status" class="access-feedback"></p><div role="alert" id="mensagem-erro" class="access-feedback" style="display:none"></div></form>
+<div class="login-support"><span aria-hidden="true">◇</span><p>Acesso pessoal e protegido. Se precisar de uma conta ou de ajuda para entrar, fale com o responsável da instalação.</p></div></section>
+</main><footer class="access-bottom">HYDRA-S · Monitoramento e automação hídrica</footer>
+<script src="/login.js"></script>
 </body></html>
