@@ -341,7 +341,9 @@
 
     <nav class="nav-menu" aria-label="Áreas do sistema">
         <span class="nav-caption">ESPAÇO DE OPERAÇÃO</span>
-        <button type="button" class="nav-btn is-active" id="dashboard-nav" aria-current="page"><span class="nav-symbol" aria-hidden="true">▦</span><span>Painel principal</span></button>
+        <button type="button" class="nav-btn is-active" id="dashboard-nav" data-app-target="overview" aria-controls="overview-section" aria-current="page"><span class="nav-symbol" aria-hidden="true">▦</span><span>Visão Geral</span></button>
+        <button type="button" class="nav-btn" id="history-nav" data-app-target="history" aria-controls="history-section"><span class="nav-symbol" aria-hidden="true">≡</span><span>Histórico e Eventos</span></button>
+        <button type="button" class="nav-btn" id="settings-nav" data-app-target="settings" aria-controls="settings-section"><span class="nav-symbol" aria-hidden="true">⚙</span><span>Configurações</span></button>
         <div id="assistant-nav-slot"></div>
         <span class="nav-caption">FERRAMENTAS E CONTA</span>
         <button class="nav-btn" onclick="abrirDoc()">
@@ -364,7 +366,7 @@
             <i class="ph ph-corners-out" id="icone-fullscreen"></i> <span>Tela Cheia</span>
         </button>
         <a href="painel-adm.html" id="admin-link" class="nav-btn">
-            <i class="ph ph-shield-check"></i> <span>Painel Admin</span>
+            <i class="ph ph-shield-check"></i> <span>Administração</span>
         </a>
         <a href="#" onclick="sdaLogout(); return false" class="nav-btn danger" style="margin-top: 24px;">
             <i class="ph ph-sign-out"></i> <span>Encerrar Sessão</span>
@@ -378,11 +380,12 @@
 </aside>
 
 <main class="main-content main-wrapper" id="main-content" tabindex="-1">
+<section id="overview-section" data-app-section="overview" class="app-section" aria-label="Visão Geral">
     
     <header class="page-header">
         <div>
-            <h2>Análise e planejamento</h2>
-            <p>Histórico, perfis de planta e configuração da irrigação.</p>
+            <h2>Monitoramento complementar</h2>
+            <p>Gráfico de umidade e condições do ambiente.</p>
         </div>
     </header>
 
@@ -461,7 +464,7 @@
             </div>
         </div>
 
-        <div class="bento-card col-span-4 recurso-premium">
+        <div class="bento-card col-span-4 recurso-premium" data-section-target="settings">
             <div class="bento-card-header"><i class="ph ph-faders"></i> Perfis de Operação</div>
             <select id="seletorPlanta" onchange="atualizarLimiteIdeal()" style="padding: 16px; font-size: 16px; margin-bottom: 20px; font-weight: 500;"></select>
             <div style="display: flex; gap: 12px;">
@@ -472,7 +475,7 @@
             <div style="font-size: 13px; color: var(--text-secondary); margin-top: 20px; line-height: 1.6;">O sistema ajustará dinamicamente o gatilho de umidade da bomba baseado no perfil selecionado.</div>
         </div>
 
-        <div class="bento-card col-span-4">
+        <div class="bento-card col-span-4" data-section-target="settings">
             <div class="bento-card-header"><i class="ph ph-clock-user"></i> Cronograma de Automação</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
                 <input type="time" id="input-hora" style="margin: 0;">
@@ -487,6 +490,13 @@
         </div>
 
     </div>
+</section>
+<section id="history-section" data-app-section="history" class="app-section" aria-labelledby="history-heading" hidden>
+<header class="section-heading"><span class="hydra-eyebrow">REGISTROS E RASTREABILIDADE</span><h2 id="history-heading" tabindex="-1">Histórico e Eventos</h2><p>Leituras, acionamentos e consumo estimado do período.</p></header>
+</section>
+<section id="settings-section" data-app-section="settings" class="app-section" aria-labelledby="settings-heading" hidden>
+<header class="section-heading"><span class="hydra-eyebrow">SEU AMBIENTE DE OPERAÇÃO</span><h2 id="settings-heading" tabindex="-1">Configurações</h2><p>Perfis, agendamento e opções existentes. Alterações só são enviadas pelos controles de salvar.</p></header><div class="section-content settings-grid"></div>
+</section>
 </main>
 
 <div id="modal-doc" class="modal">
@@ -921,6 +931,7 @@
         document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); showToast("Documentação gerada com sucesso!", "success");
     }
 </script>
+<script src="/ui-sections.js"></script>
 <script src="/maquete.js"></script>
 <script src="/monitoring.js"></script>
 <script src="/assistant-markdown.js"></script>
