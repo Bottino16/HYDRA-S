@@ -2,7 +2,7 @@
 
 ## Interpretar uma bomba desligada
 
-Uma bomba desligada não significa necessariamente falta de água. No HYDRA-S, pode não existir pedido, o solo pode estar úmido, o destino cheio, haver sensor inválido, retenção de partida, intervalo entre ciclos ou limite de tempo. Sem estado recente e motivo confirmado, a causa é informação insuficiente; não diagnosticar pelo desligamento isolado.
+Uma bomba desligada não significa necessariamente falta de água. Sem estado recente e motivo confirmado, a causa é informação insuficiente. No HYDRA-S, pode não existir pedido, o solo pode estar úmido, o destino cheio, haver sensor inválido, retenção de partida, intervalo entre ciclos ou limite de tempo. Não diagnosticar pelo desligamento isolado.
 
 ## Modo automático local
 
