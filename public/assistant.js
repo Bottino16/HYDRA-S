@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
  async function sendQuestion(question,continuationId=null){
   if(busy||historyLoading)return;setBusy(true);status.dataset.state='loading';following=true;status.textContent='Digitando…';message('user',question);let target=null,text='',done=false;abort=new AbortController();
   try{
-   const response=await window.sdaRequest('/api/chat',{method:'POST',body:JSON.stringify({...continuationId?{continuarRespostaId:continuationId}:{mensagem:question},...(conversationId?{conversaId:conversationId}:{})}),signal:abort.signal});
+   const response=await window.sdaRequest('/api/chat',{method:'POST',body:JSON.stringify({...(continuationId?{continuarRespostaId:continuationId}:{mensagem:question}),...(conversationId?{conversaId:conversationId}:{})}),signal:abort.signal});
    if(!response.ok){status.dataset.state='error';status.textContent=(await response.json()).mensagem;return;}
    const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
    function frame(value){let type='',data='';for(const line of value.split('\n')){if(line.startsWith('event: '))type=line.slice(7);if(line.startsWith('data: '))data+=line.slice(6);}if(!data)return;const payload=JSON.parse(data);

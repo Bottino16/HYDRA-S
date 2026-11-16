@@ -22,7 +22,7 @@ function config() {
   const local=provider==='ollama';
   const flows=[1,2,3].map(i=>{const raw=process.env['FLOW_PUMP_'+i+'_L_MIN'];if(!raw)return null;const v=Number(raw);if(!Number.isFinite(v)||v<=0||v>1000)throw new Error('Vazão inválida.');return v;});
   return {
-    assistant:{provider,ollamaBaseUrl:local?require('./assistant/ollama').localBase(process.env.OLLAMA_BASE_URL||'http://127.0.0.1:11434'):undefined,ollamaModel:process.env.OLLAMA_MODEL||'',ollamaNumCtx:number('OLLAMA_NUM_CTX',4096,2048,4096),ollamaNumPredict:number('OLLAMA_NUM_PREDICT',128,32,384),demo:process.env.ASSISTANT_DEMO==='true',key:process.env.ANTHROPIC_API_KEY||'',model:process.env.ANTHROPIC_MODEL||'',
+    assistant:{provider,ollamaBaseUrl:local?require('./assistant/ollama').localBase(process.env.OLLAMA_BASE_URL||'http://127.0.0.1:11434'):undefined,ollamaModel:process.env.OLLAMA_MODEL||'',ollamaNumCtx:number('OLLAMA_NUM_CTX',4096,2048,4096),ollamaNumPredict:number('OLLAMA_NUM_PREDICT',256,32,384),demo:process.env.ASSISTANT_DEMO==='true',key:process.env.ANTHROPIC_API_KEY||'',model:process.env.ANTHROPIC_MODEL||'',
       hourly:number('ASSISTANT_MESSAGES_PER_HOUR',20,1,1000),daily:number('ASSISTANT_MESSAGES_PER_DAY',100,1,10000),
       messageChars:number('ASSISTANT_MESSAGE_MAX_CHARS',2000,50,8000),maxTokens:number('ASSISTANT_MAX_TOKENS',700,64,4096),
       maxContinuations:number('ASSISTANT_MAX_CONTINUATIONS',2,0,3),historyChars:number('ASSISTANT_HISTORY_MAX_CHARS',6000,100,24000),timeoutMs:number('ASSISTANT_TIMEOUT_SECONDS',local?60:30,1,120)*1000,
