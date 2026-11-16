@@ -8,6 +8,8 @@ test('IA-2D.2: guarda incremental só admite IDs enviados, bloqueia URLs, links,
  const bibliography=review('Texto útil.\n## Referências\nAutor Inventado, 2099.\nhttps://falso.invalid',[doc]);assert.ok(!bibliography.text.includes('Autor Inventado'));
  const checked=review('Segundo Autor, calibre. Silva (2099). [rótulo](https://errado.invalid) [alface.md]',[doc]);assert.deepEqual(checked.citations,[{id:doc.id,title:doc.title}]);assert.ok(!checked.text.includes('Autor'));assert.ok(!checked.text.includes('Silva'));assert.ok(!checked.text.includes('https'));
  assert.deepEqual(review('[alface.md]',[]).citations,[]);assert.equal(review('[alface.md]',[]).text,'');
+ assert.equal(review('Veja inexistente.md e alface.md.',[doc]).text,'Veja  e [alface.md].');
+ const splitFilename=new ReferenceGuard([doc]);assert.equal(splitFilename.push('alface.md'),'');assert.equal(splitFilename.push('x ')+splitFilename.finish(),'alface.mdx ');
 });
 test('IA-2D.2: proveniência contém snapshot exato e hashes de cada evidência; rejeita snapshot adulterado',()=>{
  const trace=provenance([doc]);assert.match(trace.documents[0].sha256,/^[a-f0-9]{64}$/);assert.equal(trace.documents[0].paragraphs[0].id.split('#')[0],doc.id);assert.deepEqual(originalDocuments(trace),[doc]);trace.documents[0].text+=' ALTERADO';assert.deepEqual(originalDocuments(trace),[]);

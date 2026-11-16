@@ -17,7 +17,7 @@ class ReferenceGuard{
   this.pending+=part;let output='';
   const starters=['http://','https://','www.','doi:','segundo ','conforme ','fonte:','fontes:','referências:','referencias:','bibliografia:','de acordo com '];
   while(this.pending){
-   const match=/\[|https?:\/\/|www\.|doi:|\b(?:segundo|conforme)\s+|\b(?:fontes?|refer[eê]ncias?|bibliografia)\s*(?::|\n)|\bde acordo com\s+|\b(?:[a-z0-9-]+\.)+(?:com|org|net|edu|gov|br|invalid|io)\b/iu.exec(this.pending);
+   const match=/\[|https?:\/\/|www\.|doi:|\b[a-z0-9-]+\.md\b|\b(?:segundo|conforme)\s+|\b(?:fontes?|refer[eê]ncias?|bibliografia)\s*(?::|\n)|\bde acordo com\s+|\b(?:[a-z0-9-]+\.)+(?:com|org|net|edu|gov|br|invalid|io)\b/iu.exec(this.pending);
    if(!match){
     let keep=0;if(!final){const lower=this.pending.toLowerCase();for(const start of starters)for(let n=1;n<=Math.min(start.length-1,lower.length);n++)if(lower.endsWith(start.slice(0,n)))keep=Math.max(keep,n);
      const word=this.pending.match(/[\p{L}\p{N}_.-]+$/u)?.[0];if(word&&/^[a-z0-9_.-]+$/i.test(word))keep=Math.max(keep,word.length);
@@ -25,6 +25,8 @@ class ReferenceGuard{
     output+=this.pending.slice(0,this.pending.length-keep);this.pending=this.pending.slice(this.pending.length-keep);break;
    }
    output+=this.pending.slice(0,match.index);this.pending=this.pending.slice(match.index);
+   const filename=this.pending.match(/^[a-z0-9-]+\.md\b/i)?.[0];
+   if(filename){if(filename.length===this.pending.length&&!final)break;if(this.allowed.has(filename))output+='['+filename+']';else this.removed++;this.pending=this.pending.slice(filename.length);continue;}
    if(/^(?:fontes|refer[eê]ncias?|bibliografia)\s*(?::|\n)/i.test(this.pending)){this.bibliography=true;this.pending='';this.removed++;break;}
    if(this.pending[0]==='['){
     const close=this.pending.indexOf(']');if(close<0){if(final){this.removed++;this.pending='';}break;}
