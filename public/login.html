@@ -5,16 +5,44 @@
 <title>HYDRA-S | Acesso ao sistema</title>
 <link rel="stylesheet" href="/ui-foundation.css"><link rel="stylesheet" href="/access.css">
 <link rel="stylesheet" href="/ui-polish.css">
+<link rel="stylesheet" href="/login-premium.css">
 </head>
 <body class="access-page login-page">
 <script src="/access-theme.js"></script>
+<a class="skip-link" href="#campo-usuario">Ir para o login</a>
 <header class="access-top"><a class="access-brand" href="/login.html"><span class="water-mark" aria-hidden="true">≈</span><span>HYDRA-S<small>INTELIGÊNCIA HÍDRICA</small></span></a><button type="button" class="access-theme" data-access-theme>Alternar tema</button></header>
 <main class="login-layout">
-<section class="login-story" aria-labelledby="identity-heading"><span class="access-eyebrow">ÁGUA · SOLO · AUTOMAÇÃO</span><h1 id="identity-heading">Mais clareza.<br>Em cada gota.</h1><p>Um ambiente para acompanhar seu cultivo, observar os sensores e cuidar da irrigação.</p><div class="water-visual" aria-hidden="true"><div class="water-ring ring-one"></div><div class="water-ring ring-two"></div><div class="water-core">H<span>HYDRA-S</span></div><span class="water-caption">MONITORAR · ENTENDER · CUIDAR</span></div><p class="access-footnote">Tecnologia a serviço do manejo da água.</p></section>
-<section class="login-box access-card" aria-labelledby="login-heading"><span class="access-eyebrow">SEU AMBIENTE DE OPERAÇÃO</span><h2 id="login-heading">Bem-vindo de volta</h2><p>Entre com a conta autorizada pelo responsável da sua instalação.</p>
+<section class="login-story" aria-labelledby="identity-heading">
+<span class="access-eyebrow"><span class="identity-line" aria-hidden="true"></span> INTELIGÊNCIA QUE FLUI</span>
+<h1 id="identity-heading">O cuidado começa<br> com <em>cada gota.</em></h1>
+<p>Água, solo e tecnologia em sintonia.<br>Acompanhe sua irrigação com uma nova perspectiva.</p>
+<div class="hydra-landscape" aria-hidden="true">
+<svg viewBox="0 0 640 290" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="water-fill" x1="0" y1="100" x2="0" y2="270" gradientUnits="userSpaceOnUse"><stop stop-color="#53d6ed" stop-opacity=".32"/><stop offset="1" stop-color="#53d6ed" stop-opacity=".02"/></linearGradient><linearGradient id="flow-stroke"><stop stop-color="#53d6ed" stop-opacity=".1"/><stop offset=".5" stop-color="#53d6ed"/><stop offset="1" stop-color="#53d6ed" stop-opacity=".2"/></linearGradient></defs>
+<ellipse cx="324" cy="251" rx="280" ry="29" stroke="currentColor" opacity=".12"/><ellipse cx="324" cy="251" rx="222" ry="17" stroke="currentColor" opacity=".1"/>
+<path d="M35 222C85 195 106 242 157 220S234 189 285 213" stroke="url(#flow-stroke)" stroke-width="2"/>
+<path d="M35 234C85 207 106 254 157 232S234 201 285 225" stroke="currentColor" opacity=".18"/>
+<path d="M236 124V220C236 238 396 238 396 220V124" fill="url(#water-fill)" stroke="currentColor" stroke-opacity=".65" stroke-width="1.5"/>
+<ellipse cx="316" cy="124" rx="80" ry="19" stroke="currentColor" stroke-width="1.5"/>
+<path d="M236 166C265 153 290 181 317 168S367 157 396 166" stroke="currentColor" stroke-opacity=".7"/><path d="M236 166V220C236 238 396 238 396 220V166C367 157 344 155 317 168S265 153 236 166Z" fill="url(#water-fill)"/>
+<path d="M253 137V214M379 137V214" stroke="currentColor" opacity=".12"/>
+<path d="M396 201H429V231H480" stroke="currentColor" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/>
+<circle cx="429" cy="201" r="5" fill="#53d6ed"/>
+<path d="M477 243H590M504 239V203M540 239V186M575 239V209" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M504 218C487 218 483 203 486 195C499 194 507 204 504 218ZM540 210C518 210 514 190 519 181C535 182 543 194 540 210ZM540 198C540 180 553 170 565 173C565 189 554 198 540 198ZM575 225C561 224 557 211 561 204C572 204 578 213 575 225Z" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-opacity=".7"/>
+<path d="M316 58C316 58 302 74 302 83A14 14 0 0 0 330 83C330 74 316 58 316 58Z" fill="url(#water-fill)" stroke="currentColor" stroke-opacity=".75"/>
+<path d="M315 102V105M315 39V23M307 31H323" stroke="currentColor" opacity=".3"/>
+<circle cx="158" cy="220" r="3" fill="currentColor"/><circle cx="480" cy="231" r="3" fill="currentColor"/>
+<path d="M83 180V157H165M458 121H529V146" stroke="currentColor" stroke-dasharray="3 6" opacity=".2"/>
+</svg>
+<div class="landscape-caption"><span>DA ÁGUA AO CULTIVO</span><span>UM SISTEMA. TODO O PERCURSO.</span></div>
+</div>
+<div class="login-principles"><span>Monitorar com clareza</span><span>Irrigar com consciência</span></div>
+</section>
+<section class="login-box access-card" aria-labelledby="login-heading"><div class="login-entry-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3S5 10 5 14a7 7 0 0 0 14 0c0-4-7-11-7-11Z" stroke="currentColor" stroke-width="1.5"/><path d="M9 15a3 3 0 0 0 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div><span class="access-eyebrow">ACESSO À SUA INSTALAÇÃO</span><h2 id="login-heading">Seu controle.<br>Sua conexão.</h2><p>Entre no HYDRA-S para acompanhar o que importa.</p>
 <form id="login-form" novalidate><label class="access-field" for="campo-usuario">Usuário<input type="text" id="campo-usuario" placeholder="Seu nome de usuário" autocomplete="username" autocapitalize="none" spellcheck="false"></label><label class="access-field" for="campo-senha">Senha<input type="password" id="campo-senha" autocomplete="current-password" placeholder="Sua senha"></label><button type="submit" class="access-primary btn-login" id="entrar">Entrar</button><p id="login-progress" role="status" class="access-feedback"></p><div role="alert" id="mensagem-erro" class="access-feedback" style="display:none"></div></form>
-<div class="login-support"><span aria-hidden="true">◇</span><p>Acesso pessoal e protegido. Se precisar de uma conta ou de ajuda para entrar, fale com o responsável da instalação.</p></div></section>
-</main><footer class="access-bottom">HYDRA-S · Monitoramento e automação hídrica</footer>
+<div class="login-support"><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 8 3v5c0 5-8 10-8 10S4 16 4 11V6l8-3Z" stroke="currentColor" stroke-width="1.5"/><path d="m8.5 11 2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5"/></svg></span><p>Acesso pessoal e protegido. Se precisar de uma conta ou de ajuda para entrar, fale com o responsável da instalação.</p></div></section>
+</main><footer class="access-bottom"><span>HYDRA-S <span aria-hidden="true">/</span> Inteligência hídrica</span><span>Tecnologia para cuidar da água.</span></footer>
 <script src="/login.js"></script>
 <script src="/ui-polish.js"></script>
 </body></html>
