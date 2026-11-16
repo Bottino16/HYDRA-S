@@ -15,9 +15,10 @@
   // Aviso local, sem salvar automaticamente nem recriar os campos na navegação.
   document.querySelector('.settings-schedule')?.addEventListener('input',()=>feedback('schedule-feedback','Alterações no formulário ainda não enviadas.','warning'));
   for(const id of ['modal-perfil','modal-calendario']){
-   const modal=document.getElementById(id);if(!modal)continue;let previous;
-   const observer=new MutationObserver(()=>{if(modal.style.display==='flex'){previous=document.activeElement;modal.querySelector('input,button')?.focus();}else if(previous){previous.focus();previous=null;}});observer.observe(modal,{attributes:true,attributeFilter:['style']});
-   modal.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const controls=[...modal.querySelectorAll('input:not([type=hidden]),button,[tabindex="0"]')].filter(el=>!el.disabled);const first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}});
+   const modal=document.getElementById(id);if(!modal)continue;let previous,open=false;
+   const controls=()=>[...modal.querySelectorAll('*')].filter(el=>['INPUT','BUTTON','SELECT','TEXTAREA'].includes(el.tagName)&&!el.disabled&&el.type!=='hidden');
+   const observer=new MutationObserver(()=>{const visible=modal.style.display==='flex';if(visible===open)return;open=visible;if(open){previous=document.activeElement;controls()[0]?.focus();}else{previous?.focus();previous=null;}});observer.observe(modal,{attributes:true,attributeFilter:['style']});
+   modal.addEventListener('keydown',event=>{if(event.key!=='Tab')return;const items=controls(),first=items[0],last=items.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}});
   }
  });
 })();
