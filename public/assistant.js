@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   el('p',metadata.referenceReview?'Evidências enviadas ao modelo:':'Registro antigo de fontes, sem auditoria de trechos:',details);
   if(!metadata.sources?.length)el('p','Sem evidência documental selecionada para esta parte.',details);
   const items=el('ul',undefined,details);for(const source of metadata.sources||[]){const item=el('li',undefined,items);el('strong',source.title||source.id,item);el('small',source.id,item);}
-  if(metadata.referenceReview?.state==='context-only')el('p','Resposta em geração; citações ainda não conferidas.',details);
+  if(metadata.referenceReview?.state==='context-only')el('p','Citações ainda não conferidas para esta parte.',details);
   else if(metadata.referenceReview){el('p','IDs citados nesta parte: '+((metadata.citations||[]).map(s=>s.id).join(', ')||'nenhum'),details);if(metadata.referenceReview.removed)el('p','Referências não verificadas do texto foram omitidas.',details);}
   el('p','Envio de evidência ou ID válido não comprova a precisão de cada afirmação.',details);
  }
