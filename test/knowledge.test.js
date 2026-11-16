@@ -2,12 +2,22 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const {Knowledge}=require('../src/assistant/knowledge'),{fitLocalRequest}=require('../src/assistant/local-context'),{SYSTEM_PROMPT}=require('../src/assistant/prompt'),{contextFor}=require('../src/assistant/context');
 const baseline=require('./fixtures/rag-ia2b-baseline.json');
 const expected=[['irrigacao-culturas.md'],['sensor-capacitivo-calibracao.md'],[],[],['irrigacao-culturas.md'],[],[],[],['sensor-capacitivo-calibracao.md'],[],['ph-nutrientes.md'],[]];
-test('IA-2B: as mesmas 12 perguntas da auditoria selecionam evidência pertinente ou nenhuma',()=>{
- const rag=new Knowledge(path.resolve('knowledge'));assert.equal(baseline.cases.length,12);
+// Historical IA-2B expectations describe the original seven-document corpus.
+// New system documents intentionally fill several of its previously empty searches.
+// Keep every old assertion; IA-2C.1 tests exercise the entire expanded corpus separately.
+function legacyKnowledge(t){
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hydra-rag-legacy-'));
+ t.after(()=>{const target=path.resolve(dir);assert.ok(target.startsWith(path.resolve(os.tmpdir())+path.sep)&&path.basename(target).startsWith('hydra-rag-legacy-'));fs.rmSync(target,{recursive:true,force:true});});
+ const ids=[...new Set(baseline.cases.flatMap(c=>c.documents.map(d=>d.id)))];assert.equal(ids.length,7);
+ for(const id of ids){assert.match(id,/^[a-z0-9-]+\.md$/);fs.copyFileSync(path.resolve('knowledge',id),path.join(dir,id));}
+ return new Knowledge(dir);
+}
+test('IA-2B: as mesmas 12 perguntas da auditoria selecionam evidência pertinente ou nenhuma no corpus original',t=>{
+ const rag=legacyKnowledge(t);assert.equal(baseline.cases.length,12);
  baseline.cases.forEach((c,i)=>{const docs=rag.search(c.question);assert.deepEqual(docs.map(d=>d.id),expected[i],c.question);for(const d of docs){assert.ok(d.title.trim());assert.ok(!d.text.includes('#'));assert.ok(!d.text.includes('https://'));assert.ok(d.text.length>60);}});
 });
-test('IA-2B: acentos, pH curto, plurais e equivalências explícitas sem prefixos arbitrários',()=>{
- const rag=new Knowledge('knowledge');
+test('IA-2B: acentos, pH curto, plurais e equivalências explícitas sem prefixos arbitrários no corpus original',t=>{
+ const rag=legacyKnowledge(t);
  for(const q of ['calibrar sensor capacitivo','CALIBRAÇÃO sensores capacitivos','sensor calibrado','sensores calibradas','calibracao'])assert.equal(rag.search(q)[0]?.id,'sensor-capacitivo-calibracao.md',q);
  assert.equal(rag.search('pH')[0].id,'ph-nutrientes.md');
  for(const q of ['excesso de água','falta de agua','déficit hídrico','solo encharcado'])assert.equal(rag.search(q)[0]?.id,'excesso-falta-agua.md',q);
