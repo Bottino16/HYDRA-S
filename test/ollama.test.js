@@ -33,14 +33,14 @@ test('Ollama: endpoint só permite loopback literal HTTP, sem caminhos, credenci
  for(const url of ['http://192.168.1.2:11434','https://127.0.0.1','http://example.com','http://user:pass@127.0.0.1','http://127.0.0.1/api','http://127.0.0.1?token=x'])assert.throws(()=>localBase(url));
 });
 test('Ollama: orçamento mantém regras, pergunta e contexto; limita RAG/histórico e recusa excesso',()=>{
- const req=payload();req.messages.unshift({role:'assistant',content:'x'.repeat(10000)});const fitted=fitLocalRequest(req,cfg);assert.ok(fitted.budget.estimatedInputUpperBound<=fitted.budget.inputLimit);assert.equal(fitted.messages.length,1);const data=JSON.parse(fitted.messages.at(-1).content);assert.equal(data.pergunta,'Como calibrar o sensor?');assert.equal(data.contexto.solo,'sem dados');assert.equal(req.system,SYSTEM_PROMPT);assert.equal(data.documentos[0].id,'sensor.md');
+ const req=payload();req.messages.unshift({role:'assistant',content:'x'.repeat(10000)});const fitted=fitLocalRequest(req,cfg);assert.ok(fitted.budget.estimatedInputTokens<=fitted.budget.inputLimit);assert.equal(fitted.messages.length,1);const data=JSON.parse(fitted.messages.at(-1).content);assert.equal(data.pergunta,'Como calibrar o sensor?');assert.equal(data.contexto.solo,'sem dados');assert.equal(req.system,SYSTEM_PROMPT);assert.equal(data.documentos[0].id,'sensor.md');
  req.messages.at(-1).content=JSON.stringify({pergunta:'x'.repeat(10000),contexto:{},documentos:[]});assert.throws(()=>fitLocalRequest(req,cfg),{code:'CONTEXT_LIMIT',status:400});
 });
 test('Ollama: saída 256 respeita teto geral e mantém contexto 4096 com todas as regras',async t=>{
  const f=await fixture(t),old=f.app.assistant,{AssistantService}=require('../src/assistant/service');
  const service=new AssistantService({store:old.store,device:old.device,weather:old.weather,config:{...old.cfg,ollamaNumPredict:256,maxTokens:700},simulate:true,provider:old.provider});
  const job=await service.prepare({id:1,nivel:'master',usuario:'ollama_admin'},{mensagem:'Por que calibrar um sensor capacitivo?'});
- try{assert.equal(job.request.max_tokens,256);assert.equal(job.budget.inputLimit,3584);assert.equal(job.request.system,SYSTEM_PROMPT);assert.match(SYSTEM_PROMPT,/até três tópicos curtos/);assert.match(SYSTEM_PROMPT,/NUNCA aciona bombas/);assert.match(SYSTEM_PROMPT,/SIMULAÇÃO/);assert.ok(job.budget.estimatedInputUpperBound<=3584);
+ try{assert.equal(job.request.max_tokens,256);assert.equal(job.budget.inputLimit,3072);assert.equal(job.request.system,SYSTEM_PROMPT);assert.match(SYSTEM_PROMPT,/até três tópicos curtos/);assert.match(SYSTEM_PROMPT,/NUNCA aciona bombas/);assert.match(SYSTEM_PROMPT,/SIMULAÇÃO/);assert.ok(job.budget.estimatedInputTokens<=3072);
  let sent;const adapter=new OllamaProvider(cfg,{fetcher:async(url,options)=>{sent=JSON.parse(options.body);return response(frame('Calibre com referências locais.',true));}});for await(const part of adapter.stream(job.request,{signal:new AbortController().signal}))assert.ok(part);assert.equal(sent.options.num_predict,256);assert.equal(sent.options.num_ctx,4096);
  }finally{job.release();}const lower=new AssistantService({store:old.store,device:old.device,weather:old.weather,config:{...old.cfg,ollamaNumPredict:256,maxTokens:64},simulate:true,provider:old.provider});assert.equal(lower.cfg.maxTokens,64);
 });
