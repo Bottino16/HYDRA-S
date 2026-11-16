@@ -1,0 +1,245 @@
+{
+  "description": "Comparação determinística sem Ollama; mesmos arquivos agronômicos e perguntas do baseline.",
+  "results": [
+    {
+      "question": "Qual é a umidade ideal para alface?",
+      "before": [
+        {
+          "id": "excesso-falta-agua.md",
+          "title": "Sinais de excesso e falta de água\r",
+          "text": "Murcha pode ocorrer com déficit hídrico, mas não confirma sozinha sua causa. Encharcamento reduz a aeração das raízes. Observe umidade na zona radicular e drenagem antes de irrigar mais. Sintomas semelhantes exigem investigação; não diagnostique doença ou deficiência apenas pela aparência e pelo sensor.\r"
+        },
+        {
+          "id": "irrigacao-culturas.md",
+          "title": "Irrigação por cultura: alface e outras hortaliças\r",
+          "text": "# Irrigação por cultura: alface e outras hortaliças\r\n\nAlface e folhas têm raízes relativamente superficiais e são sensíveis a estresse hídrico. O manejo deve considerar fase da cultura, clima e solo. Não há percentual universal na escala de um sensor não calibrado. Gotejamento bem manejado pode reduzir perdas. Compare culturas e ajuste frequência e aplicação com avaliação técnica, sem transportar receitas de outra região.\r"
+        },
+        {
+          "id": "materia-organica.md",
+          "title": "Matéria orgânica e manejo\r",
+          "text": "A matéria orgânica participa do funcionamento do solo. Seu teor pode ser avaliado em laboratório junto com pH e nutrientes. Um resultado isolado não define uma dose universal de composto ou adubo: considere cultura, origem do material, solo e orientação técnica local. Sensor de umidade não mede matéria orgânica.\r"
+        }
+      ],
+      "after": [
+        {
+          "id": "irrigacao-culturas.md",
+          "title": "Irrigação por cultura: alface e outras hortaliças",
+          "text": "Alface e folhas têm raízes relativamente superficiais e são sensíveis a estresse hídrico. O manejo deve considerar fase da cultura, clima e solo. Não há percentual universal na escala de um sensor não calibrado. Gotejamento bem manejado pode reduzir perdas. Compare culturas e ajuste frequência e aplicação com avaliação técnica, sem transportar receitas de outra região."
+        }
+      ]
+    },
+    {
+      "question": "Por que calibrar um sensor capacitivo de umidade?",
+      "before": [
+        {
+          "id": "ph-nutrientes.md",
+          "title": "pH, nutrientes e análise de solo\r",
+          "text": "pH e disponibilidade de nutrientes precisam de avaliação própria: o sensor capacitivo não os mede. A análise de solo ajuda a orientar correção e adubação conforme cultura e condições locais. Não aplicar doses de corretivos, fertilizantes ou agrotóxicos a partir de uma leitura de umidade; procure agrônomo e laboratório.\r"
+        },
+        {
+          "id": "excesso-falta-agua.md",
+          "title": "Sinais de excesso e falta de água\r",
+          "text": "Murcha pode ocorrer com déficit hídrico, mas não confirma sozinha sua causa. Encharcamento reduz a aeração das raízes. Observe umidade na zona radicular e drenagem antes de irrigar mais. Sintomas semelhantes exigem investigação; não diagnostique doença ou deficiência apenas pela aparência e pelo sensor.\r"
+        },
+        {
+          "id": "materia-organica.md",
+          "title": "Matéria orgânica e manejo\r",
+          "text": "A matéria orgânica participa do funcionamento do solo. Seu teor pode ser avaliado em laboratório junto com pH e nutrientes. Um resultado isolado não define uma dose universal de composto ou adubo: considere cultura, origem do material, solo e orientação técnica local. Sensor de umidade não mede matéria orgânica.\r"
+        }
+      ],
+      "after": [
+        {
+          "id": "sensor-capacitivo-calibracao.md",
+          "title": "Sensor capacitivo e calibração",
+          "text": "Sensores capacitivos precisam de calibração adequada ao solo, pois os atributos do material afetam a resposta. No HYDRA-S, os pontos seco e úmido criam uma escala relativa; isso não garante medição volumétrica. Compare com método de referência e amostras representativas com apoio técnico. Sem Arduino, apenas simule: não considere os valores provisórios uma calibração real."
+        }
+      ]
+    },
+    {
+      "question": "Se minha caixa d’água está cheia, isso significa que minha plantação está encharcada?",
+      "before": [
+        {
+          "id": "excesso-falta-agua.md",
+          "title": "Sinais de excesso e falta de água\r",
+          "text": "# Sinais de excesso e falta de água\r"
+        },
+        {
+          "id": "sensor-capacitivo-calibracao.md",
+          "title": "Sensor capacitivo e calibração\r",
+          "text": "Sensores capacitivos precisam de calibração adequada ao solo, pois os atributos do material afetam a resposta. No HYDRA-S, os pontos seco e úmido criam uma escala relativa; isso não garante medição volumétrica. Compare com método de referência e amostras representativas com apoio técnico. Sem Arduino, apenas simule: não considere os valores provisórios uma calibração real.\r"
+        },
+        {
+          "id": "textura-drenagem.md",
+          "title": "Textura, estrutura e drenagem\r",
+          "text": "Textura é a proporção de areia, silte e argila. Estrutura e compactação também afetam poros, infiltração e drenagem. Solo arenoso costuma exigir aplicações menores e mais frequentes; camadas compactadas podem reter água mesmo com superfície arenosa. Confirme o comportamento no local.\r"
+        }
+      ],
+      "after": []
+    },
+    {
+      "question": "Minha caixa está cheia",
+      "before": [],
+      "after": []
+    },
+    {
+      "question": "70% é uma umidade ideal universal?",
+      "before": [
+        {
+          "id": "materia-organica.md",
+          "title": "Matéria orgânica e manejo\r",
+          "text": "A matéria orgânica participa do funcionamento do solo. Seu teor pode ser avaliado em laboratório junto com pH e nutrientes. Um resultado isolado não define uma dose universal de composto ou adubo: considere cultura, origem do material, solo e orientação técnica local. Sensor de umidade não mede matéria orgânica.\r"
+        },
+        {
+          "id": "excesso-falta-agua.md",
+          "title": "Sinais de excesso e falta de água\r",
+          "text": "Murcha pode ocorrer com déficit hídrico, mas não confirma sozinha sua causa. Encharcamento reduz a aeração das raízes. Observe umidade na zona radicular e drenagem antes de irrigar mais. Sintomas semelhantes exigem investigação; não diagnostique doença ou deficiência apenas pela aparência e pelo sensor.\r"
+        },
+        {
+          "id": "irrigacao-culturas.md",
+          "title": "Irrigação por cultura: alface e outras hortaliças\r",
+          "text": "Alface e folhas têm raízes relativamente superficiais e são sensíveis a estresse hídrico. O manejo deve considerar fase da cultura, clima e solo. Não há percentual universal na escala de um sensor não calibrado. Gotejamento bem manejado pode reduzir perdas. Compare culturas e ajuste frequência e aplicação com avaliação técnica, sem transportar receitas de outra região.\r"
+        }
+      ],
+      "after": [
+        {
+          "id": "irrigacao-culturas.md",
+          "title": "Irrigação por cultura: alface e outras hortaliças",
+          "text": "Alface e folhas têm raízes relativamente superficiais e são sensíveis a estresse hídrico. O manejo deve considerar fase da cultura, clima e solo. Não há percentual universal na escala de um sensor não calibrado. Gotejamento bem manejado pode reduzir perdas. Compare culturas e ajuste frequência e aplicação com avaliação técnica, sem transportar receitas de outra região."
+        }
+      ]
+    },
+    {
+      "question": "Como funciona o HYDRA-S?",
+      "before": [
+        {
+          "id": "materia-organica.md",
+          "title": "Matéria orgânica e manejo\r",
+          "text": "A matéria orgânica participa do funcionamento do solo. Seu teor pode ser avaliado em laboratório junto com pH e nutrientes. Um resultado isolado não define uma dose universal de composto ou adubo: considere cultura, origem do material, solo e orientação técnica local. Sensor de umidade não mede matéria orgânica.\r"
+        },
+        {
+          "id": "sensor-capacitivo-calibracao.md",
+          "title": "Sensor capacitivo e calibração\r",
+          "text": "Sensores capacitivos precisam de calibração adequada ao solo, pois os atributos do material afetam a resposta. No HYDRA-S, os pontos seco e úmido criam uma escala relativa; isso não garante medição volumétrica. Compare com método de referência e amostras representativas com apoio técnico. Sem Arduino, apenas simule: não considere os valores provisórios uma calibração real.\r"
+        },
+        {
+          "id": "umidade-capacidade-campo.md",
+          "title": "Umidade e capacidade de campo\r",
+          "text": "Após molhamento, parte da água drena por gravidade. Capacidade de campo descreve a água retida quando essa drenagem diminui. Água disponível às raízes fica entre capacidade de campo e ponto de murcha. Esses limites dependem do solo. A escala relativa do sensor HYDRA-S não equivale a esses valores.\r"
+        }
+      ],
+      "after": []
+    },
+    {
+      "question": "Que bomba leva água do rio ao poço?",
+      "before": [
+        {
+          "id": "excesso-falta-agua.md",
+          "title": "Sinais de excesso e falta de água\r",
+          "text": "# Sinais de excesso e falta de água\r"
+        },
+        {
+          "id": "textura-drenagem.md",
+          "title": "Textura, estrutura e drenagem\r",
+          "text": "Textura é a proporção de areia, silte e argila. Estrutura e compactação também afetam poros, infiltração e drenagem. Solo arenoso costuma exigir aplicações menores e mais frequentes; camadas compactadas podem reter água mesmo com superfície arenosa. Confirme o comportamento no local.\r"
+        },
+        {
+          "id": "umidade-capacidade-campo.md",
+          "title": "Umidade e capacidade de campo\r",
+          "text": "Após molhamento, parte da água drena por gravidade. Capacidade de campo descreve a água retida quando essa drenagem diminui. Água disponível às raízes fica entre capacidade de campo e ponto de murcha. Esses limites dependem do solo. A escala relativa do sensor HYDRA-S não equivale a esses valores.\r"
+        }
+      ],
+      "after": []
+    },
+    {
+      "question": "Posso regar?",
+      "before": [],
+      "after": []
+    },
+    {
+      "question": "Sensor de umidade",
+      "before": [
+        {
+          "id": "excesso-falta-agua.md",
+          "title": "Sinais de excesso e falta de água\r",
+          "text": "Murcha pode ocorrer com déficit hídrico, mas não confirma sozinha sua causa. Encharcamento reduz a aeração das raízes. Observe umidade na zona radicular e drenagem antes de irrigar mais. Sintomas semelhantes exigem investigação; não diagnostique doença ou deficiência apenas pela aparência e pelo sensor.\r"
+        },
+        {
+          "id": "materia-organica.md",
+          "title": "Matéria orgânica e manejo\r",
+          "text": "A matéria orgânica participa do funcionamento do solo. Seu teor pode ser avaliado em laboratório junto com pH e nutrientes. Um resultado isolado não define uma dose universal de composto ou adubo: considere cultura, origem do material, solo e orientação técnica local. Sensor de umidade não mede matéria orgânica.\r"
+        },
+        {
+          "id": "ph-nutrientes.md",
+          "title": "pH, nutrientes e análise de solo\r",
+          "text": "pH e disponibilidade de nutrientes precisam de avaliação própria: o sensor capacitivo não os mede. A análise de solo ajuda a orientar correção e adubação conforme cultura e condições locais. Não aplicar doses de corretivos, fertilizantes ou agrotóxicos a partir de uma leitura de umidade; procure agrônomo e laboratório.\r"
+        }
+      ],
+      "after": [
+        {
+          "id": "sensor-capacitivo-calibracao.md",
+          "title": "Sensor capacitivo e calibração",
+          "text": "Sensores capacitivos precisam de calibração adequada ao solo, pois os atributos do material afetam a resposta. No HYDRA-S, os pontos seco e úmido criam uma escala relativa; isso não garante medição volumétrica. Compare com método de referência e amostras representativas com apoio técnico. Sem Arduino, apenas simule: não considere os valores provisórios uma calibração real."
+        }
+      ]
+    },
+    {
+      "question": "Qual irrigação para tomate e milho?",
+      "before": [
+        {
+          "id": "irrigacao-culturas.md",
+          "title": "Irrigação por cultura: alface e outras hortaliças\r",
+          "text": "# Irrigação por cultura: alface e outras hortaliças\r"
+        }
+      ],
+      "after": []
+    },
+    {
+      "question": "Qual o pH do meu solo?",
+      "before": [
+        {
+          "id": "irrigacao-culturas.md",
+          "title": "Irrigação por cultura: alface e outras hortaliças\r",
+          "text": "Alface e folhas têm raízes relativamente superficiais e são sensíveis a estresse hídrico. O manejo deve considerar fase da cultura, clima e solo. Não há percentual universal na escala de um sensor não calibrado. Gotejamento bem manejado pode reduzir perdas. Compare culturas e ajuste frequência e aplicação com avaliação técnica, sem transportar receitas de outra região.\r"
+        },
+        {
+          "id": "materia-organica.md",
+          "title": "Matéria orgânica e manejo\r",
+          "text": "A matéria orgânica participa do funcionamento do solo. Seu teor pode ser avaliado em laboratório junto com pH e nutrientes. Um resultado isolado não define uma dose universal de composto ou adubo: considere cultura, origem do material, solo e orientação técnica local. Sensor de umidade não mede matéria orgânica.\r"
+        },
+        {
+          "id": "ph-nutrientes.md",
+          "title": "pH, nutrientes e análise de solo\r",
+          "text": "# pH, nutrientes e análise de solo\r\n\npH e disponibilidade de nutrientes precisam de avaliação própria: o sensor capacitivo não os mede. A análise de solo ajuda a orientar correção e adubação conforme cultura e condições locais. Não aplicar doses de corretivos, fertilizantes ou agrotóxicos a partir de uma leitura de umidade; procure agrônomo e laboratório.\r"
+        }
+      ],
+      "after": [
+        {
+          "id": "ph-nutrientes.md",
+          "title": "pH, nutrientes e análise de solo",
+          "text": "pH e disponibilidade de nutrientes precisam de avaliação própria: o sensor capacitivo não os mede. A análise de solo ajuda a orientar correção e adubação conforme cultura e condições locais. Não aplicar doses de corretivos, fertilizantes ou agrotóxicos a partir de uma leitura de umidade; procure agrônomo e laboratório."
+        }
+      ]
+    },
+    {
+      "question": "Quais são as fontes?",
+      "before": [
+        {
+          "id": "excesso-falta-agua.md",
+          "title": "Sinais de excesso e falta de água\r",
+          "text": "## Fontes de referência\r"
+        },
+        {
+          "id": "irrigacao-culturas.md",
+          "title": "Irrigação por cultura: alface e outras hortaliças\r",
+          "text": "Alface e folhas têm raízes relativamente superficiais e são sensíveis a estresse hídrico. O manejo deve considerar fase da cultura, clima e solo. Não há percentual universal na escala de um sensor não calibrado. Gotejamento bem manejado pode reduzir perdas. Compare culturas e ajuste frequência e aplicação com avaliação técnica, sem transportar receitas de outra região.\r\n\n## Fontes de referência\r"
+        },
+        {
+          "id": "materia-organica.md",
+          "title": "Matéria orgânica e manejo\r",
+          "text": "## Fontes de referência\r"
+        }
+      ],
+      "after": []
+    }
+  ]
+}
