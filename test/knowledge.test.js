@@ -3,13 +3,14 @@ const {Knowledge}=require('../src/assistant/knowledge'),{fitLocalRequest}=requir
 const baseline=require('./fixtures/rag-ia2b-baseline.json');
 const expected=[['irrigacao-culturas.md'],['sensor-capacitivo-calibracao.md'],[],[],['irrigacao-culturas.md'],[],[],[],['sensor-capacitivo-calibracao.md'],[],['ph-nutrientes.md'],[]];
 // Historical IA-2B expectations describe the original seven-document corpus.
-// New system documents intentionally fill several of its previously empty searches.
-// Keep every old assertion; IA-2C.1 tests exercise the entire expanded corpus separately.
+// Frozen texts preserve historical expectations even when IA-2C.2 reviews agronomy.
+// Full-corpus tests below and in knowledge-system/agronomy exercise current documents.
 function legacyKnowledge(t){
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'hydra-rag-legacy-'));
  t.after(()=>{const target=path.resolve(dir);assert.ok(target.startsWith(path.resolve(os.tmpdir())+path.sep)&&path.basename(target).startsWith('hydra-rag-legacy-'));fs.rmSync(target,{recursive:true,force:true});});
  const ids=[...new Set(baseline.cases.flatMap(c=>c.documents.map(d=>d.id)))];assert.equal(ids.length,7);
- for(const id of ids){assert.match(id,/^[a-z0-9-]+\.md$/);fs.copyFileSync(path.resolve('knowledge',id),path.join(dir,id));}
+ const original=require('./fixtures/rag-ia2b-corpus.json');
+ for(const id of ids){assert.match(id,/^[a-z0-9-]+\.md$/);assert.equal(typeof original[id],'string');fs.writeFileSync(path.join(dir,id),original[id],'utf8');}
  return new Knowledge(dir);
 }
 test('IA-2B: as mesmas 12 perguntas da auditoria selecionam evidência pertinente ou nenhuma no corpus original',t=>{

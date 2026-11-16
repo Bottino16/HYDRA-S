@@ -1,0 +1,144 @@
+[
+  {
+    "question": "Qual é a umidade ideal para alface?",
+    "document": "irrigacao-culturas.md",
+    "evidence": [
+      "Alface",
+      "Não há percentual universal",
+      "estabelecimento"
+    ]
+  },
+  {
+    "question": "Como irrigar tomate?",
+    "document": "irrigacao-culturas.md",
+    "evidence": [
+      "Tomate não tem percentual ideal universal",
+      "florescimento",
+      "pegamento"
+    ]
+  },
+  {
+    "question": "Como irrigar milho?",
+    "document": "irrigacao-culturas.md",
+    "evidence": [
+      "Milho não tem percentual ideal universal",
+      "pendoamento",
+      "polinização"
+    ]
+  },
+  {
+    "question": "Por que calibrar um sensor capacitivo de umidade?",
+    "document": "sensor-capacitivo-calibracao.md",
+    "evidence": [
+      "calibração adequada ao solo",
+      "não garante medição volumétrica"
+    ]
+  },
+  {
+    "question": "O que é capacidade de campo?",
+    "document": "umidade-capacidade-campo.md",
+    "evidence": [
+      "Capacidade de campo é a umidade retida",
+      "Não é saturação"
+    ]
+  },
+  {
+    "question": "O que é ponto de murcha permanente?",
+    "document": "umidade-capacidade-campo.md",
+    "evidence": [
+      "Ainda existe água",
+      "não é recomendação para esperar"
+    ]
+  },
+  {
+    "question": "Como identificar excesso de água?",
+    "document": "excesso-falta-agua.md",
+    "evidence": [
+      "Encharcamento prolongado reduz a aeração",
+      "não comprovam uma doença específica"
+    ]
+  },
+  {
+    "question": "Como identificar falta de água?",
+    "document": "excesso-falta-agua.md",
+    "evidence": [
+      "murcha não confirma sozinha déficit hídrico",
+      "Raízes comprometidas por excesso"
+    ]
+  },
+  {
+    "question": "Como a textura afeta a drenagem?",
+    "document": "textura-drenagem.md",
+    "evidence": [
+      "textura superficial sozinha não determina a drenagem"
+    ]
+  },
+  {
+    "question": "O que é matéria orgânica?",
+    "document": "materia-organica.md",
+    "evidence": [
+      "Contribui para agregação",
+      "não significa dispensar irrigação"
+    ]
+  },
+  {
+    "question": "Qual o pH do meu solo?",
+    "document": "ph-nutrientes.md",
+    "evidence": [
+      "sensor capacitivo não os mede",
+      "não mede diretamente sua quantidade"
+    ]
+  },
+  {
+    "question": "Como o pH afeta nutrientes?",
+    "document": "ph-nutrientes.md",
+    "evidence": [
+      "influencia a disponibilidade",
+      "informação insuficiente"
+    ]
+  },
+  {
+    "question": "Qual é a diferença entre o nível da caixa e a umidade do solo?",
+    "document": "hydra-caixa-solo.md",
+    "evidence": [
+      "Caixa cheia não significa solo encharcado"
+    ]
+  },
+  {
+    "question": "Qual irrigação para tomate e milho?",
+    "document": "irrigacao-culturas.md",
+    "evidence": [
+      "Tomate",
+      "Milho"
+    ]
+  },
+  {
+    "question": "Posso regar?",
+    "document": null,
+    "evidence": []
+  },
+  {
+    "question": "Qual a umidade ideal para feijão?",
+    "document": null,
+    "evidence": []
+  },
+  {
+    "question": "Qual o pH ideal para café?",
+    "document": "ph-nutrientes.md",
+    "evidence": [
+      "nem estabelece uma faixa ideal universal",
+      "informação insuficiente"
+    ],
+    "coverage": "general-only; nenhum valor específico para café documentado"
+  },
+  {
+    "question": "criptomoedas zzzzz",
+    "document": null,
+    "evidence": []
+  },
+  {
+    "question": "Qual a umidade ideal para cacto?",
+    "document": null,
+    "evidence": []
+  }
+]

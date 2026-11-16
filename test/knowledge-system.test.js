@@ -6,7 +6,9 @@ async function simulatedContext(connected){return contextFor({store:{profiles:[{
 test('IA-2C.1: perguntas obrigatórias e agronomia recuperam evidência explicativa no corpus completo',()=>{
  const rag=new Knowledge('knowledge');
  for(const c of cases){const docs=rag.search(c.question);assert.equal(docs[0]?.id,c.document,c.question);for(const part of c.evidence)assert.ok(docs[0].text.includes(part),c.question+': '+part);for(const d of docs){assert.ok(!d.text.includes('#'));assert.ok(!d.text.includes('## Fontes'));assert.ok(d.text.length<=1600);}}
- for(const question of ['Posso regar?','Qual irrigação para tomate e milho?','criptomoedas zzzzz'])assert.deepEqual(rag.search(question),[],question);
+ // IA-2C.2 now documents both crops; absence remains required for uncovered subjects.
+ const crops=rag.search('Qual irrigação para tomate e milho?');assert.equal(crops[0]?.id,'irrigacao-culturas.md');assert.match(crops[0].text,/Tomate/);assert.match(crops[0].text,/Milho/);
+ for(const question of ['Posso regar?','Qual irrigação para feijão?','criptomoedas zzzzz'])assert.deepEqual(rag.search(question),[],question);
 });
 test('IA-2C.1: tópicos adicionais cobrem ACK sem partida, limites e sensores sem inventar hardware',()=>{
  const rag=new Knowledge('knowledge');
