@@ -1,0 +1,19 @@
+{
+  "audit": "IA-2D.2 antes de alterar código; análise estática e exemplo sintético sem API.",
+  "promptSha256": "4163ac5aa88b40eed3dc5e91d70b91256f490ac5beec0e9b5a25f5995f914488",
+  "documents": [
+    {
+      "id": "sensor.md",
+      "title": "Sensor",
+      "text": "Sensor requer calibração local."
+    }
+  ],
+  "uncheckedOutput": "Calibre [inexistente.md]. Fonte: Autor Inventado (2099). https://fonte-inventada.invalid/",
+  "findings": [
+    "sources continham ID/título dos documentos ajustados, sem snapshot ou hash de evidências",
+    "texto podia citar documento inexistente ou bibliografia não enviada sem validação",
+    "UI mostrava Base consultada, sem separar envio de uso pelo modelo",
+    "continuação refazia busca e podia recuperar outra versão da base",
+    "metadados JSON existentes permitem auditoria aditiva sem migração"
+  ]
+}
