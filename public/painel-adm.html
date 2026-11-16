@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>HYDRA-S | Administração</title><link rel="stylesheet" href="/ui-foundation.css"><link rel="stylesheet" href="/access.css"><link rel="stylesheet" href="/admin.css"><script src="/auth.js"></script></head>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>HYDRA-S | Administração</title><link rel="stylesheet" href="/ui-foundation.css"><link rel="stylesheet" href="/access.css"><link rel="stylesheet" href="/admin.css"><script src="/auth.js"></script><link rel="stylesheet" href="/ui-polish.css">
+</head>
 <body class="access-page admin-page"><script src="/access-theme.js"></script>
 <a class="access-skip" href="#admin-main">Ir para a gestão de contas</a>
 <header class="access-top"><a class="access-brand" href="/arthur.html"><span class="water-mark" aria-hidden="true">≈</span><span>HYDRA-S<small>INTELIGÊNCIA HÍDRICA</small></span></a><div class="admin-top-actions"><button type="button" data-access-theme>Alternar tema</button><button type="button" onclick="fazerLogout()">Encerrar sessão</button></div></header>
@@ -179,4 +180,5 @@
             if(event.key!=='Tab')return;const controls=[...event.currentTarget.querySelectorAll('*')].filter(el=>['BUTTON','INPUT','SELECT'].includes(el.tagName)&&!el.disabled&&el.type!=='hidden');const first=controls[0],last=controls.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}
         });
     </script>
+<script src="/ui-polish.js"></script>
 </body></html>
