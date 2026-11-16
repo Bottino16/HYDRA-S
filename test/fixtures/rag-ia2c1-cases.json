@@ -1,0 +1,90 @@
+[
+  {
+    "question": "Para que serve a bomba de irrigação?",
+    "document": "hydra-percurso-bombas.md",
+    "evidence": [
+      "bomba 3 é a bomba de irrigação",
+      "da Caixa para a Plantação"
+    ],
+    "prefix": "Rio → Poço → Caixa → Plantação"
+  },
+  {
+    "question": "Qual é a diferença entre o nível da caixa e a umidade do solo?",
+    "document": "hydra-caixa-solo.md",
+    "evidence": [
+      "Caixa cheia não significa solo encharcado",
+      "Solo seco não significa falta de água na Caixa"
+    ],
+    "prefix": "Caixa cheia não significa solo encharcado"
+  },
+  {
+    "question": "Como funcionam as cinco boias?",
+    "document": "hydra-cinco-boias.md",
+    "evidence": [
+      "Rio com água, Poço mínimo, Poço máximo, Caixa mínimo e Caixa máximo",
+      "Não medem umidade do solo"
+    ],
+    "prefix": "As cinco boias são"
+  },
+  {
+    "question": "O HYDRA-S está medindo água de verdade?",
+    "document": "hydra-simulacao.md",
+    "evidence": [
+      "não está medindo água de verdade",
+      "SIMULAÇÃO",
+      "NÃO VALIDADO fisicamente"
+    ],
+    "prefix": "não está medindo água de verdade"
+  },
+  {
+    "question": "Uma bomba desligada significa necessariamente falta de água?",
+    "document": "hydra-modos-protecoes.md",
+    "evidence": [
+      "desligada não significa necessariamente falta de água",
+      "informação insuficiente"
+    ],
+    "prefix": "desligada não significa necessariamente falta de água"
+  },
+  {
+    "question": "A IA pode ligar a bomba automaticamente?",
+    "document": "hydra-ia-sem-comandos.md",
+    "evidence": [
+      "A IA não pode ligar a bomba automaticamente",
+      "texto gerado não é executado como comando"
+    ],
+    "prefix": "A IA não pode ligar a bomba automaticamente"
+  },
+  {
+    "question": "Como funciona o HYDRA-S?",
+    "document": "hydra-percurso-bombas.md",
+    "evidence": [
+      "Rio → Poço → Caixa → Plantação",
+      "sem medição de fluxo"
+    ],
+    "prefix": "Rio → Poço → Caixa → Plantação"
+  },
+  {
+    "question": "Qual é a umidade ideal para alface?",
+    "document": "irrigacao-culturas.md",
+    "evidence": [
+      "Não há percentual universal"
+    ],
+    "prefix": "Alface"
+  },
+  {
+    "question": "Por que calibrar um sensor capacitivo de umidade?",
+    "document": "sensor-capacitivo-calibracao.md",
+    "evidence": [
+      "não garante medição volumétrica"
+    ],
+    "prefix": "Sensores capacitivos"
+  },
+  {
+    "question": "Qual o pH do meu solo?",
+    "document": "ph-nutrientes.md",
+    "evidence": [
+      "sensor capacitivo não os mede"
+    ],
+    "prefix": "pH e disponibilidade de nutrientes"
+  }
+]
