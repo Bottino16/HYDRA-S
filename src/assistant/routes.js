@@ -8,26 +8,27 @@ function assistantRoutes(service){
  router.post('/conversas',wrap(async(req,res)=>res.status(201).json({conversaId:await service.store.chatNew(req.user.id,service.cfg.demo)})));
  router.get('/conversas/:id',wrap(async(req,res)=>{const before=req.query.before===undefined?Number.MAX_SAFE_INTEGER:Number(req.query.before);if(!Number.isSafeInteger(before)||before<1)return res.status(400).json({mensagem:'Paginação inválida.'});const rows=await service.store.chatMessages(req.user.id,req.params.id,{before});if(!rows.length)return res.status(404).json({mensagem:'Conversa não encontrada.'});res.json({mensagens:rows,nextBefore:rows.length===100?rows[0].id:null});}));
  router.post('/chat',wrap(async(req,res)=>{
-  const job=await service.prepare(req.user,req.body),controller=new AbortController();service.controllers.add(controller);let timedOut=false,text='',complete=false,limited=false,received=false;
+  const job=await service.prepare(req.user,req.body),controller=new AbortController();service.controllers.add(controller);let timedOut=false,text='',complete=false,limited=false,received=false,stopReason='stop';
   const timer=setTimeout(()=>{timedOut=true;controller.abort();},service.cfg.timeoutMs);timer.unref();const disconnect=()=>controller.abort();res.on('close',disconnect);
   const send=(event,data)=>{if(!res.destroyed)res.write('event: '+event+'\ndata: '+JSON.stringify(data)+'\n\n');};
   res.status(200).set({'Content-Type':'text/event-stream; charset=utf-8','Cache-Control':'no-cache, no-transform','X-Accel-Buffering':'no'});res.flushHeaders();
-  send('meta',{provider:service.engine,model:service.cfg.demo?null:service.cfg.model,conversaId:job.id,demo:service.cfg.demo,fonte:job.context.fonte,telemetria:job.context.telemetria,sources:job.documents.map(d=>({id:d.id,title:d.title}))});
+  send('meta',{provider:service.engine,model:service.cfg.demo?null:service.cfg.model,conversaId:job.id,demo:service.cfg.demo,fonte:job.context.fonte,telemetria:job.context.telemetria,continuationOf:job.rootId,continuationIndex:job.continuationIndex,sources:job.documents.map(d=>({id:d.id,title:d.title}))});
   let iterator;
   const sessionTimer=setInterval(()=>req.sessionStore.get(req.sessionID,(error,data)=>{if(error||!data||data.expiresAt<=Date.now()||!service.store.byId(data.userId)?.ativo)controller.abort();}),1000);sessionTimer.unref();
   try{
-   text=(service.cfg.demo?'**Resposta de demonstração, sem IA real.**\n\n':'')+(job.context.fonte==='SIMULAÇÃO'?'Estou analisando dados simulados.\n\n':'')+(job.context.telemetria==='sem dados'?'Sem dados recentes de sensores; não é possível avaliar o estado atual da maquete.\n\n':'');
+   text=job.rootId?'':(service.cfg.demo?'**Resposta de demonstração, sem IA real.**\n\n':'')+(job.context.fonte==='SIMULAÇÃO'?'Estou analisando dados simulados.\n\n':'')+(job.context.telemetria==='sem dados'?'Sem dados recentes de sensores; não é possível avaliar o estado atual da maquete.\n\n':'');
    if(text)send('delta',{text});
    iterator=service.provider.stream(job.request,{signal:controller.signal,context:job.context,documents:job.documents,question:job.question})[Symbol.asyncIterator]();
    const cap=Math.min(service.cfg.maxTokens*12,12000);
-   while(true){const item=await nextChunk(iterator,controller.signal);if(item.done){limited=!!item.value?.limited;break;}if(typeof item.value!=='string'||!item.value)continue;received=true;const part=item.value.slice(0,cap-text.length);text+=part;send('delta',{text:part});if(text.length>=cap){limited=true;break;}}
+   while(true){const item=await nextChunk(iterator,controller.signal);if(item.done){limited=!!item.value?.limited;stopReason=limited?'length':'stop';break;}if(typeof item.value!=='string'||!item.value)continue;received=true;const part=item.value.slice(0,cap-text.length);text+=part;send('delta',{text:part});if(text.length>=cap){limited=true;stopReason='output_cap';break;}}
    if(!received)throw new Error('resposta vazia');
-   await service.save(job,text,{partial:false,limited});complete=true;send('done',{conversaId:job.id,suggestion:service.suggestion(job),limited});
+   const saved=await service.save(job,text,{partial:false,limited,stopReason});complete=true;send('done',{conversaId:job.id,messageId:saved.id,continuationOf:job.rootId,continuationIndex:job.continuationIndex,canContinue:saved.metadados.canContinue,maxContinuations:service.cfg.maxContinuations,suggestion:job.rootId?null:service.suggestion(job),limited,stopReason});
   }catch(error){
-   if(text&&!complete)await service.save(job,text,{partial:true}).catch(()=>{});
+   stopReason=timedOut||error.code==='TIMEOUT'?'timeout':controller.signal.aborted||error.code==='CANCELLED'?'cancelled':'error';
+   if((text||job.rootId)&&!complete)await service.save(job,text,{partial:true,limited:false,stopReason}).catch(()=>{});
    const localMessages={MODEL_MISSING:'Modelo Ollama não encontrado. Confira OLLAMA_MODEL e os modelos já instalados.',INVALID_RESPONSE:'Ollama retornou uma resposta inválida ou interrompida.',CONTEXT_LIMIT:'Pergunta excede o orçamento local; reduza a pergunta.',CANCELLED:'Geração Ollama interrompida.'};
-   if(service.engine==='ollama')send('error',{mensagem:timedOut||error.code==='TIMEOUT'?'Tempo limite do Ollama atingido. Nenhum outro provedor foi utilizado.':(localMessages[error.code]||'Ollama indisponível. Verifique o serviço local; não houve troca de provedor.')});
-   else send('error',{mensagem:timedOut?'Tempo limite do assistente atingido. Tente novamente ou use o modo demonstração.':'Não foi possível concluir a resposta do assistente. Verifique conexão, chave e modelo no servidor ou use o modo demonstração. O painel e a irrigação continuam funcionando.'});
+   if(service.engine==='ollama')send('error',{stopReason,mensagem:stopReason==='cancelled'?'Geração interrompida. A parte recebida foi preservada; isso não é limite de tokens.':timedOut||error.code==='TIMEOUT'?'Tempo limite do Ollama atingido. Nenhum outro provedor foi utilizado.':(localMessages[error.code]||'Ollama indisponível. Verifique o serviço local; não houve troca de provedor.')});
+   else send('error',{stopReason,mensagem:timedOut?'Tempo limite do assistente atingido. Tente novamente ou use o modo demonstração.':'Não foi possível concluir a resposta do assistente. Verifique conexão, chave e modelo no servidor ou use o modo demonstração. O painel e a irrigação continuam funcionando.'});
   }finally{clearTimeout(timer);clearInterval(sessionTimer);controller.abort();if(iterator?.return)Promise.resolve(iterator.return()).catch(()=>{});service.controllers.delete(controller);res.off('close',disconnect);job.release();if(!res.destroyed)res.end();}
  }));return router;
 }

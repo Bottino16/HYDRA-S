@@ -24,6 +24,7 @@ class OllamaProvider{
     if(value.error)throw new OllamaError('PROVIDER_ERROR');
     if(typeof value.done!=='boolean'||value.message?.role!=='assistant'||typeof value.message.content!=='string'||value.message.tool_calls?.length||value.model!==request.model)throw new OllamaError('INVALID_RESPONSE');
     if(value.message.content){content=true;output+=value.message.content.length;if(output>12000)throw new OllamaError('INVALID_RESPONSE');}
+    if(value.done&&value.done_reason!==undefined&&!['stop','length'].includes(value.done_reason))throw new OllamaError('INVALID_RESPONSE');
     done=value.done;if(done)limited=value.done_reason==='length';return value.message.content;
    };
    while(!done){const item=await reader.read();if(item.done){buffer+=decoder.decode();if(buffer.trim()){const text=parse(buffer);if(text)yield text;buffer='';}break;}
