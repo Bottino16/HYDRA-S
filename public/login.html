@@ -10,13 +10,17 @@
 <body class="access-page login-page">
 <script src="/access-theme.js"></script>
 <a class="skip-link" href="#campo-usuario">Ir para o login</a>
-<header class="access-top"><a class="access-brand" href="/login.html"><span class="water-mark" aria-hidden="true">≈</span><span>HYDRA-S<small>INTELIGÊNCIA HÍDRICA</small></span></a><button type="button" class="access-theme" data-access-theme>Alternar tema</button></header>
-<main class="login-layout">
-<section class="login-story" aria-labelledby="identity-heading">
-<span class="access-eyebrow"><span class="identity-line" aria-hidden="true"></span> INTELIGÊNCIA QUE FLUI</span>
-<h1 id="identity-heading">O cuidado começa<br> com <em>cada gota.</em></h1>
-<p>Água, solo e tecnologia em sintonia.<br>Acompanhe sua irrigação com uma nova perspectiva.</p>
-<div class="hydra-landscape" aria-hidden="true">
+<header class="access-top"><a class="access-brand" href="/login.html"><span class="login-logo-slot" data-logo-slot aria-hidden="true">≈</span><span>HYDRA-S<small>INTELIGÊNCIA HÍDRICA</small></span></a><div class="login-header-actions"><a class="login-access-link" href="#login-area">Acessar sistema <span aria-hidden="true">↗</span></a><button type="button" class="access-theme" data-access-theme>Alternar tema</button></div></header>
+<main class="login-experience">
+<section class="login-hero" aria-labelledby="hero-heading">
+<div class="hero-water" aria-hidden="true"><div class="hero-orbit orbit-one"></div><div class="hero-orbit orbit-two"></div><div class="hero-orbit orbit-three"></div></div>
+<div class="hero-copy"><span class="access-eyebrow">TECNOLOGIA QUE CULTIVA O FUTURO</span><p class="hero-wordmark">HYDRA-S</p><h1 id="hero-heading">Inteligência para cultivar.<br><em>Consciência para cada gota.</em></h1><p class="hero-description">Água e tecnologia conectadas para uma irrigação mais inteligente.<br>Mais cuidado com sua plantação. Mais atenção ao uso da água.</p></div>
+<a class="scroll-invitation" href="#water-journey"><span>ROLE PARA CONTINUAR</span><span class="scroll-track" aria-hidden="true">↓</span></a>
+<span class="hero-side-note" aria-hidden="true">ÁGUA · SOLO · CONEXÃO</span>
+</section>
+<section id="water-journey" class="water-journey" aria-labelledby="journey-heading">
+<div class="journey-copy login-reveal"><span class="access-eyebrow">UM FLUXO. NOVAS POSSIBILIDADES.</span><h2 id="journey-heading">Da água à vida.<br><em>Do cuidado ao controle.</em></h2><p>Acompanhe reservatórios, observe o solo e entenda o percurso da água até sua plantação. Tudo começa com uma visão mais clara.</p><a class="journey-link" href="#login-area">Conecte-se ao seu cultivo <span aria-hidden="true">↓</span></a></div>
+<div class="journey-illustration login-reveal"><div class="hydra-landscape" aria-hidden="true">
 <svg viewBox="0 0 640 290" fill="none" xmlns="http://www.w3.org/2000/svg">
 <defs><linearGradient id="water-fill" x1="0" y1="100" x2="0" y2="270" gradientUnits="userSpaceOnUse"><stop stop-color="#53d6ed" stop-opacity=".32"/><stop offset="1" stop-color="#53d6ed" stop-opacity=".02"/></linearGradient><linearGradient id="flow-stroke"><stop stop-color="#53d6ed" stop-opacity=".1"/><stop offset=".5" stop-color="#53d6ed"/><stop offset="1" stop-color="#53d6ed" stop-opacity=".2"/></linearGradient></defs>
 <ellipse cx="324" cy="251" rx="280" ry="29" stroke="currentColor" opacity=".12"/><ellipse cx="324" cy="251" rx="222" ry="17" stroke="currentColor" opacity=".1"/>
@@ -37,12 +41,17 @@
 </svg>
 <div class="landscape-caption"><span>DA ÁGUA AO CULTIVO</span><span>UM SISTEMA. TODO O PERCURSO.</span></div>
 </div>
-<div class="login-principles"><span>Monitorar com clareza</span><span>Irrigar com consciência</span></div>
+</div>
 </section>
+<section id="login-area" class="login-access-section" aria-labelledby="access-heading" tabindex="-1">
+<div class="access-introduction login-reveal"><span class="access-eyebrow">SEU PRÓXIMO PASSO</span><h2 id="access-heading">Uma nova perspectiva<br>para <em>o seu cultivo.</em></h2><p>Seu ambiente de monitoramento e irrigação está aqui. Acesse com a conta autorizada da sua instalação.</p><div class="login-principles"><span>Monitorar com clareza</span><span>Irrigar com consciência</span></div></div>
 <section class="login-box access-card" aria-labelledby="login-heading"><div class="login-entry-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3S5 10 5 14a7 7 0 0 0 14 0c0-4-7-11-7-11Z" stroke="currentColor" stroke-width="1.5"/><path d="M9 15a3 3 0 0 0 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div><span class="access-eyebrow">ACESSO À SUA INSTALAÇÃO</span><h2 id="login-heading">Seu controle.<br>Sua conexão.</h2><p>Entre no HYDRA-S para acompanhar o que importa.</p>
 <form id="login-form" novalidate><label class="access-field" for="campo-usuario">Usuário<input type="text" id="campo-usuario" placeholder="Seu nome de usuário" autocomplete="username" autocapitalize="none" spellcheck="false"></label><label class="access-field" for="campo-senha">Senha<input type="password" id="campo-senha" autocomplete="current-password" placeholder="Sua senha"></label><button type="submit" class="access-primary btn-login" id="entrar">Entrar</button><p id="login-progress" role="status" class="access-feedback"></p><div role="alert" id="mensagem-erro" class="access-feedback" style="display:none"></div></form>
 <div class="login-support"><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m12 3 8 3v5c0 5-8 10-8 10S4 16 4 11V6l8-3Z" stroke="currentColor" stroke-width="1.5"/><path d="m8.5 11 2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.5"/></svg></span><p>Acesso pessoal e protegido. Se precisar de uma conta ou de ajuda para entrar, fale com o responsável da instalação.</p></div></section>
+
+</section>
 </main><footer class="access-bottom"><span>HYDRA-S <span aria-hidden="true">/</span> Inteligência hídrica</span><span>Tecnologia para cuidar da água.</span></footer>
 <script src="/login.js"></script>
+<script src="/login-experience.js"></script>
 <script src="/ui-polish.js"></script>
 </body></html>
