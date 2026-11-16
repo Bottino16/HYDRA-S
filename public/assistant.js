@@ -28,6 +28,17 @@ document.addEventListener('DOMContentLoaded',async()=>{
  function emptyConversation(){if(messages.childElementCount)return;const empty=el('div',undefined,messages);empty.className='assistant-empty';el('span','◈',empty).setAttribute('aria-hidden','true');el('h3','Vamos cuidar do seu solo?',empty);el('p','Pergunte sobre umidade, cultivo ou irrigação. As leituras da maquete são simuladas.',empty);}
  emptyConversation();
  function engineLabel(data){return data.demo?'Resposta de demonstração, sem IA real.':data.provider==='ollama'?'Ollama local • '+data.model:data.provider==='claude'?'Claude • '+data.model:'Resposta de IA • confira antes de aplicar';}
+ function renderSources(card,metadata){
+  card.querySelector('.assistant-sources')?.remove();
+  if(!metadata.sources?.length&&!metadata.referenceReview)return;
+  const details=el('details',undefined,card);details.className='assistant-sources';el('summary','Fontes e rastreabilidade',details);
+  el('p',metadata.referenceReview?'Evidências enviadas ao modelo:':'Registro antigo de fontes, sem auditoria de trechos:',details);
+  if(!metadata.sources?.length)el('p','Sem evidência documental selecionada para esta parte.',details);
+  const items=el('ul',undefined,details);for(const source of metadata.sources||[]){const item=el('li',undefined,items);el('strong',source.title||source.id,item);el('small',source.id,item);}
+  if(metadata.referenceReview?.state==='context-only')el('p','Resposta em geração; citações ainda não conferidas.',details);
+  else if(metadata.referenceReview){el('p','IDs citados nesta parte: '+((metadata.citations||[]).map(s=>s.id).join(', ')||'nenhum'),details);if(metadata.referenceReview.removed)el('p','Referências não verificadas do texto foram omitidas.',details);}
+  el('p','Envio de evidência ou ID válido não comprova a precisão de cada afirmação.',details);
+ }
  function message(role,text,metadata={}){
   messages.querySelector('.assistant-empty')?.remove();const card=el('article',undefined,messages);card.className='assistant-message';card.dataset.role=role;card.dataset.provider=metadata.provider||'';if(role==='user')messages.querySelectorAll('.assistant-continue').forEach(button=>{button.dataset.consumed='true';button.disabled=true;button.title='Somente a última resposta limitada pode continuar.';});const author=el('header',undefined,card);author.className='assistant-author';const avatar=el('span',role==='user'?'V':'H',author);avatar.className='assistant-avatar';avatar.setAttribute('aria-hidden','true');el('strong',role==='user'?'Você':'Assistente do Solo',author);
   if(metadata.messageId)card.id='assistant-message-'+metadata.messageId;
@@ -38,7 +49,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
    const actions=el('div',undefined,card);actions.className='assistant-message-actions';const copy=el('button','Copiar resposta',actions);copy.type='button';copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(content.textContent);status.dataset.state='success';status.textContent='Resposta copiada.';}catch{status.dataset.state='warning';status.textContent='Não foi possível copiar. Selecione o texto manualmente.';}});
    if(metadata.partial)el('small','Resposta parcial/interrompida.',card).className='assistant-meta';
    if(metadata.limited){el('small','Resposta limitada pelo tamanho máximo. A explicação pode estar incompleta.',card).className='assistant-meta';continuationButton(card,metadata);}
-   if(metadata.sources?.length){const sources=el('details',undefined,card);sources.className='assistant-sources';el('summary','Base consultada · '+metadata.sources.length+' documento(s)',sources);const items=el('ul',undefined,sources);for(const source of metadata.sources){const item=el('li',undefined,items);el('strong',source.title||source.id,item);el('small',source.id,item);}el('p','Trechos recuperados; confira as referências indicadas na resposta.',sources);}
+   renderSources(card,metadata);
   }
   scrollEnd();return {card,content};
  }
@@ -62,16 +73,17 @@ document.addEventListener('DOMContentLoaded',async()=>{
  }
  form.addEventListener('submit',event=>{event.preventDefault();if(busy||historyLoading||!input.value.trim())return;const question=input.value.trim();input.value='';counter.textContent='0 / '+input.maxLength+' caracteres';input.style.height='';sendQuestion(question);});
  async function sendQuestion(question,continuationId=null){
-  if(busy||historyLoading)return;setBusy(true);status.dataset.state='loading';following=true;status.textContent='Digitando…';message('user',question);let target=null,text='',done=false;abort=new AbortController();
+  if(busy||historyLoading)return;setBusy(true);status.dataset.state='loading';following=true;status.textContent='Digitando…';message('user',question);let target=null,text='',done=false,contextSources=[];abort=new AbortController();
   try{
    const response=await window.sdaRequest('/api/chat',{method:'POST',body:JSON.stringify({...(continuationId?{continuarRespostaId:continuationId}:{mensagem:question}),...(conversationId?{conversaId:conversationId}:{})}),signal:abort.signal});
    if(!response.ok){status.dataset.state='error';status.textContent=(await response.json()).mensagem;return;}
    const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
    function frame(value){let type='',data='';for(const line of value.split('\n')){if(line.startsWith('event: '))type=line.slice(7);if(line.startsWith('data: '))data+=line.slice(6);}if(!data)return;const payload=JSON.parse(data);
-    if(type==='meta'){conversationId=payload.conversaId;target=message('assistant','',{demo:payload.demo,provider:payload.provider,model:payload.model,sources:payload.sources,continuationOf:payload.continuationOf,continuationIndex:payload.continuationIndex});el('small',payload.fonte+' • '+payload.telemetria,target.card).className='assistant-meta';}
+    if(type==='meta'){contextSources=payload.sources||[];conversationId=payload.conversaId;target=message('assistant','',{demo:payload.demo,provider:payload.provider,model:payload.model,sources:payload.sources,referenceReview:payload.referenceReview,continuationOf:payload.continuationOf,continuationIndex:payload.continuationIndex});el('small',payload.fonte+' • '+payload.telemetria,target.card).className='assistant-meta';}
     if(type==='delta'&&target){text+=payload.text;window.sdaMarkdown(target.content,text);scrollEnd();}
     if(type==='error'){status.dataset.state='error';status.textContent=payload.mensagem;if(target)el('small','Resposta parcial/interrompida.',target.card).className='assistant-meta';done=true;}
-    if(type==='done'){status.dataset.state=payload.limited?'warning':'success';status.textContent=payload.limited?'Resposta limitada pelo tamanho máximo. A explicação pode estar incompleta; use Continuar resposta quando disponível.':'Resposta concluída. Revise antes de aplicar.';done=true;if(target){if(payload.messageId)target.card.id='assistant-message-'+payload.messageId;if(payload.limited){el('small','Resposta limitada pelo tamanho máximo. A explicação pode estar incompleta.',target.card).className='assistant-meta';continuationButton(target.card,{...payload,messageId:payload.messageId});}applyButton(target.card,payload.suggestion);}}
+    if((type==='done'||type==='review')&&target){if(typeof payload.reviewedText==='string'){text=payload.reviewedText;window.sdaMarkdown(target.content,text);}renderSources(target.card,{sources:contextSources,citations:payload.citations,referenceReview:payload.referenceReview});}
+   if(type==='done'){status.dataset.state=payload.limited?'warning':'success';status.textContent=payload.limited?'Resposta limitada pelo tamanho máximo. A explicação pode estar incompleta; use Continuar resposta quando disponível.':'Resposta concluída. Revise antes de aplicar.';done=true;if(target){if(payload.messageId)target.card.id='assistant-message-'+payload.messageId;if(payload.limited){el('small','Resposta limitada pelo tamanho máximo. A explicação pode estar incompleta.',target.card).className='assistant-meta';continuationButton(target.card,{...payload,messageId:payload.messageId});}applyButton(target.card,payload.suggestion);}}
    }
    while(true){const chunk=await reader.read();if(chunk.done)break;buffer+=decoder.decode(chunk.value,{stream:true});let at;while((at=buffer.indexOf('\n\n'))>=0){frame(buffer.slice(0,at));buffer=buffer.slice(at+2);}}
    if(!done){status.dataset.state='warning';status.textContent='Resposta interrompida. Tente novamente.';}

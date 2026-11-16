@@ -1,3 +1,4 @@
+const {ReferenceGuard}=require('./references');
 const {Router}=require('express');
 const wrap=fn=>(req,res,next)=>Promise.resolve(fn(req,res,next)).catch(next);
 function nextChunk(iterator,signal){return new Promise((resolve,reject)=>{const abort=()=>reject(new Error('cancelado'));if(signal.aborted)return abort();signal.addEventListener('abort',abort,{once:true});Promise.resolve(iterator.next()).then(resolve,reject).finally(()=>signal.removeEventListener('abort',abort));});}
@@ -12,20 +13,23 @@ function assistantRoutes(service){
   const timer=setTimeout(()=>{timedOut=true;controller.abort();},service.cfg.timeoutMs);timer.unref();const disconnect=()=>controller.abort();res.on('close',disconnect);
   const send=(event,data)=>{if(!res.destroyed)res.write('event: '+event+'\ndata: '+JSON.stringify(data)+'\n\n');};
   res.status(200).set({'Content-Type':'text/event-stream; charset=utf-8','Cache-Control':'no-cache, no-transform','X-Accel-Buffering':'no'});res.flushHeaders();
-  send('meta',{provider:service.engine,model:service.cfg.demo?null:service.cfg.model,conversaId:job.id,demo:service.cfg.demo,fonte:job.context.fonte,telemetria:job.context.telemetria,continuationOf:job.rootId,continuationIndex:job.continuationIndex,sources:job.documents.map(d=>({id:d.id,title:d.title}))});
-  let iterator;
+  send('meta',{provider:service.engine,model:service.cfg.demo?null:service.cfg.model,conversaId:job.id,demo:service.cfg.demo,fonte:job.context.fonte,telemetria:job.context.telemetria,continuationOf:job.rootId,continuationIndex:job.continuationIndex,sources:job.documents.map(d=>({id:d.id,title:d.title})),referenceReview:{version:1,state:'context-only'}});
+  let iterator,rawLength=0;const guard=new ReferenceGuard(job.documents);
+  const deliver=part=>{if(part){text+=part;send('delta',{text:part});}};
   const sessionTimer=setInterval(()=>req.sessionStore.get(req.sessionID,(error,data)=>{if(error||!data||data.expiresAt<=Date.now()||!service.store.byId(data.userId)?.ativo)controller.abort();}),1000);sessionTimer.unref();
   try{
    text=job.rootId?'':(service.cfg.demo?'**Resposta de demonstração, sem IA real.**\n\n':'')+(job.context.fonte==='SIMULAÇÃO'?'Estou analisando dados simulados.\n\n':'')+(job.context.telemetria==='sem dados'?'Sem dados recentes de sensores; não é possível avaliar o estado atual da maquete.\n\n':'');
-   if(text)send('delta',{text});
+   if(text){rawLength=text.length;send('delta',{text});}
    iterator=service.provider.stream(job.request,{signal:controller.signal,context:job.context,documents:job.documents,question:job.question})[Symbol.asyncIterator]();
    const cap=Math.min(service.cfg.maxTokens*12,12000);
-   while(true){const item=await nextChunk(iterator,controller.signal);if(item.done){limited=!!item.value?.limited;stopReason=limited?'length':'stop';break;}if(typeof item.value!=='string'||!item.value)continue;received=true;const part=item.value.slice(0,cap-text.length);text+=part;send('delta',{text:part});if(text.length>=cap){limited=true;stopReason='output_cap';break;}}
+   while(true){const item=await nextChunk(iterator,controller.signal);if(item.done){limited=!!item.value?.limited;stopReason=limited?'length':'stop';break;}if(typeof item.value!=='string'||!item.value)continue;received=true;const part=item.value.slice(0,cap-rawLength);rawLength+=part.length;deliver(guard.push(part));if(rawLength>=cap){limited=true;stopReason='output_cap';break;}}
+   deliver(guard.finish());
    if(!received)throw new Error('resposta vazia');
-   const saved=await service.save(job,text,{partial:false,limited,stopReason});complete=true;send('done',{conversaId:job.id,messageId:saved.id,continuationOf:job.rootId,continuationIndex:job.continuationIndex,canContinue:saved.metadados.canContinue,maxContinuations:service.cfg.maxContinuations,suggestion:job.rootId?null:service.suggestion(job),limited,stopReason});
+   const saved=await service.save(job,text,{partial:false,limited,stopReason,referenceReview:{removed:guard.removed}});complete=true;send('done',{conversaId:job.id,messageId:saved.id,continuationOf:job.rootId,continuationIndex:job.continuationIndex,canContinue:saved.metadados.canContinue,maxContinuations:service.cfg.maxContinuations,reviewedText:saved.mensagem,citations:saved.metadados.citations,referenceReview:saved.metadados.referenceReview,suggestion:job.rootId?null:service.suggestion(job),limited,stopReason});
   }catch(error){
    stopReason=timedOut||error.code==='TIMEOUT'?'timeout':controller.signal.aborted||error.code==='CANCELLED'?'cancelled':'error';
-   if((text||job.rootId)&&!complete)await service.save(job,text,{partial:true,limited:false,stopReason}).catch(()=>{});
+   // Do not flush an unfinished reference after cancellation/timeout.
+   if((text||job.rootId)&&!complete){const saved=await service.save(job,text,{partial:true,limited:false,stopReason,referenceReview:{removed:guard.removed+(guard.pending?1:0)}}).catch(()=>null);if(saved)send('review',{reviewedText:saved.mensagem,citations:saved.metadados.citations,referenceReview:saved.metadados.referenceReview});}
    const localMessages={MODEL_MISSING:'Modelo Ollama não encontrado. Confira OLLAMA_MODEL e os modelos já instalados.',INVALID_RESPONSE:'Ollama retornou uma resposta inválida ou interrompida.',CONTEXT_LIMIT:'Pergunta excede o orçamento local; reduza a pergunta.',CANCELLED:'Geração Ollama interrompida.'};
    if(service.engine==='ollama')send('error',{stopReason,mensagem:stopReason==='cancelled'?'Geração interrompida. A parte recebida foi preservada; isso não é limite de tokens.':timedOut||error.code==='TIMEOUT'?'Tempo limite do Ollama atingido. Nenhum outro provedor foi utilizado.':(localMessages[error.code]||'Ollama indisponível. Verifique o serviço local; não houve troca de provedor.')});
    else send('error',{stopReason,mensagem:timedOut?'Tempo limite do assistente atingido. Tente novamente ou use o modo demonstração.':'Não foi possível concluir a resposta do assistente. Verifique conexão, chave e modelo no servidor ou use o modo demonstração. O painel e a irrigação continuam funcionando.'});
