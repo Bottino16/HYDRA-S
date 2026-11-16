@@ -1,0 +1,202 @@
+[
+  {
+    "question": "Qual é a umidade ideal para alface?",
+    "documents": [
+      {
+        "id": "irrigacao-culturas.md",
+        "title": "Irrigação por cultura: alface e outras hortaliças",
+        "text": "Alface e folhas têm raízes relativamente superficiais e são sensíveis a estresse hídrico. O manejo deve considerar fase da cultura, clima e solo. Não há percentual universal na escala de um sensor não calibrado. Gotejamento bem manejado pode reduzir perdas. Compare culturas e ajuste frequência e aplicação com avaliação técnica, sem transportar receitas de outra região."
+      }
+    ]
+  },
+  {
+    "question": "Como irrigar tomate?",
+    "documents": []
+  },
+  {
+    "question": "Como irrigar milho?",
+    "documents": []
+  },
+  {
+    "question": "Por que calibrar um sensor capacitivo de umidade?",
+    "documents": [
+      {
+        "id": "sensor-capacitivo-calibracao.md",
+        "title": "Sensor capacitivo e calibração",
+        "text": "Sensores capacitivos precisam de calibração adequada ao solo, pois os atributos do material afetam a resposta. No HYDRA-S, os pontos seco e úmido criam uma escala relativa; isso não garante medição volumétrica. Compare com método de referência e amostras representativas com apoio técnico. Sem Arduino, apenas simule: não considere os valores provisórios uma calibração real."
+      }
+    ]
+  },
+  {
+    "question": "O que é capacidade de campo?",
+    "documents": [
+      {
+        "id": "umidade-capacidade-campo.md",
+        "title": "Umidade e capacidade de campo",
+        "text": "Após molhamento, parte da água drena por gravidade. Capacidade de campo descreve a água retida quando essa drenagem diminui. Água disponível às raízes fica entre capacidade de campo e ponto de murcha. Esses limites dependem do solo. A escala relativa do sensor HYDRA-S não equivale a esses valores."
+      },
+      {
+        "id": "hydra-consumo-estimativa.md",
+        "title": "HYDRA-S: consumo de água e vazão das bombas como ESTIMATIVA",
+        "text": "Há três campos de vazão, um por bomba, positivos ou null para não calibrada. Um campo preenchido representa configuração, não prova calibração física. Mesmo com vazão informada, o rótulo permanece ESTIMATIVA: não há medidor de vazão na implementação. Pressão, instalação e fluxo físico não são confirmados por ACK."
+      },
+      {
+        "id": "hydra-percurso-bombas.md",
+        "title": "Como funciona o HYDRA-S: bombas de irrigação, Rio → Poço → Caixa → Plantação",
+        "text": "O HYDRA-S permanece em SIMULAÇÃO, sem Arduino disponível e com firmware NÃO VALIDADO fisicamente. Os nomes Rio e Poço descrevem o percurso do projeto; não confirmam captação em rio natural, perfuração, capacidade em litros ou desempenho elétrico/hidráulico. Ensaios físicos supervisionados são pendentes, não funcionalidades já validadas."
+      }
+    ]
+  },
+  {
+    "question": "O que é ponto de murcha permanente?",
+    "documents": [
+      {
+        "id": "umidade-capacidade-campo.md",
+        "title": "Umidade e capacidade de campo",
+        "text": "Após molhamento, parte da água drena por gravidade. Capacidade de campo descreve a água retida quando essa drenagem diminui. Água disponível às raízes fica entre capacidade de campo e ponto de murcha. Esses limites dependem do solo. A escala relativa do sensor HYDRA-S não equivale a esses valores."
+      },
+      {
+        "id": "excesso-falta-agua.md",
+        "title": "Sinais de excesso e falta de água",
+        "text": "Murcha pode ocorrer com déficit hídrico, mas não confirma sozinha sua causa. Encharcamento reduz a aeração das raízes. Observe umidade na zona radicular e drenagem antes de irrigar mais. Sintomas semelhantes exigem investigação; não diagnostique doença ou deficiência apenas pela aparência e pelo sensor."
+      }
+    ]
+  },
+  {
+    "question": "Como identificar excesso de água?",
+    "documents": [
+      {
+        "id": "excesso-falta-agua.md",
+        "title": "Sinais de excesso e falta de água",
+        "text": "Murcha pode ocorrer com déficit hídrico, mas não confirma sozinha sua causa. Encharcamento reduz a aeração das raízes. Observe umidade na zona radicular e drenagem antes de irrigar mais. Sintomas semelhantes exigem investigação; não diagnostique doença ou deficiência apenas pela aparência e pelo sensor."
+      },
+      {
+        "id": "hydra-caixa-solo.md",
+        "title": "HYDRA-S: diferença entre nível da Caixa e umidade do solo nos reservatórios",
+        "text": "Caixa cheia não significa solo encharcado. Nível da Caixa é água no reservatório; umidade do solo vem de outra leitura. Solo seco não significa falta de água na Caixa: pode haver água armazenada sem irrigação. No HYDRA-S, dados simulados descrevem grandezas distintas, não medições físicas nem diagnóstico definitivo da plantação.\n\nO ultrassônico estima o nível da Caixa por distância; as boias da Caixa indicam mínimo e máximo. O sensor capacitivo representa umidade relativa do solo. A Caixa pode estar cheia enquanto o solo permanece seco; inversamente, solo úmido não comprova reserva de água. Para avaliar encharcamento, faltam observação de drenagem, solo e calibração física."
+      }
+    ]
+  },
+  {
+    "question": "Como identificar falta de água?",
+    "documents": [
+      {
+        "id": "excesso-falta-agua.md",
+        "title": "Sinais de excesso e falta de água",
+        "text": "Murcha pode ocorrer com déficit hídrico, mas não confirma sozinha sua causa. Encharcamento reduz a aeração das raízes. Observe umidade na zona radicular e drenagem antes de irrigar mais. Sintomas semelhantes exigem investigação; não diagnostique doença ou deficiência apenas pela aparência e pelo sensor."
+      },
+      {
+        "id": "hydra-caixa-solo.md",
+        "title": "HYDRA-S: diferença entre nível da Caixa e umidade do solo nos reservatórios",
+        "text": "Caixa cheia não significa solo encharcado. Nível da Caixa é água no reservatório; umidade do solo vem de outra leitura. Solo seco não significa falta de água na Caixa: pode haver água armazenada sem irrigação. No HYDRA-S, dados simulados descrevem grandezas distintas, não medições físicas nem diagnóstico definitivo da plantação.\n\nO ultrassônico estima o nível da Caixa por distância; as boias da Caixa indicam mínimo e máximo. O sensor capacitivo representa umidade relativa do solo. A Caixa pode estar cheia enquanto o solo permanece seco; inversamente, solo úmido não comprova reserva de água. Para avaliar encharcamento, faltam observação de drenagem, solo e calibração física."
+      },
+      {
+        "id": "hydra-modos-protecoes.md",
+        "title": "HYDRA-S: bomba desligada, modos AUTO e MANUAL e proteções",
+        "text": "Uma bomba desligada não significa necessariamente falta de água. Sem estado recente e motivo confirmado, a causa é informação insuficiente. No HYDRA-S, pode não existir pedido, o solo pode estar úmido, o destino cheio, haver sensor inválido, retenção de partida, intervalo entre ciclos ou limite de tempo. Não diagnosticar pelo desligamento isolado.\n\nEm AUTO, a bomba 1 inicia enchimento abaixo do mínimo do Poço e mantém a intenção até o máximo; a bomba 2 faz o equivalente para a Caixa se houver água no Poço. A bomba 3 inicia abaixo do limiar seco e deixa de irrigar ao atingir o úmido: histerese. Todas continuam sujeitas às travas, fila e sensores válidos."
+      }
+    ]
+  },
+  {
+    "question": "Como a textura afeta a drenagem?",
+    "documents": [
+      {
+        "id": "textura-drenagem.md",
+        "title": "Textura, estrutura e drenagem",
+        "text": "Textura é a proporção de areia, silte e argila. Estrutura e compactação também afetam poros, infiltração e drenagem. Solo arenoso costuma exigir aplicações menores e mais frequentes; camadas compactadas podem reter água mesmo com superfície arenosa. Confirme o comportamento no local."
+      },
+      {
+        "id": "excesso-falta-agua.md",
+        "title": "Sinais de excesso e falta de água",
+        "text": "Murcha pode ocorrer com déficit hídrico, mas não confirma sozinha sua causa. Encharcamento reduz a aeração das raízes. Observe umidade na zona radicular e drenagem antes de irrigar mais. Sintomas semelhantes exigem investigação; não diagnostique doença ou deficiência apenas pela aparência e pelo sensor."
+      },
+      {
+        "id": "hydra-caixa-solo.md",
+        "title": "HYDRA-S: diferença entre nível da Caixa e umidade do solo nos reservatórios",
+        "text": "O ultrassônico estima o nível da Caixa por distância; as boias da Caixa indicam mínimo e máximo. O sensor capacitivo representa umidade relativa do solo. A Caixa pode estar cheia enquanto o solo permanece seco; inversamente, solo úmido não comprova reserva de água. Para avaliar encharcamento, faltam observação de drenagem, solo e calibração física."
+      }
+    ]
+  },
+  {
+    "question": "O que é matéria orgânica?",
+    "documents": [
+      {
+        "id": "materia-organica.md",
+        "title": "Matéria orgânica e manejo",
+        "text": "A matéria orgânica participa do funcionamento do solo. Seu teor pode ser avaliado em laboratório junto com pH e nutrientes. Um resultado isolado não define uma dose universal de composto ou adubo: considere cultura, origem do material, solo e orientação técnica local. Sensor de umidade não mede matéria orgânica."
+      }
+    ]
+  },
+  {
+    "question": "Qual o pH do meu solo?",
+    "documents": [
+      {
+        "id": "ph-nutrientes.md",
+        "title": "pH, nutrientes e análise de solo",
+        "text": "pH e disponibilidade de nutrientes precisam de avaliação própria: o sensor capacitivo não os mede. A análise de solo ajuda a orientar correção e adubação conforme cultura e condições locais. Não aplicar doses de corretivos, fertilizantes ou agrotóxicos a partir de uma leitura de umidade; procure agrônomo e laboratório."
+      }
+    ]
+  },
+  {
+    "question": "Como o pH afeta nutrientes?",
+    "documents": [
+      {
+        "id": "ph-nutrientes.md",
+        "title": "pH, nutrientes e análise de solo",
+        "text": "pH e disponibilidade de nutrientes precisam de avaliação própria: o sensor capacitivo não os mede. A análise de solo ajuda a orientar correção e adubação conforme cultura e condições locais. Não aplicar doses de corretivos, fertilizantes ou agrotóxicos a partir de uma leitura de umidade; procure agrônomo e laboratório."
+      }
+    ]
+  },
+  {
+    "question": "Qual é a diferença entre o nível da caixa e a umidade do solo?",
+    "documents": [
+      {
+        "id": "hydra-caixa-solo.md",
+        "title": "HYDRA-S: diferença entre nível da Caixa e umidade do solo nos reservatórios",
+        "text": "Caixa cheia não significa solo encharcado. Nível da Caixa é água no reservatório; umidade do solo vem de outra leitura. Solo seco não significa falta de água na Caixa: pode haver água armazenada sem irrigação. No HYDRA-S, dados simulados descrevem grandezas distintas, não medições físicas nem diagnóstico definitivo da plantação.\n\nO ultrassônico estima o nível da Caixa por distância; as boias da Caixa indicam mínimo e máximo. O sensor capacitivo representa umidade relativa do solo. A Caixa pode estar cheia enquanto o solo permanece seco; inversamente, solo úmido não comprova reserva de água. Para avaliar encharcamento, faltam observação de drenagem, solo e calibração física."
+      },
+      {
+        "id": "hydra-cinco-boias.md",
+        "title": "HYDRA-S: cinco boias do Rio, Poço e Caixa",
+        "text": "As cinco boias são, nesta ordem: Rio com água, Poço mínimo, Poço máximo, Caixa mínimo e Caixa máximo. A boia do Rio indica disponibilidade; as duas do Poço e as duas da Caixa indicam limiares de enchimento e disponibilidade. Não medem umidade do solo nem volume contínuo em litros.\n\nNo mapa do HYDRA-S, Rio usa D2; mínimo/máximo do Poço usam D3/D8; mínimo/máximo da Caixa usam D9/D10. Rio e mínimas fecham para GND com água (LOW ativo); máximas abrem ao atingir cheio (HIGH ativo). As cinco entradas usam INPUT_PULLUP. São posições funcionais previstas; alturas físicas e orientação real ainda precisam de conferência."
+      },
+      {
+        "id": "hydra-percurso-bombas.md",
+        "title": "Como funciona o HYDRA-S: bombas de irrigação, Rio → Poço → Caixa → Plantação",
+        "text": "Rio, Poço e Caixa são reservatórios representados na maquete. A bomba 1 exige água no Rio e respeita o máximo do Poço. A bomba 2 exige o mínimo do Poço e respeita o máximo da Caixa e o ultrassônico. A bomba 3 exige o mínimo da Caixa, ultrassônico e solo válidos, além das demais proteções. Não se deduz a vazão real pelo nome da bomba.\n\nO HYDRA-S funciona no percurso Rio → Poço → Caixa → Plantação. A bomba 1 transfere água do Rio para o Poço; a bomba 2 transfere do Poço para a Caixa; a bomba 3 é a bomba de irrigação, da Caixa para a Plantação. Isso é confirmado no controlador e na simulação, sem medição de fluxo que prove transferência física."
+      }
+    ]
+  },
+  {
+    "question": "Qual irrigação para tomate e milho?",
+    "documents": []
+  },
+  {
+    "question": "Posso regar?",
+    "documents": []
+  },
+  {
+    "question": "Qual a umidade ideal para feijão?",
+    "documents": []
+  },
+  {
+    "question": "Qual a capacidade física em litros do tanque?",
+    "documents": [
+      {
+        "id": "umidade-capacidade-campo.md",
+        "title": "Umidade e capacidade de campo",
+        "text": "Após molhamento, parte da água drena por gravidade. Capacidade de campo descreve a água retida quando essa drenagem diminui. Água disponível às raízes fica entre capacidade de campo e ponto de murcha. Esses limites dependem do solo. A escala relativa do sensor HYDRA-S não equivale a esses valores."
+      },
+      {
+        "id": "hydra-percurso-bombas.md",
+        "title": "Como funciona o HYDRA-S: bombas de irrigação, Rio → Poço → Caixa → Plantação",
+        "text": "O HYDRA-S permanece em SIMULAÇÃO, sem Arduino disponível e com firmware NÃO VALIDADO fisicamente. Os nomes Rio e Poço descrevem o percurso do projeto; não confirmam captação em rio natural, perfuração, capacidade em litros ou desempenho elétrico/hidráulico. Ensaios físicos supervisionados são pendentes, não funcionalidades já validadas.\n\nO HYDRA-S funciona no percurso Rio → Poço → Caixa → Plantação. A bomba 1 transfere água do Rio para o Poço; a bomba 2 transfere do Poço para a Caixa; a bomba 3 é a bomba de irrigação, da Caixa para a Plantação. Isso é confirmado no controlador e na simulação, sem medição de fluxo que prove transferência física."
+      },
+      {
+        "id": "hydra-caixa-solo.md",
+        "title": "HYDRA-S: diferença entre nível da Caixa e umidade do solo nos reservatórios",
+        "text": "Leitura ausente, vencida ou inválida significa sem dados; não autoriza concluir reservatório vazio ou solo seco. Sem leituras recentes e válidas do HYDRA-S, reconhecer informação insuficiente. Percentual de nível não é automaticamente litros; percentual do solo não é teor volumétrico nem faixa ideal universal.\n\nO ultrassônico estima o nível da Caixa por distância; as boias da Caixa indicam mínimo e máximo. O sensor capacitivo representa umidade relativa do solo. A Caixa pode estar cheia enquanto o solo permanece seco; inversamente, solo úmido não comprova reserva de água. Para avaliar encharcamento, faltam observação de drenagem, solo e calibração física."
+      }
+    ]
+  }
+]
