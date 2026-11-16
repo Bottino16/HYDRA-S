@@ -21,7 +21,8 @@ function sections(content){
   if(/^\s*#{1,6}\s/.test(line)){
    bibliography=/\b(fontes?|referencias?|bibliografia)\b/.test(words(line).join(' '));lines.push('');continue;
   }
-  if(bibliography||/^\s*(?:fontes?|refer[eê]ncias?|bibliografia)\s*:/i.test(line)||/Resumo educativo em portugu[eê]s|Refer[eê]ncias consultadas/i.test(line))continue;
+  if(/^\s*(?:fontes?|refer[eê]ncias?|bibliografia)\s*:/i.test(line)){bibliography=true;lines.push('');continue;}
+  if(bibliography||/Resumo educativo em portugu[eê]s|Refer[eê]ncias consultadas/i.test(line))continue;
   if(/^\s*(?:[-*]\s*)?(?:https?:\/\/|\[[^\]]+\]\(https?:\/\/)/i.test(line)||(/^\s*[-*]/.test(line)&&/https?:\/\//.test(line)))continue;
   lines.push(line);
  }

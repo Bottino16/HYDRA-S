@@ -18,6 +18,7 @@ test('IA-2B: metadados não viram evidência, README/arquivos inválidos ignorad
  t.after(()=>{const resolved=path.resolve(dir),root=path.resolve(os.tmpdir())+path.sep;assert.ok(resolved.startsWith(root)&&path.basename(resolved).startsWith('hydra-rag-ia2b-'));fs.rmSync(resolved,{recursive:true,force:true});});
  const put=(name,text)=>fs.writeFileSync(path.join(dir,name),text,'utf8'),rag=new Knowledge(dir);
  put('title-only.md','# Calibração\n\n## Fontes de referência\n\n- Calibração https://example.invalid/\n');assert.deepEqual(rag.search('calibração'),[]);
+ put('plain-bibliography.md','# Calibração\n\nFontes:\n\nCalibração apenas na bibliografia, não uma explicação.');assert.deepEqual(rag.search('calibração'),[]);
  put('README.md','# Calibração\n\nCalibração secreta não é evidência.');
  put('bad_name.md','# Calibração\n\nCalibração secreta não é evidência.');
  const text='# Calibração\n\nCalibração deve usar referência adequada ao solo.\n\n## Bibliografia\n\nCalibração título em referência apenas.\n';
