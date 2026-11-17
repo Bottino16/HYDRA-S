@@ -329,6 +329,7 @@
 <link rel="stylesheet" href="/water-experience.css">
 <link rel="stylesheet" href="/overview-v41.css">
 <link rel="stylesheet" href="/environment-v5.css">
+<link rel="stylesheet" href="/sidebar-premium.css">
 </head>
 <body>
 
@@ -338,27 +339,31 @@
 <header class="mobile-header"><span class="mobile-brand">◈ HYDRA-S</span><button id="menu-toggle" type="button" aria-controls="app-sidebar" aria-expanded="false">☰ Menu</button></header>
 <button id="menu-backdrop" class="menu-backdrop" aria-label="Fechar menu" hidden></button>
 <aside class="sidebar" id="app-sidebar" aria-label="Navegação principal">
-    <div class="brand">
-        <div class="brand-icon"><i class="ph-fill ph-drop"></i></div>
+    <div class="sidebar-brand-row"><div class="brand">
+        <div class="brand-icon"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3C9 7 5 11 5 15a7 7 0 0 0 14 0c0-4-4-8-7-12Z"/></svg></div>
         <div class="brand-text">
             <h1>HYDRA-S</h1>
             <p>INTELIGÊNCIA HÍDRICA</p>
         </div>
     </div>
 
+    <button id="menu-close" type="button" aria-label="Fechar navegação">✕</button></div>
     <nav class="nav-menu" aria-label="Áreas do sistema">
-        <span class="nav-caption">ESPAÇO DE OPERAÇÃO</span>
+        <div class="nav-group" role="group" aria-labelledby="nav-operation-label">
+        <span class="nav-caption" id="nav-operation-label">ESPAÇO DE OPERAÇÃO</span>
         <button type="button" class="nav-btn is-active" id="dashboard-nav" data-app-target="overview" aria-controls="overview-section" aria-current="page"><span class="nav-symbol" aria-hidden="true">▦</span><span>Visão Geral</span></button>
         <button type="button" class="nav-btn" id="history-nav" data-app-target="history" aria-controls="history-section"><span class="nav-symbol" aria-hidden="true">≡</span><span>Histórico e Eventos</span></button>
         <button type="button" class="nav-btn" id="settings-nav" data-app-target="settings" aria-controls="settings-section"><span class="nav-symbol" aria-hidden="true">⚙</span><span>Configurações</span></button>
         <div id="assistant-nav-slot"></div>
-        <span class="nav-caption">FERRAMENTAS E CONTA</span>
+        </div>
+        <div class="nav-group" role="group" aria-labelledby="nav-tools-label">
+        <span class="nav-caption" id="nav-tools-label">FERRAMENTAS E CONTA</span>
         <button class="nav-btn" onclick="abrirDoc()">
-            <i class="ph ph-book-open-text"></i> <span>Documentação</span>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h6l3 2 3-2h6v14h-6l-3 2-3-2H3ZM12 7v14"/></svg> <span>Documentação</span>
         </button>
-        <button class="nav-btn" onclick="sdaChangePassword()">Trocar senha</button>
+        <button class="nav-btn" onclick="sdaChangePassword()"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 5a5 5 0 1 1-2 9l-7 7H2v-3l7-7a5 5 0 0 1 5-6ZM16 8h.01"/></svg><span>Trocar senha</span></button>
         <button class="nav-btn" onclick="toggleTema()">
-            <i class="ph ph-moon" id="icone-tema"></i> <span>Alternar Tema</span>
+            <svg id="icone-tema" class="nav-icon ph-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 15A8 8 0 0 1 9 4a8 8 0 1 0 11 11Z"/></svg> <span>Alternar Tema</span>
         </button>
         <div class="notification-wrapper">
         <button type="button" class="nav-btn" id="notification-toggle" aria-expanded="false" aria-controls="painel-notif" onclick="toggleNotificacoes()">
@@ -370,14 +375,17 @@
         </section>
         </div>
         <button class="nav-btn" onclick="toggleFullScreen()">
-            <i class="ph ph-corners-out" id="icone-fullscreen"></i> <span>Tela Cheia</span>
+            <svg id="icone-fullscreen" class="nav-icon ph-corners-out" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></svg> <span>Tela Cheia</span>
         </button>
         <a href="painel-adm.html" id="admin-link" class="nav-btn">
-            <i class="ph ph-shield-check"></i> <span>Administração</span>
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 4 4 7 8 9 4-2 8-5 8-9V6ZM8 12l3 3 5-6"/></svg> <span>Administração</span>
         </a>
-        <a href="#" onclick="sdaLogout(); return false" class="nav-btn danger" style="margin-top: 24px;">
-            <i class="ph ph-sign-out"></i> <span>Encerrar Sessão</span>
+        </div>
+        <div class="nav-group nav-session" role="group" aria-labelledby="nav-session-label"><span class="nav-caption" id="nav-session-label">SUA SESSÃO</span>
+        <a href="#" onclick="sdaLogout(); return false" class="nav-btn danger">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H4v16h6M9 12h12m-5-5 5 5-5 5"/></svg> <span>Encerrar Sessão</span>
         </a>
+        </div>
     </nav>
 
     <div class="status-badge">
