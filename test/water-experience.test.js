@@ -25,3 +25,13 @@ test('Water Experience: erro continua no controle e CLIENTE não ganha operaçã
  const client=await fixture(t,false);assert.ok([...client.d.querySelectorAll('.pump-actions button')].every(n=>n.disabled));client.d.querySelector('.circuit-pump').click();await wait();assert.equal(client.calls.length,1);
  const css=fs.readFileSync('public/water-experience.css','utf8');assert.ok(css.includes('prefers-reduced-motion:reduce'));assert.ok(css.includes('aria-busy=true'));assert.ok(css.includes('pump-feedback[data-state=error]'));
 });
+
+ test('V4.1: módulos mantêm identificação, função e percurso correto sem novos comandos',async t=>{
+ const f=await fixture(t);const links=[...f.d.querySelectorAll('.circuit-pump')];
+ assert.deepEqual(links.map(n=>n.querySelector('.circuit-module-id').textContent),['B01','B02','B03']);
+ assert.deepEqual(links.map(n=>n.querySelector('.circuit-function').textContent),['Captação','Transferência','Irrigação']);
+ assert.deepEqual(links.map(n=>n.querySelector('.circuit-pump-route').textContent),['Rio → Poço','Poço → Caixa','Caixa → Plantação']);
+ for(const link of links)link.click();await wait();assert.equal(f.calls.length,1);
+ f.events.estado_sistema({...f.state,pumps:[true,false,null]});
+ assert.deepEqual(links.map(n=>n.querySelector('.circuit-confirmed-state').textContent),['Ligada · confirmada','Desligada · confirmada','Sem dados']);
+ });
