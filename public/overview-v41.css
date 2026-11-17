@@ -58,3 +58,5 @@
 #overview-section .water-experience .circuit-pump.pump-card:hover{box-shadow:none}
 @media(min-width:701px) and (max-width:1200px){#overview-section .water-experience .circuit-pump.pump-card{grid-template-columns:45px minmax(0,1fr);padding:18px 12px 12px;gap:4px 8px}#overview-section .water-experience .circuit-pump.pump-card>svg{width:45px}#overview-section .water-experience .circuit-pump.pump-card>label{font-size:11px}}
 #overview-section .water-experience .operating-bar>.pump-feedback:empty{display:none}
+/* O disclosure ocupa a largura inteira também sob as regras móveis da V5. */
+#overview-section .water-experience .circuit-pump.pump-card .legacy-manual{grid-column:1/-1!important}
