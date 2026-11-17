@@ -35,3 +35,7 @@
 
 #overview-section .water-experience .circuit-confirmed-state{font-size:9px;line-height:1.6}#overview-section .water-experience .circuit-link::before,#overview-section .water-experience .circuit-link::after{top:40px}#overview-section .water-experience .circuit-pump b{font-size:11px}
 @media(max-width:700px){#overview-section .water-experience .circuit-link::before{top:auto;bottom:100%}#overview-section .water-experience .circuit-link::after{top:100%}}
+
+#overview-section .water-experience .circuit-pending::before{content:"•";margin-right:4px;animation:water-command-wait 1.4s ease-in-out infinite alternate}
+@keyframes water-command-wait{from{opacity:.4}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){#overview-section .water-experience .circuit-pending::before{animation:none!important}}
