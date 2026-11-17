@@ -35,3 +35,26 @@
 #overview-section .pump-operation{margin-top:24px;padding-top:22px;border-top:1px solid var(--border-color);scroll-margin-top:90px}
 #overview-section .pump-operation-note{font-size:12px;line-height:1.7;color:var(--text-secondary);margin:8px 0}
 #overview-section .pump-operation .legacy-manual{margin-top:18px;width:100%;box-sizing:border-box}
+
+/* Controles únicos integrados aos módulos premium; nenhuma segunda grade é criada. */
+#overview-section .water-experience .circuit-pump.pump-card{display:grid;grid-template-columns:64px minmax(0,1fr);grid-template-rows:auto auto auto auto auto auto auto;gap:5px 12px;padding:20px 16px 16px;min-height:0;float:none;scroll-margin-top:90px}
+#overview-section .water-experience .circuit-pump.pump-card>svg{grid-column:1;grid-row:1/5;width:64px;height:66px}
+#overview-section .water-experience .circuit-pump.pump-card>label{grid-column:1/-1;grid-row:5;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 6px;padding-top:12px;border-top:1px solid var(--border-color);font-size:12px;color:var(--text-secondary)}
+#overview-section .water-experience .circuit-pump.pump-card input{width:76px;min-width:0;min-height:44px;margin:0;padding:8px 10px;font-size:16px}
+#overview-section .water-experience .circuit-pump.pump-card .pump-actions{grid-column:1/-1;grid-row:6;display:flex;gap:8px;margin:0}
+#overview-section .water-experience .circuit-pump.pump-card .pump-actions button{flex:1;min-height:44px;font-size:13px;margin:0;padding:10px}
+#overview-section .water-experience .circuit-pump.pump-card>.pump-feedback{grid-column:1/-1;grid-row:7;font-size:11px;line-height:1.7;min-height:0;margin:8px 0 0;padding-top:10px}
+#overview-section .water-experience .circuit-pump.pump-card .circuit-pending,#overview-section .water-experience .circuit-pump.pump-card .circuit-command-error{display:none}
+#overview-section .water-experience .circuit-pump.pump-card[aria-busy=true]{border-color:var(--warning)}
+#overview-section .water-experience .circuit-pump.pump-card:has(.pump-feedback[data-state=error]){border-color:var(--danger)}
+#overview-section .water-experience .circuit-pump.pump-card .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
+#overview-section .water-experience .operating-bar{margin:12px 0 24px;padding:14px 0;border-block:1px solid var(--border-color)}
+#overview-section .water-experience .operating-bar h3{font-size:16px;font-weight:500;margin:0}
+#overview-section .water-experience .operating-bar p{font-size:12px}
+#overview-section .water-experience .circuit-pump.pump-card .legacy-manual{grid-column:1/-1;grid-row:8;padding:10px 0!important;margin:10px 0 0;border:0;border-top:1px solid var(--border-color);border-radius:0!important;background:transparent;width:100%;box-sizing:border-box}
+#overview-section .water-experience .legacy-manual .bento-card-header{font-size:10px}
+#overview-section .water-experience .legacy-manual input{width:76px!important;flex:0 1 auto!important}
+#overview-section .water-experience .legacy-manual button{width:100%;min-height:44px;font-size:12px}
+#overview-section .water-experience .circuit-pump.pump-card:hover{box-shadow:none}
+@media(min-width:701px) and (max-width:1200px){#overview-section .water-experience .circuit-pump.pump-card{grid-template-columns:45px minmax(0,1fr);padding:18px 12px 12px;gap:4px 8px}#overview-section .water-experience .circuit-pump.pump-card>svg{width:45px}#overview-section .water-experience .circuit-pump.pump-card>label{font-size:11px}}
+#overview-section .water-experience .operating-bar>.pump-feedback:empty{display:none}
