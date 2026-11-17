@@ -29,3 +29,9 @@
 
 /* Legibilidade dos textos auxiliares sem devolver protagonismo aos indicadores. */
 #overview-section .telemetry-strip .bento-card-header{font-size:10px}#overview-section .telemetry-strip .metric-context{font-size:10px}#overview-section .water-experience .water-node header small{font-size:10px}#overview-section .water-experience .float-pill{font-size:10px}#overview-section .water-experience .scene-caption{font-size:9px}#overview-section .water-experience .circuit-function{font-size:10px}#overview-section .water-experience .circuit-pump-route,#overview-section .water-experience .circuit-confirmed-state{font-size:11px}#overview-section .water-experience .circuit-shortcut-label{font-size:10px!important}
+
+/* Hierarquia: resumos no circuito; comandos exclusivamente na seção operacional. */
+#overview-section .pump-summary-note{font-size:12px;line-height:1.7;color:var(--text-secondary);margin:-3px 0 18px}
+#overview-section .pump-operation{margin-top:24px;padding-top:22px;border-top:1px solid var(--border-color);scroll-margin-top:90px}
+#overview-section .pump-operation-note{font-size:12px;line-height:1.7;color:var(--text-secondary);margin:8px 0}
+#overview-section .pump-operation .legacy-manual{margin-top:18px;width:100%;box-sizing:border-box}

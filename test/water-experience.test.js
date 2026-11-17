@@ -3,8 +3,9 @@ const wait=()=>new Promise(r=>setTimeout(r,20));
 async function fixture(t,master=true){
  const dom=new JSDOM('<main><section id="overview-section"></section></main>',{url:'http://localhost:3000/arthur.html',runScripts:'outside-only'});t.after(()=>dom.window.close());const w=dom.window,events={},calls=[];let resolve;
  const state={connected:true,simulate:true,modo:'MANUAL',rio:0,poco:20,caixa:75,solo:0,boias:[false,true,false,true,false],pumps:[false,false,false],alertas:0};
+ const originalLegacy=new w.DOMParser().parseFromString(fs.readFileSync('public/arthur.html','utf8'),'text/html').querySelector('.legacy-manual');const legacy=w.document.importNode(originalLegacy,true);w.document.querySelector('#overview-section').append(legacy);let legacyEvents=0;legacy.querySelector('#tempo-manual').addEventListener('input',()=>legacyEvents++);
  w.sdaReady=Promise.resolve({usuario:{nivel:master?'master':'cliente'}});w.sdaSocket={on:(n,fn)=>events[n]=fn};w.confirm=()=>true;
- w.sdaRequest=async(url,options)=>{calls.push({url,options});return url==='/api/estado'?{ok:true,json:async()=>state}:new Promise(r=>resolve=r);};w.eval(fs.readFileSync('public/maquete.js','utf8'));await wait();return {w,d:w.document,events,state,calls,answer:r=>resolve(r)};
+ w.sdaRequest=async(url,options)=>{calls.push({url,options});return url==='/api/estado'?{ok:true,json:async()=>state}:new Promise(r=>resolve=r);};w.eval(fs.readFileSync('public/maquete.js','utf8'));await wait();return {w,d:w.document,events,state,calls,legacy,legacyEvents:()=>legacyEvents,answer:r=>resolve(r)};
 }
 test('Water Experience: quatro cenários distintos, canteiros estáticos e cinco boias preservadas',async t=>{
  const f=await fixture(t);assert.deepEqual([...f.d.querySelectorAll('.reservoir-scene')].map(n=>n.dataset.scene),['river','well','elevated','farm']);assert.equal(f.d.querySelectorAll('.float-pill').length,5);assert.equal(f.d.querySelectorAll('.crop-leaves').length,12);
@@ -35,3 +36,9 @@ test('Water Experience: erro continua no controle e CLIENTE não ganha operaçã
  f.events.estado_sistema({...f.state,pumps:[true,false,null]});
  assert.deepEqual(links.map(n=>n.querySelector('.circuit-confirmed-state').textContent),['Ligada · confirmada','Desligada · confirmada','Sem dados']);
  });
+
+test('Hierarquia: resumos sem comandos, todos os controles na seção operacional e legado movido intacto',async t=>{
+ const f=await fixture(t),region=f.d.querySelector('#pump-operation');assert.equal(region.getAttribute('aria-labelledby'),'pump-operation-title');assert.equal(f.d.querySelectorAll('.water-experience button,.water-experience input').length,0);assert.equal(region.querySelectorAll('.pump-start,.pump-stop').length,6);assert.equal(f.d.querySelectorAll('.pump-start,.pump-stop').length,6);assert.equal(region.querySelector('.legacy-manual'),f.legacy);assert.equal(f.d.querySelectorAll('.legacy-manual').length,1);assert.equal(f.legacy.open,false);assert.equal(f.legacy.querySelector('[onclick="regarManual()"]').closest('#pump-operation'),region);assert.equal(f.legacy.querySelector('[onclick="pararRega()"]').closest('#pump-operation'),region);
+ const input=f.d.querySelector('#tempo-manual');input.value='1';input.dispatchEvent(new f.w.Event('input'));assert.equal(f.legacyEvents(),1);assert.equal(input.value,'1');
+ for(const [i,link] of [...f.d.querySelectorAll('.circuit-pump')].entries()){assert.equal(link.querySelector('.circuit-shortcut-label').textContent,'Ir para controles ↗');assert.equal(link.hash,'#pump-card-'+(i+1));assert.equal(f.d.querySelector(link.hash).closest('#pump-operation'),region);assert.equal(f.d.querySelector(link.hash).tabIndex,-1);link.click();}await wait();assert.equal(f.calls.length,1);
+});
