@@ -424,14 +424,15 @@
             <div class="progress-bg"><div class="progress-fill" id="prog-agua" style="width: 0%; background: #60a5fa;"></div></div>
         </div>
 
-        <div class="bento-card col-span-8">
+        <div class="bento-card col-span-8 overview-chart" id="overview-chart">
             <div class="bento-card-header" style="justify-content: space-between;">
-                <span style="display:flex; align-items:center; gap:10px;"><i class="ph ph-chart-line-up"></i> Histórico Analítico</span>
+                <span style="display:flex; align-items:center; gap:10px;"><i class="ph ph-chart-line-up"></i> Umidade do solo · histórico recente</span>
                 <button class="btn btn-outline" onclick="baixarRelatorio()" style="width:auto; padding: 8px 14px; margin:0; font-size:12px;">
                     <i class="ph ph-download-simple"></i> Exportar CSV
                 </button>
             </div>
             <div style="position: relative; height: 320px; width: 100%;">
+                <p id="overview-chart-empty" role="status">Aguardando leituras para compor o gráfico.</p>
                 <canvas id="graficoUmidade" role="img" aria-label="Gráfico de umidade do solo. Consulte valores detalhados em Histórico e Eventos."></canvas>
             </div>
         </div>
@@ -453,7 +454,7 @@
             </div>
         </details>
 
-        <div class="bento-card col-span-4 recurso-premium">
+        <div class="bento-card col-span-4 recurso-premium overview-weather" id="overview-weather" data-available="false">
             <div class="bento-card-header"><i class="ph ph-cloud-sun"></i> Condições do clima</div>
             <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 24px;">
                 <i id="icone-clima" class="ph-fill ph-sun" style="font-size: 64px; color: var(--warning); filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.3));"></i>
@@ -618,6 +619,7 @@
         iconeEl.style.color = clima.cor;
         iconeEl.style.filter = `drop-shadow(0 0 20px ${clima.cor}60)`; 
         
+        document.getElementById('overview-weather').dataset.available='true';
         document.getElementById('texto-clima').innerText = clima.nome + (temperaturaReal ? ` (${temperaturaReal}°C)` : " (Simulado)");
         const statusTexto = document.getElementById('status-clima-rega');
         statusTexto.innerText = clima.textoSec;
@@ -900,7 +902,7 @@
         data: { 
             labels: [], 
             datasets: [{ 
-                label: 'Umidade (%)', 
+                label: 'Umidade relativa do sensor (%)', 
                 data: [], 
                 borderColor: '#38bdf8', 
                 tension: 0.4, 
@@ -910,13 +912,14 @@
                 pointBackgroundColor: '#0f1115', 
                 pointBorderColor: '#38bdf8', 
                 pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6
+                pointRadius: 0,
+                pointHoverRadius: 4
             }] 
         },
         options: { 
             responsive: true, 
-            maintainAspectRatio: false, 
+            maintainAspectRatio: false,
+            animation: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? false : {duration:250}, 
             plugins: { 
                 legend: { display: false }, 
                 tooltip: { 
@@ -932,16 +935,26 @@
             }, 
             scales: { 
                 y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false } }, 
-                x: { grid: { display: false, drawBorder: false } } 
+                x: { grid: { display: false, drawBorder: false }, ticks: {autoSkip:true,maxTicksLimit:6,maxRotation:0,minRotation:0,font:{size:10}} } 
             }, 
             interaction: { mode: 'nearest', axis: 'x', intersect: false } 
         }
     });
 
+    let overviewLight;
+    function updateOverviewChartTheme(){
+        if(!grafico.options?.scales)return;
+        const light=document.body.classList.contains('light-mode');if(light===overviewLight)return;overviewLight=light;
+        const color=getComputedStyle(document.body).getPropertyValue('--text-secondary').trim()||'#94a3b8';
+        for(const key of ['x','y']){grafico.options.scales[key].ticks={...grafico.options.scales[key].ticks,color};}
+        grafico.options.scales.y.grid.color=light?'rgba(20,50,70,.08)':'rgba(180,220,240,.07)';grafico.update('none');
+    }
+    new MutationObserver(updateOverviewChartTheme).observe(document.body,{attributes:true,attributeFilter:['class']});updateOverviewChartTheme();
     socket.on('historico_grafico', (historico) => {
+        document.getElementById('overview-chart-empty').hidden=historico.some(p=>typeof p.umidade==='number'&&Number.isFinite(p.umidade));
         grafico.data.labels = historico.map(p => p.hora);
         grafico.data.datasets[0].data = historico.map(p => p.umidade);
-        grafico.update();
+        grafico.update('none');
     });
 
     function baixarRelatorio() { location.href='/api/leituras.csv'+(window.sdaHistoryQuery?window.sdaHistoryQuery():''); }
