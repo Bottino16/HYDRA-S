@@ -328,6 +328,7 @@
 <link rel="stylesheet" href="/overview-v2.css">
 <link rel="stylesheet" href="/water-experience.css">
 <link rel="stylesheet" href="/overview-v41.css">
+<link rel="stylesheet" href="/environment-v5.css">
 </head>
 <body>
 
@@ -388,10 +389,11 @@
 <main class="main-content main-wrapper" id="main-content" tabindex="-1">
 <section id="overview-section" data-app-section="overview" class="app-section" aria-label="Visão Geral">
     
-    <header class="page-header">
+    <header class="page-header environmental-heading">
         <div>
-            <h2>Monitoramento complementar</h2>
-            <p>Gráfico de umidade e condições do ambiente.</p>
+            <span class="environment-eyebrow">TELEMETRIA / AMBIENTE</span>
+            <h2>Análise Ambiental</h2>
+            <p>Acompanhe o solo e as condições do ambiente, com a origem dos dados sempre visível.</p>
         </div>
     </header>
 
@@ -426,16 +428,35 @@
             <div class="progress-bg"><div class="progress-fill" id="prog-agua" style="width: 0%; background: #60a5fa;"></div></div>
         </div>
 
-        <div class="bento-card col-span-8 overview-chart" id="overview-chart">
+        <div class="bento-card col-span-8 overview-chart environmental-chart" id="overview-chart">
             <div class="bento-card-header" style="justify-content: space-between;">
-                <span style="display:flex; align-items:center; gap:10px;"><i class="ph ph-chart-line-up"></i> Umidade do solo · histórico recente</span>
+                <span style="display:flex; align-items:center; gap:10px;"><i class="ph ph-chart-line-up"></i> <span><strong>Dinâmica da umidade</strong><small>Histórico recente · escala relativa do sensor (%)</small></span></span>
                 <button class="btn btn-outline" onclick="baixarRelatorio()" style="width:auto; padding: 8px 14px; margin:0; font-size:12px;">
                     <i class="ph ph-download-simple"></i> Exportar CSV
                 </button>
             </div>
-            <div style="position: relative; height: 320px; width: 100%;">
-                <p id="overview-chart-empty" role="status">Aguardando leituras para compor o gráfico.</p>
+            <div class="environment-chart-legend"><span><i aria-hidden="true"></i> Umidade do solo</span><span>0–100% · não volumétrica</span></div>
+            <div class="environment-chart-stage" style="position: relative; height: 320px; width: 100%;">
+                <p id="overview-chart-empty" role="status">Sem leituras disponíveis.
+O gráfico aparecerá quando houver dados.</p>
                 <canvas id="graficoUmidade" role="img" aria-label="Gráfico de umidade do solo. Consulte valores detalhados em Histórico e Eventos."></canvas>
+            </div>
+        </div>
+
+        <div class="bento-card col-span-4 recurso-premium overview-weather" id="overview-weather" data-available="false">
+            <div class="bento-card-header"><span class="environment-eyebrow">CONTEXTO EXTERNO</span><span id="weather-source" role="status">Aguardando consulta</span></div>
+            <h3>Condições do clima</h3>
+            <div class="weather-observation">
+                <i id="icone-clima" class="ph-fill ph-sun" style="font-size: 64px; color: var(--warning); filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.3));"></i>
+                <div>
+                    <div id="texto-clima" style="font-size: 26px; font-weight: 300; letter-spacing: -1px;">Carregando...</div>
+                    <div id="status-clima-rega" style="font-size: 13px; color: var(--success); font-weight: 600; text-transform: uppercase; margin-top: 4px;">Aguardando dados</div>
+                </div>
+            </div>
+            <p class="weather-note">Contexto informativo. A consulta não comprova condições no cultivo.</p>
+            <div class="weather-actions">
+                <button class="btn btn-outline" style="font-size: 13px; padding: 10px; flex: 1;" onclick="atualizarClimaSimulado()">🎮 Simular</button>
+                <button class="btn btn-primary" style="font-size: 13px; padding: 10px; flex: 1;" onclick="buscarClimaReal()">🛰️ Consultar clima</button>
             </div>
         </div>
 
@@ -455,21 +476,6 @@
                 <div id="texto-bomba" style="font-size: 12px; font-weight: 700; color: var(--text-secondary); letter-spacing: 1.5px;">STATUS: DESCONHECIDO</div>
             </div>
         </details>
-
-        <div class="bento-card col-span-4 recurso-premium overview-weather" id="overview-weather" data-available="false">
-            <div class="bento-card-header"><i class="ph ph-cloud-sun"></i> Condições do clima</div>
-            <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 24px;">
-                <i id="icone-clima" class="ph-fill ph-sun" style="font-size: 64px; color: var(--warning); filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.3));"></i>
-                <div>
-                    <div id="texto-clima" style="font-size: 26px; font-weight: 300; letter-spacing: -1px;">Carregando...</div>
-                    <div id="status-clima-rega" style="font-size: 13px; color: var(--success); font-weight: 600; text-transform: uppercase; margin-top: 4px;">Aguardando dados</div>
-                </div>
-            </div>
-            <div style="display: flex; gap: 12px;">
-                <button class="btn btn-outline" style="font-size: 13px; padding: 10px; flex: 1;" onclick="atualizarClimaSimulado()">🎮 Simular</button>
-                <button class="btn btn-primary" style="font-size: 13px; padding: 10px; flex: 1;" onclick="buscarClimaReal()">🛰️ Consultar clima</button>
-            </div>
-        </div>
 
         <section class="settings-card settings-profiles recurso-premium" data-section-target="settings" aria-labelledby="profiles-heading">
             <header class="settings-card-heading"><span class="settings-icon" aria-hidden="true">♧</span><div><span class="hydra-eyebrow">01 · CULTIVO</span><h3 id="profiles-heading">Perfis de plantas</h3><p>Organize os limites de umidade para cada cultivo.</p></div></header>
@@ -622,6 +628,8 @@
         iconeEl.style.filter = `drop-shadow(0 0 20px ${clima.cor}60)`; 
         
         document.getElementById('overview-weather').dataset.available='true';
+        document.getElementById('overview-weather').dataset.source='simulation';
+        document.getElementById('weather-source').textContent='SIMULAÇÃO CLIMÁTICA';
         document.getElementById('texto-clima').innerText = clima.nome + (temperaturaReal ? ` (${temperaturaReal}°C)` : " (Simulado)");
         const statusTexto = document.getElementById('status-clima-rega');
         statusTexto.innerText = clima.textoSec;
@@ -629,17 +637,28 @@
         chovendo = clima.chove; 
     }
 
+    // Apenas apresentação: não altera o serviço, cache ou decisões do controlador.
+    function renderWeatherObservation(result) {
+        const panel=document.getElementById('overview-weather'), data=result.offline?null:result.data;
+        const temperature=typeof data?.temperature==='number'&&Number.isFinite(data.temperature)?data.temperature:null;
+        const rainy=typeof data?.rainy==='boolean'?data.rainy:null;
+        const available=temperature!==null||rainy!==null;
+        panel.dataset.available=String(available);panel.dataset.source=available?'external':result.offline?'offline':'unavailable';
+        document.getElementById('weather-source').textContent=available?'CONSULTA EXTERNA':result.offline?'OFFLINE':'SEM DADOS';
+        document.getElementById('texto-clima').textContent=available?[temperature!==null?temperature+'°C':null,rainy===true?'Chuva informada':rainy===false?'Sem chuva informada':null].filter(Boolean).join(' · '):'Clima sem dados';
+        const icon=document.getElementById('icone-clima');icon.className='ph-fill '+(rainy===true?'ph-cloud-rain':'ph-cloud');icon.style.color='var(--accent)';icon.style.filter='none';
+    }
+
     async function buscarClimaReal() {
         modoSimulacao = false;
         try {
             const response = await window.sdaRequest('/api/clima');
             const data = await response.json();
-            if(data.data) aplicarClimaNaInterface(data.data.rainy ? tiposClima.chuvoso : tiposClima.ensolarado, data.data.temperature);
-            else document.getElementById('texto-clima').textContent='Clima sem dados';
+            renderWeatherObservation(data);
             document.getElementById('status-clima-rega').textContent=data.offline?'CLIMA OFFLINE • controle local preservado':'Clima via backend • informativo';
             chovendo=false;
         } catch {
-            document.getElementById('texto-clima').textContent='Clima sem dados';
+            renderWeatherObservation({offline:true});
             document.getElementById('status-clima-rega').textContent='CLIMA OFFLINE • controle local preservado';
         }
     }
@@ -907,7 +926,7 @@
                 label: 'Umidade relativa do sensor (%)', 
                 data: [], 
                 borderColor: '#38bdf8', 
-                tension: 0.4, 
+                tension: 0,
                 fill: true, 
                 backgroundColor: gradient, 
                 borderWidth: 3, 
@@ -928,6 +947,11 @@
                     mode: 'index', 
                     intersect: false,
                     backgroundColor: 'rgba(15, 17, 21, 0.9)',
+                    titleColor: '#e6f5ff',
+                    bodyColor: '#e6f5ff',
+                    displayColors: false,
+                    cornerRadius: 10,
+                    callbacks: {label: item => item.raw == null ? 'Sem dados' : item.raw + '% · escala relativa'},
                     titleFont: { size: 13 },
                     bodyFont: { size: 14, weight: 'bold' },
                     padding: 12,
@@ -936,7 +960,7 @@
                 } 
             }, 
             scales: { 
-                y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false } }, 
+                y: { min: 0, max: 100, ticks:{stepSize:25,callback:value=>value+'%'}, grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false } },
                 x: { grid: { display: false, drawBorder: false }, ticks: {autoSkip:true,maxTicksLimit:6,maxRotation:0,minRotation:0,font:{size:10}} } 
             }, 
             interaction: { mode: 'nearest', axis: 'x', intersect: false } 

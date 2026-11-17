@@ -1,0 +1,40 @@
+/* V5: apenas o módulo ambiental inferior da Visão Geral. */
+#overview-section .environmental-heading{margin:34px 0 20px;padding-top:26px;border-top:1px solid var(--border-color)}
+#overview-section .environmental-heading h2{font-size:clamp(25px,2.5vw,34px);font-weight:450;letter-spacing:-.045em;margin:8px 0}
+#overview-section .environmental-heading p{font-size:13px;max-width:620px;line-height:1.7;color:var(--text-secondary)}
+.environment-eyebrow{font-size:10px;letter-spacing:.16em;color:var(--accent);font-weight:600}
+#overview-section>.bento-grid{grid-template-columns:minmax(0,2.2fr) minmax(260px,1fr);gap:18px;align-items:start}
+#overview-section .overview-chart{grid-column:1!important;grid-row:1;border:1px solid var(--border-color);background:linear-gradient(150deg,color-mix(in srgb,var(--accent) 4%,transparent),transparent 45%),var(--bg-panel);padding:24px!important;border-radius:22px!important}
+#overview-section .overview-chart .bento-card-header{gap:16px;align-items:start;margin-bottom:22px;text-transform:none}
+#overview-section .overview-chart .bento-card-header strong{display:block;font-size:18px;color:var(--text-primary);font-weight:500;letter-spacing:-.03em}
+#overview-section .overview-chart .bento-card-header small{display:block;font-size:11px;margin-top:6px;line-height:1.6;letter-spacing:0}
+#overview-section .overview-chart .bento-card-header>span>i{font-size:24px;color:var(--accent)}
+#overview-section .overview-chart .bento-card-header button{font-size:12px!important;min-height:44px;flex-shrink:0}
+#overview-section .environment-chart-legend{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--text-secondary);margin:0 0 18px;padding:12px 0;border-block:1px solid var(--border-color)}
+.environment-chart-legend i{display:inline-block;width:18px;height:3px;background:var(--accent);vertical-align:middle;margin-right:7px;border-radius:2px}
+#overview-section .overview-chart>.environment-chart-stage{height:250px!important}
+#overview-section #graficoUmidade{height:250px!important}
+#overview-section #overview-chart-empty{background:var(--bg-panel);border:1px dashed var(--border-color);border-radius:12px;white-space:pre-line;line-height:1.9;font-size:13px}
+#overview-section .overview-weather{grid-column:2!important;grid-row:1;padding:24px!important;border-radius:22px!important;background:var(--bg-panel);position:relative;overflow:hidden}
+#overview-section .overview-weather::before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--accent);opacity:.5}
+#overview-section .overview-weather .bento-card-header{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;text-transform:none}
+#weather-source{font-size:10px;color:var(--text-secondary);border:1px solid var(--border-color);padding:3px 7px;border-radius:6px;letter-spacing:.03em}
+#overview-section .overview-weather h3{font-size:21px;letter-spacing:-.035em;font-weight:500;margin:18px 0}
+#overview-section .weather-observation{display:flex;gap:14px;align-items:center;margin:20px 0}
+#overview-section .overview-weather #texto-clima{overflow-wrap:anywhere}
+#overview-section .overview-weather #texto-clima{font-size:22px!important;line-height:1.4;letter-spacing:-.025em!important}
+#overview-section .overview-weather #icone-clima{font-size:36px!important;filter:none!important}
+#overview-section .overview-weather #status-clima-rega{font-size:11px!important;text-transform:none!important;line-height:1.7;margin-top:8px!important;font-weight:400!important}
+#overview-section .weather-note{font-size:12px;color:var(--text-secondary);line-height:1.7;border-top:1px solid var(--border-color);padding-top:16px;margin:20px 0 16px}
+#overview-section .weather-actions{display:flex;flex-wrap:wrap;gap:10px}
+#overview-section .weather-actions button{min-height:44px;font-size:12px!important;flex:1 1 120px!important}
+#overview-section .legacy-manual{grid-column:1/-1!important;grid-row:2;padding:14px 20px!important;background:var(--bg-panel);border-radius:14px!important}
+#overview-section .legacy-manual summary{font-size:12px;cursor:pointer;min-height:32px;line-height:2.5}
+#overview-section .legacy-manual[open]{grid-row:2;max-width:100%}
+#overview-section .legacy-manual[open]>div,#overview-section .legacy-manual[open]>button{max-width:520px}
+@media(max-width:1100px){#overview-section>.bento-grid{grid-template-columns:minmax(0,1fr)}#overview-section .overview-chart,#overview-section .overview-weather,#overview-section .legacy-manual{grid-column:1!important;grid-row:auto}}
+@media(max-width:650px){#overview-section .environmental-heading{margin-top:26px}#overview-section .overview-chart,#overview-section .overview-weather{padding:18px!important}#overview-section .overview-chart .bento-card-header{flex-wrap:wrap;gap:14px}#overview-section .overview-chart .bento-card-header button{width:100%!important}#overview-section .overview-chart .bento-card-header strong{font-size:18px}#overview-section .overview-chart>.environment-chart-stage,#overview-section #graficoUmidade{height:220px!important}#overview-section .environment-chart-legend{font-size:11px}#overview-section .weather-actions button{font-size:13px!important}}
+@media(prefers-reduced-motion:no-preference){#overview-section .overview-chart,#overview-section .overview-weather{transition:border-color .2s,box-shadow .2s}#overview-section .overview-chart:hover,#overview-section .overview-weather:hover{border-color:var(--border-hover)}}
+
+/* Prioridade sobre a altura legada do contêiner móvel do canvas. */
+@media(max-width:650px){#overview-section #overview-chart>.environment-chart-stage{height:220px!important}}
