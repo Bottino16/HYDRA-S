@@ -61,3 +61,11 @@
 @media(prefers-reduced-motion:no-preference){#history-section .history-tabs button,#history-section .history-period :is(button,a){transition:background .18s,color .18s,border-color .18s}#history-section .history-card:focus-within{border-color:var(--border-hover)}}
 /* A legenda completa continua acessível, sem repetir o título do módulo na tela. */
 #history-section .history-table caption{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#history-section .history-table td.history-detail-cell::before{display:none}
+/* Detalhes ocupam a largura do quadro sem esticar uma única coluna. */
+#history-section .history-expanded-row[hidden]{display:none!important}
+#history-section .history-expanded-row>td{background:var(--bg-base);padding:18px!important}
+#history-section .history-expanded-row dl{display:grid;grid-template-columns:minmax(100px,.6fr) minmax(0,2fr);gap:8px 16px;margin:0;line-height:1.8}
+#history-section .history-expanded-row dt{color:var(--text-secondary);font-size:11px}
+#history-section .history-expanded-row dd{margin:0;color:var(--text-primary);font-size:12px;overflow-wrap:anywhere}
+@media(max-width:600px){#history-section .history-table tbody .history-expanded-row:not([hidden]){display:block;margin-top:-12px;border-top:0;border-radius:0 0 12px 12px}#history-section .history-expanded-row>td{display:block!important;padding:0!important;border:0!important}#history-section .history-expanded-row>td::before{display:none}#history-section .history-expanded-row dl{grid-template-columns:minmax(0,1fr);gap:2px}#history-section .history-expanded-row dd{margin-bottom:10px;font-size:13px}}
