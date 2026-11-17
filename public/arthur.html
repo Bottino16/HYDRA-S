@@ -914,9 +914,10 @@ O gráfico aparecerá quando houver dados.</p>
     // Fechar painel notificação
     document.addEventListener('click', function(event) {
         const painelNotif = document.getElementById('painel-notif');
-        const relativeBtn = document.querySelector('.relative');
-        if (painelNotif.style.display === 'block' && !relativeBtn.contains(event.target)) {
+        const relativeBtn = document.querySelector('.notification-wrapper');
+        if (painelNotif.style.display === 'block' && !relativeBtn?.contains(event.target)) {
             painelNotif.style.display = 'none';
+            document.getElementById('notification-toggle')?.setAttribute('aria-expanded','false');
         }
     });
 
