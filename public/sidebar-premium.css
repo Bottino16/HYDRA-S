@@ -1,23 +1,41 @@
-/* Navegação autenticada: estrutura e dimensões independentes do conteúdo. */
-#app-sidebar{width:292px;min-width:292px;padding:28px 20px 18px;gap:26px;background:linear-gradient(165deg,color-mix(in srgb,var(--accent) 3%,transparent),transparent 35%),var(--bg-panel);box-shadow:8px 0 28px #00000008;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--border-hover) transparent}
-#app-sidebar .sidebar-brand-row{display:flex;align-items:center;gap:10px;flex-shrink:0}
-#app-sidebar .brand{padding:4px 8px;margin:0;gap:13px;min-width:0;flex:1}
-#app-sidebar .brand-icon{width:46px;height:46px;min-width:46px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent-glow),var(--bg-panel));border:1px solid var(--border-hover);border-radius:15px}
-#app-sidebar .brand-icon svg{width:26px;height:26px;color:var(--accent)}
-#app-sidebar .brand-text h1{font-size:24px;letter-spacing:.05em;white-space:nowrap}#app-sidebar .brand-text p{font-size:9px;letter-spacing:.14em;line-height:1.7}
-#menu-close{display:none}
-#app-sidebar .nav-menu{display:flex;flex-direction:column;gap:20px;flex:0 0 auto;margin:0;width:100%}
-#app-sidebar .nav-group{display:flex;flex-direction:column;gap:5px;min-width:0}
-#app-sidebar .nav-group+.nav-group{padding-top:16px;border-top:1px solid var(--border-color)}
-#app-sidebar .nav-caption{font-size:10px;font-weight:600;letter-spacing:.13em;line-height:1.6;padding:0 14px 9px;color:var(--text-secondary)}
-#app-sidebar .nav-btn{position:relative;display:flex;align-items:center;gap:13px;min-height:48px;font-size:13px;font-weight:500;line-height:1.5;padding:12px 14px;border-radius:12px;text-align:left;letter-spacing:0;border:1px solid transparent;margin:0;flex:none;justify-content:flex-start;width:100%;color:var(--text-secondary)}
+/* Sidebar Premium V2. Única camada final de dimensões da navegação autenticada. */
+#app-sidebar{--nav-width:276px;width:var(--nav-width);min-width:var(--nav-width);flex:0 0 var(--nav-width);height:100dvh;box-sizing:border-box;padding:24px 16px 16px;gap:22px;overflow:hidden;position:relative;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 3%,transparent),transparent 42%),var(--bg-panel);border-right:1px solid var(--border-color);box-shadow:8px 0 28px #00000008;transition:width .2s ease,min-width .2s ease,flex-basis .2s ease}
+#app-sidebar .sidebar-brand-row{display:flex;align-items:center;gap:7px;flex:0 0 auto;min-height:48px}
+#app-sidebar .brand{display:flex;align-items:center;gap:10px;margin:0;padding:0;min-width:0;flex:1}
+#app-sidebar .brand-icon{width:38px;min-width:38px;height:42px;display:grid;place-items:center;color:var(--accent);background:linear-gradient(135deg,var(--accent-glow),var(--bg-panel));border:1px solid var(--border-hover);border-radius:13px}
+#app-sidebar .brand-icon svg{width:24px;height:24px}
+#app-sidebar .brand-text h1{font-size:21px;letter-spacing:.045em;white-space:nowrap;margin:0}#app-sidebar .brand-text p{font-size:8px;letter-spacing:.12em;line-height:1.7;margin:3px 0 0;white-space:nowrap}
+#sidebar-collapse,#menu-close{display:grid;place-items:center;flex:0 0 36px;min-height:40px;padding:5px;border:1px solid var(--border-color);border-radius:10px;background:var(--bg-base);color:var(--text-secondary);cursor:pointer}
+#sidebar-collapse svg{width:21px;height:21px}#sidebar-collapse:hover,#menu-close:hover{color:var(--accent);border-color:var(--border-hover)}#menu-close{display:none}
+#app-sidebar .nav-menu{display:flex;flex-direction:column;gap:15px;flex:1 1 auto;min-height:0;width:100%;margin:0;padding:0 3px 6px;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--border-color) transparent}
+#app-sidebar .nav-group{display:flex;flex-direction:column;gap:3px;flex-shrink:0;min-width:0}
+#app-sidebar .nav-group+.nav-group{padding-top:13px;border-top:1px solid var(--border-color)}
+#app-sidebar .nav-caption{display:block;font-size:9px;font-weight:600;letter-spacing:.13em;line-height:1.6;padding:0 11px 7px;color:var(--text-secondary);white-space:nowrap}
+#app-sidebar .nav-btn{position:relative;display:flex;align-items:center;gap:12px;min-height:44px;font-size:13px;font-weight:500;line-height:1.5;padding:10px 11px;border-radius:11px;text-align:left;letter-spacing:0;border:1px solid transparent;margin:0;flex:none;justify-content:flex-start;width:100%;color:var(--text-secondary);background:transparent;transition:background .15s,color .15s,border-color .15s}
 #app-sidebar .nav-btn:is(:hover,:focus-visible){color:var(--text-primary);background:var(--bg-card);transform:none}
-#app-sidebar .nav-btn.is-active{color:var(--accent);background:linear-gradient(110deg,var(--accent-glow),color-mix(in srgb,var(--accent-glow) 55%,var(--bg-panel)));border-color:var(--border-hover);box-shadow:inset 3px 0 var(--accent),0 3px 14px #00000008;font-weight:600}
-#app-sidebar .nav-btn.is-active::after{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);margin-left:auto;flex-shrink:0}
-#app-sidebar .nav-btn span{display:inline}#app-sidebar :is(.nav-icon,.nav-symbol){display:inline-grid;place-items:center;flex:0 0 22px;width:22px;height:22px;font-size:20px;color:inherit}
-#app-sidebar .nav-btn.danger{color:var(--danger)}
-#app-sidebar .status-badge{margin-top:auto;width:100%;box-sizing:border-box;min-height:42px;padding:11px 13px;font-size:11px;border-radius:12px;background:var(--bg-base);flex-shrink:0;line-height:1.6}
+#app-sidebar .nav-btn.is-active{color:var(--accent);background:linear-gradient(110deg,var(--accent-glow),color-mix(in srgb,var(--accent-glow) 55%,var(--bg-panel)));border-color:var(--border-hover);box-shadow:inset 2px 0 var(--accent);font-weight:600}
+#app-sidebar .nav-btn.is-active::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--accent);margin-left:auto;flex-shrink:0}
+#app-sidebar .nav-btn span{display:inline}#app-sidebar :is(.nav-icon,.nav-symbol),#app-sidebar #assistant-nav::before{display:inline-grid;place-items:center;flex:0 0 22px;width:22px;height:22px;font-size:20px;color:inherit}
+#app-sidebar .nav-btn.danger{color:var(--danger)}#app-sidebar .nav-btn:focus-visible{outline-offset:-3px}
+#app-sidebar .status-badge{margin:0;width:100%;box-sizing:border-box;min-height:40px;padding:10px 11px;font-size:10px;border-radius:11px;background:var(--bg-base);flex:0 0 auto;line-height:1.6;justify-content:flex-start}
 #app-sidebar .notification-panel{border-radius:12px}
-@media(min-width:801px) and (max-width:1200px){#app-sidebar{width:272px;min-width:272px;padding-inline:16px;gap:24px}#app-sidebar .brand-text h1{font-size:23px}}
-@media(max-width:800px){#app-sidebar{width:min(336px,calc(100vw - 28px));min-width:0;padding:22px 18px max(20px,env(safe-area-inset-bottom));height:100dvh;gap:24px;z-index:1300;transition:transform .2s ease;visibility:hidden}body.menu-open #app-sidebar{visibility:visible}#menu-close{display:grid;place-items:center;flex:0 0 44px;min-height:44px;background:var(--bg-base);color:var(--text-secondary);border:1px solid var(--border-color);border-radius:12px;font-size:18px}#app-sidebar .brand{padding:0;gap:10px}#app-sidebar .brand-icon{width:38px;min-width:38px;height:42px}#app-sidebar .brand-text h1{font-size:22px}#app-sidebar .brand-text p{font-size:8px}#app-sidebar .nav-btn{min-height:49px;font-size:14px}#app-sidebar .nav-menu{gap:18px}body.menu-open{overflow:hidden}#menu-backdrop:not([hidden]){background:#030b1bbb}#app-sidebar .nav-btn:focus-visible{outline-offset:-3px}}
+#nav-tooltip{position:fixed;z-index:2500;pointer-events:none;width:max-content;max-width:min(250px,calc(100vw - 112px));padding:9px 12px;border:1px solid var(--border-hover);border-radius:9px;background:var(--bg-panel);color:var(--text-primary);box-shadow:var(--shadow-float);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+#nav-tooltip[hidden]{display:none}
+@media(min-width:801px){
+ body.sidebar-compact #app-sidebar{--nav-width:80px;padding:20px 10px 14px;gap:18px}
+ .sidebar-compact #app-sidebar .sidebar-brand-row{flex-direction:column;gap:10px}
+ .sidebar-compact #app-sidebar .brand{flex:none;justify-content:center}
+ .sidebar-compact #sidebar-collapse{width:44px;flex-basis:auto;min-height:36px;border-color:transparent;background:transparent}
+ .sidebar-compact #sidebar-collapse svg{transform:rotate(180deg)}
+ .sidebar-compact #app-sidebar .nav-menu{padding:0 1px 5px;gap:10px}
+ .sidebar-compact #app-sidebar .nav-group{gap:4px}
+ .sidebar-compact #app-sidebar .nav-group+.nav-group{padding-top:10px}
+ .sidebar-compact #app-sidebar .brand-text,.sidebar-compact #app-sidebar .nav-caption,.sidebar-compact #app-sidebar .nav-btn>span:not(.nav-symbol):not(.badge),.sidebar-compact #app-sidebar #status-conexao{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
+ .sidebar-compact #app-sidebar .nav-btn{justify-content:center;gap:0;padding:10px 0;min-height:46px}
+ .sidebar-compact #app-sidebar .nav-btn.is-active::after{position:absolute;right:5px;top:6px;margin:0}
+ .sidebar-compact #app-sidebar .badge{position:absolute;top:1px;right:0;font-size:9px;min-width:15px;max-width:22px;padding:1px 3px}
+ .sidebar-compact #app-sidebar .status-badge{justify-content:center;padding:10px;min-height:38px}
+ .sidebar-compact #app-sidebar .notification-panel{position:fixed;left:88px;top:80px;width:min(330px,calc(100vw - 104px));max-height:calc(100dvh - 104px);background:var(--bg-panel);box-shadow:var(--shadow-float);border:1px solid var(--border-hover);z-index:2000}
+}
+@media(max-width:800px){#app-sidebar{position:fixed;inset:0 auto 0 0;flex-basis:auto;width:min(336px,calc(100vw - 28px));min-width:0;padding:22px 18px max(18px,env(safe-area-inset-bottom));height:100dvh;gap:22px;z-index:1300;transition:transform .2s ease;visibility:hidden}body.menu-open #app-sidebar{visibility:visible}#sidebar-collapse{display:none}#menu-close{display:grid;flex-basis:44px;min-height:44px;font-size:18px}#app-sidebar .brand-text h1{font-size:22px}#app-sidebar .brand-text p{font-size:8px}#app-sidebar .nav-btn{min-height:48px;font-size:14px}#app-sidebar .nav-menu{gap:16px}body.menu-open{overflow:hidden}#menu-backdrop:not([hidden]){background:#030b1bbb}}
 @media(prefers-reduced-motion:reduce){#app-sidebar,#app-sidebar .nav-btn{transition:none!important}}
