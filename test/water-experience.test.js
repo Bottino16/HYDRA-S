@@ -47,16 +47,16 @@ test('Unificação: modo mantém payload e confirmação; CLIENTE não converte 
  const client=await fixture(t,false);const convert=client.legacy.querySelector('button');assert.equal(convert.disabled,true);convert.click();assert.equal(client.calls.length,1);assert.ok([...client.d.querySelectorAll('.pump-start,.pump-stop,.mode-switch button')].every(b=>b.disabled));
 });
 
-test('V6: estações preservam ordem do percurso, controles únicos e formulário legado',async t=>{
- const f=await fixture(t),stations=[...f.d.querySelectorAll('.flow-station')];
- assert.equal(stations.length,3);
- assert.deepEqual(stations.map(s=>[s.querySelector('.water-node').dataset.reservoir,s.querySelector('.circuit-link').dataset.pump]),[['0','1'],['1','2'],['2','3']]);
- assert.deepEqual([...f.d.querySelector('.circuit-track').children].map(n=>n.className),['flow-station','flow-station','flow-station','flow-destination']);
- assert.equal(f.d.querySelector('.flow-destination .water-node').dataset.reservoir,'3');
+test('Recuperação: percurso aprovado sem colunas V6 e com controles únicos preservados',async t=>{
+ const f=await fixture(t),track=f.d.querySelector('.circuit-track');
+ assert.equal(f.d.querySelector('.flow-station,.flow-destination'),null);
+ assert.deepEqual([...track.children].map(n=>n.dataset.reservoir ?? ('B'+n.dataset.pump)),['0','B1','1','B2','2','B3','3']);
  assert.equal(f.d.querySelectorAll('.pump-actions button').length,6);
  assert.equal(f.d.querySelector('#pump-card-3 .legacy-manual'),f.legacy);
+ assert.equal(f.d.querySelector('.pump-grid,#pump-operation'),null);
  assert.equal(f.calls.length,1);
  f.d.querySelector('#pump-card-2 input').value='7';f.events.estado_sistema({...f.state,pumps:[false,true,false]});
  assert.equal(f.d.querySelector('#pump-card-2 input').value,'7');
  assert.equal(f.d.querySelector('#pump-card-2 .circuit-confirmed-state').textContent,'Ligada · confirmada');
+ const html=fs.readFileSync('public/arthur.html','utf8');assert.ok(!html.includes('/overview-v6.css'));assert.ok(html.includes('/overview-v41.css'));
 });

@@ -1,5 +1,7 @@
 # Visão Geral V6 — circuito e operação integrados
 
+> Situação atual: V6 REJEITADA pelo usuário. A camada visual foi retirada na recuperação documentada em `RECUPERACAO-V6.md`. O conteúdo abaixo registra apenas a entrega histórica, não uma versão aprovada.
+
 Entrega: 18/11/2026. Escopo exclusivamente visual da Water Experience. Operação em SIMULAÇÃO; firmware NÃO VALIDADO fisicamente.
 
 ## Diagnóstico
