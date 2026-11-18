@@ -46,3 +46,17 @@ test('Unificação: modo mantém payload e confirmação; CLIENTE não converte 
  const f=await fixture(t);const mode=f.d.querySelector('.mode-switch button');mode.click();assert.equal(f.calls.at(-1).url,'/api/modo');assert.deepEqual(JSON.parse(f.calls.at(-1).options.body),{mode:'AUTO'});f.answer({ok:true});await wait();assert.match(f.d.querySelector('.operating-bar .pump-feedback').textContent,/confirmado/);
  const client=await fixture(t,false);const convert=client.legacy.querySelector('button');assert.equal(convert.disabled,true);convert.click();assert.equal(client.calls.length,1);assert.ok([...client.d.querySelectorAll('.pump-start,.pump-stop,.mode-switch button')].every(b=>b.disabled));
 });
+
+test('V6: estações preservam ordem do percurso, controles únicos e formulário legado',async t=>{
+ const f=await fixture(t),stations=[...f.d.querySelectorAll('.flow-station')];
+ assert.equal(stations.length,3);
+ assert.deepEqual(stations.map(s=>[s.querySelector('.water-node').dataset.reservoir,s.querySelector('.circuit-link').dataset.pump]),[['0','1'],['1','2'],['2','3']]);
+ assert.deepEqual([...f.d.querySelector('.circuit-track').children].map(n=>n.className),['flow-station','flow-station','flow-station','flow-destination']);
+ assert.equal(f.d.querySelector('.flow-destination .water-node').dataset.reservoir,'3');
+ assert.equal(f.d.querySelectorAll('.pump-actions button').length,6);
+ assert.equal(f.d.querySelector('#pump-card-3 .legacy-manual'),f.legacy);
+ assert.equal(f.calls.length,1);
+ f.d.querySelector('#pump-card-2 input').value='7';f.events.estado_sistema({...f.state,pumps:[false,true,false]});
+ assert.equal(f.d.querySelector('#pump-card-2 input').value,'7');
+ assert.equal(f.d.querySelector('#pump-card-2 .circuit-confirmed-state').textContent,'Ligada · confirmada');
+});
