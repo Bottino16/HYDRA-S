@@ -33,3 +33,8 @@ body.light-mode #overview-section .digital-twin{--base:#f0f6f8;--panel:#fff;--ra
  #overview-section .digital-twin .mode-switch button{flex:1;min-width:0;padding:7px 4px;white-space:normal}
  #overview-section .digital-twin .operating-bar>.pump-feedback{grid-column:1/-1;grid-row:3;max-width:none;width:100%;font-size:12px;text-align:left;overflow-wrap:anywhere}
 }
+/* Os metadados operacionais vencem regras móveis legadas de 8–10 px. */
+#overview-section .digital-twin .circuit-pump.pump-card>.circuit-module-id{grid-column:1;font-size:11px}
+#overview-section .digital-twin .circuit-pump.pump-card>.circuit-function{font-size:16px}
+#overview-section .digital-twin .circuit-pump.pump-card>.circuit-pump-route,#overview-section .digital-twin .circuit-pump.pump-card>.circuit-confirmed-state{font-size:12px}
+@media(max-width:560px){#overview-section .digital-twin .circuit-pump.pump-card>.circuit-function{font-size:17px}#overview-section .digital-twin .circuit-pump.pump-card>.circuit-pump-route,#overview-section .digital-twin .circuit-pump.pump-card>.circuit-confirmed-state{font-size:13px}}
