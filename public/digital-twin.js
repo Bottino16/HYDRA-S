@@ -152,11 +152,11 @@ const mobile=`<svg class="dt-scene scene-mobile" viewBox="0 0 350 920" role="img
   if(mobile&&index===1){slot.setAttribute('y','358');slot.parentElement.querySelector('.scene-sub').setAttribute('y','385');}
   if(mobile&&index===2)slot.setAttribute('y','586');
   if(!mobile&&!tablet&&index===2)slot.setAttribute('y','115');
-  if(!mobile&&!tablet&&index===3){const group=slot.parentElement;group.querySelector('.scene-number').setAttribute('y','101');group.querySelector('.scene-title').setAttribute('y','127');slot.setAttribute('y','199');}
+  if(!mobile&&!tablet&&index===3){const group=slot.parentElement;group.querySelector('.scene-number').setAttribute('y','81');group.querySelector('.scene-title').setAttribute('y','107');}
   const label=document.createElementNS('http://www.w3.org/2000/svg','text');
   label.classList.add('scene-sub');
   if(tablet&&index<3){label.setAttribute('x',slot.getAttribute('x'));label.setAttribute('y',slot.getAttribute('y'));label.textContent=['Rio','Poço','Caixa elevada'][index];slot.before(label);slot.setAttribute('x',[300,610,610][index]);slot.setAttribute('text-anchor','end');}
-  if(index===3){label.textContent='Solo · escala relativa';label.setAttribute('x',slot.getAttribute('x'));label.setAttribute('y',slot.getAttribute('y'));slot.before(label);slot.setAttribute('y',mobile?'859':tablet?'347':'177');slot.setAttribute('x',mobile?'15':tablet?'230':'924');}
+  if(index===3){label.textContent='Solo • escala relativa';label.classList.add('dt-soil-caption');label.setAttribute('x',mobile?'15':tablet?'230':'924');label.setAttribute('y',mobile?'891':tablet?'375':'181');slot.before(label);slot.setAttribute('y',mobile?'859':tablet?'347':'155');slot.setAttribute('x',mobile?'15':tablet?'230':'924');}
  });
  function sync(){
   slots.forEach(slot=>{const tank=tanks[Number(slot.dataset.dtLevel)];slot.textContent=tank.value.textContent;slot.dataset.available=tank.card.dataset.known;});
