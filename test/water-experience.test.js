@@ -77,3 +77,11 @@ test('DT-1: três composições espelham somente leituras validadas e confirmaç
  assert.equal(f.d.querySelector('#preview-state'),null);assert.ok(!f.d.querySelector('.digital-twin').textContent.includes('confirmação ilustrativa'));
  const ids=[...f.d.querySelectorAll('[id]')].map(n=>n.id);assert.equal(new Set(ids).size,ids.length);
 });
+
+test('DT-1: geometria e posicionamento das ilustrações aprovadas não são reinterpretados',()=>{
+ const prototype=fs.readFileSync('docs/prototipos/digital-twin-premium/prototype.js','utf8'),production=fs.readFileSync('public/digital-twin.js','utf8');
+ const paths=s=>[...s.matchAll(/<path d="([^"]+)"/g)].map(m=>m[1]);
+ const transforms=s=>[...s.matchAll(/<use href="#[^"]+" transform="([^"]+)"/g)].map(m=>m[1]);
+ assert.deepEqual(paths(production),paths(prototype));assert.deepEqual(transforms(production),transforms(prototype));
+ assert.ok(paths(production).length>20);assert.ok(!/addEventListener|sdaRequest|fetch\(|WebSocket|preview-state|confirmação ilustrativa/.test(production));
+});
