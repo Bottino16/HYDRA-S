@@ -58,7 +58,7 @@ test('painel das três bombas não muda para ligada no clique',async()=>{
  const dom=new JSDOM('<main></main>',{runScripts:'outside-only',url:'http://localhost:3000'}),win=dom.window,handlers={};let complete;
  win.sdaReady=Promise.resolve({usuario:{nivel:'master'}});win.confirm=()=>true;win.socket={on:(name,fn)=>handlers[name]=fn};
  const initial={...state(),connected:true,v:1,seq:1};win.sdaRequest=async url=>url==='/api/estado'?{ok:true,json:async()=>initial}:new Promise(resolve=>{complete=resolve;});
- win.eval(fs.readFileSync('public/maquete.js','utf8'));
+ win.eval(fs.readFileSync('public/digital-twin.js','utf8'));win.eval(fs.readFileSync('public/maquete.js','utf8'));
  await new Promise(resolve=>setTimeout(resolve,20));
  const button=[...win.document.querySelectorAll('button')].find(b=>b.textContent==='Ligar');button.click();
  const label=[...win.document.querySelectorAll('span')].find(s=>s.textContent.startsWith('Bomba 1:'));

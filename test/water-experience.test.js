@@ -5,12 +5,12 @@ async function fixture(t,master=true){
  const state={connected:true,simulate:true,modo:'MANUAL',rio:0,poco:20,caixa:75,solo:0,boias:[false,true,false,true,false],pumps:[false,false,false],alertas:0};
  const originalLegacy=new w.DOMParser().parseFromString(fs.readFileSync('public/arthur.html','utf8'),'text/html').querySelector('.legacy-manual');const legacy=w.document.importNode(originalLegacy,true);w.document.querySelector('#overview-section').append(legacy);let legacyEvents=0;legacy.querySelector('#tempo-manual').addEventListener('input',()=>legacyEvents++);
  w.sdaReady=Promise.resolve({usuario:{nivel:master?'master':'cliente'}});w.sdaSocket={on:(n,fn)=>events[n]=fn};w.confirm=()=>true;
- w.sdaRequest=async(url,options)=>{calls.push({url,options});return url==='/api/estado'?{ok:true,json:async()=>state}:new Promise(r=>resolve=r);};w.eval(fs.readFileSync('public/maquete.js','utf8'));await wait();return {w,d:w.document,events,state,calls,legacy,legacyEvents:()=>legacyEvents,answer:r=>resolve(r)};
+ w.sdaRequest=async(url,options)=>{calls.push({url,options});return url==='/api/estado'?{ok:true,json:async()=>state}:new Promise(r=>resolve=r);};w.eval(fs.readFileSync('public/digital-twin.js','utf8'));w.eval(fs.readFileSync('public/maquete.js','utf8'));await wait();return {w,d:w.document,events,state,calls,legacy,legacyEvents:()=>legacyEvents,answer:r=>resolve(r)};
 }
 test('Water Experience: quatro cenários distintos, canteiros estáticos e cinco boias preservadas',async t=>{
- const f=await fixture(t);assert.deepEqual([...f.d.querySelectorAll('.reservoir-scene')].map(n=>n.dataset.scene),['river','well','elevated','farm']);assert.equal(f.d.querySelectorAll('.float-pill').length,5);assert.equal(f.d.querySelectorAll('.crop-leaves').length,12);
+ const f=await fixture(t);assert.deepEqual([...f.d.querySelectorAll('.reservoir-scene')].map(n=>n.dataset.scene),['river','well','elevated','farm']);assert.equal(f.d.querySelectorAll('.float-pill').length,5);assert.equal(f.d.querySelectorAll('#hydra-dt-crop-rows use').length,30);
  assert.equal(f.d.querySelector('#circuit-level-0').textContent,'0%');assert.equal(f.d.querySelector('[data-reservoir="2"] .vessel-fill').style.height,'75%');assert.equal(f.d.querySelector('.soil-relative-fill').style.width,'0%');
- const crop=f.d.querySelector('.farm-art').outerHTML;f.events.estado_sistema({...f.state,solo:91});assert.equal(f.d.querySelector('.soil-relative-fill').style.width,'91%');assert.equal(f.d.querySelector('.farm-art').outerHTML,crop);assert.match(f.d.querySelector('.circuit-footnote').textContent,/sem indicar saúde ou crescimento medidos/);
+ const crop=f.d.querySelector('#hydra-dt-crop-rows').outerHTML;f.events.estado_sistema({...f.state,solo:91});assert.equal(f.d.querySelector('.soil-relative-fill').style.width,'91%');assert.equal(f.d.querySelector('#hydra-dt-crop-rows').outerHTML,crop);assert.match(f.d.querySelector('.circuit-footnote').textContent,/sem indicar saúde ou crescimento medidos/);
  f.events.estado_sistema({...f.state,solo:null,poco:null});assert.equal(f.d.querySelector('#circuit-level-1').textContent,'Sem dados');assert.equal(f.d.querySelector('#circuit-level-3').textContent,'Sem dados');assert.equal(f.d.querySelector('.soil-relative-fill').style.width,'0%');assert.equal(f.d.querySelector('[data-reservoir="3"]').dataset.known,'false');
 });
 test('Water Experience: controles únicos integrados; saídas dependem da telemetria',async t=>{
@@ -47,10 +47,12 @@ test('Unificação: modo mantém payload e confirmação; CLIENTE não converte 
  const client=await fixture(t,false);const convert=client.legacy.querySelector('button');assert.equal(convert.disabled,true);convert.click();assert.equal(client.calls.length,1);assert.ok([...client.d.querySelectorAll('.pump-start,.pump-stop,.mode-switch button')].every(b=>b.disabled));
 });
 
-test('Recuperação: percurso aprovado sem colunas V6 e com controles únicos preservados',async t=>{
+test('DT-1: cena única sem colunas V6, com boias e controles preservados',async t=>{
  const f=await fixture(t),track=f.d.querySelector('.circuit-track');
  assert.equal(f.d.querySelector('.flow-station,.flow-destination'),null);
- assert.deepEqual([...track.children].map(n=>n.dataset.reservoir ?? ('B'+n.dataset.pump)),['0','B1','1','B2','2','B3','3']);
+ assert.deepEqual([...track.children].map(n=>n.dataset.reservoir),['0','1','2','3']);
+ assert.deepEqual([...f.d.querySelector('.dt-pump-deck').children].map(n=>n.dataset.pump),['1','2','3']);
+ assert.equal(f.d.querySelectorAll('.dt-scene').length,3);assert.equal(f.d.querySelectorAll('.scene-landscape,.farm-art').length,0);
  assert.equal(f.d.querySelectorAll('.pump-actions button').length,6);
  assert.equal(f.d.querySelector('#pump-card-3 .legacy-manual'),f.legacy);
  assert.equal(f.d.querySelector('.pump-grid,#pump-operation'),null);
@@ -59,4 +61,19 @@ test('Recuperação: percurso aprovado sem colunas V6 e com controles únicos pr
  assert.equal(f.d.querySelector('#pump-card-2 input').value,'7');
  assert.equal(f.d.querySelector('#pump-card-2 .circuit-confirmed-state').textContent,'Ligada · confirmada');
  const html=fs.readFileSync('public/arthur.html','utf8');assert.ok(!html.includes('/overview-v6.css'));assert.ok(html.includes('/overview-v41.css'));
+});
+
+
+test('DT-1: três composições espelham somente leituras validadas e confirmação existente',async t=>{
+ const f=await fixture(t),slots=[...f.d.querySelectorAll('[data-dt-level]')];
+ for(const slot of slots){const value=[0,20,75,0][Number(slot.dataset.dtLevel)];assert.ok(slot.textContent.includes(value+'%'));}
+ const crop=f.d.querySelector('#hydra-dt-crop-rows').outerHTML;
+ f.d.querySelector('#pump-card-2 .pump-start').click();assert.ok([...f.d.querySelectorAll('[data-scene-pump="2"]')].every(n=>n.dataset.state==='off'));
+ f.answer({ok:true,json:async()=>({ack:{pumps:[false,true,false]}})});await wait();assert.ok([...f.d.querySelectorAll('[data-scene-pump="2"]')].every(n=>n.dataset.state==='off'));
+ f.events.estado_sistema({...f.state,pumps:[false,true,false],rio:null,poco:NaN,caixa:101,solo:-1});
+ assert.ok(slots.every(n=>n.textContent.includes('Sem dados')));assert.ok([...f.d.querySelectorAll('[data-scene-pump="2"]')].every(n=>n.dataset.state==='on'));
+ assert.equal(f.d.querySelector('#hydra-dt-crop-rows').outerHTML,crop);
+ f.events.disconnect();assert.ok([...f.d.querySelectorAll('[data-scene-pump]')].every(n=>n.dataset.state==='unknown'));
+ assert.equal(f.d.querySelector('#preview-state'),null);assert.ok(!f.d.querySelector('.digital-twin').textContent.includes('confirmação ilustrativa'));
+ const ids=[...f.d.querySelectorAll('[id]')].map(n=>n.id);assert.equal(new Set(ids).size,ids.length);
 });

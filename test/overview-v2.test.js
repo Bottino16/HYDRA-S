@@ -6,7 +6,7 @@ async function fixture(t,master=true){
  const state={connected:true,simulate:true,rio:0,poco:35,caixa:60,solo:0,temperatura:0,umidade_ar:0,pumps:[false,false,false],boias:[false,true,false,true,false],alertas:0,modo:'MANUAL',limites:{max:1,gap:2000,cycles:[120000,120000,60000]}};
  w.sdaReady=Promise.resolve({usuario:{nivel:master?'master':'cliente'}});w.sdaSocket={on:(name,fn)=>handlers[name]=fn};w.confirm=()=>true;
  w.sdaRequest=async(url,options)=>{requests.push({url,options});if(url==='/api/estado')return {ok:true,json:async()=>state};return new Promise(r=>resolve=r);};
- w.eval(fs.readFileSync('public/maquete.js','utf8'));await pause();return {w,d:w.document,state,handlers,requests,answer:value=>resolve(value)};
+ w.eval(fs.readFileSync('public/digital-twin.js','utf8'));w.eval(fs.readFileSync('public/maquete.js','utf8'));await pause();return {w,d:w.document,state,handlers,requests,answer:value=>resolve(value)};
 }
 test('Visão Geral V2: zero válido, valores ausentes e cinco boias sem inferir vazão',async t=>{
  const f=await fixture(t);assert.equal(f.d.querySelector('#circuit-level-0').textContent,'0%');assert.equal(f.d.querySelector('#circuit-level-3').textContent,'0%');
