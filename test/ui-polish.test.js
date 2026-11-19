@@ -17,3 +17,15 @@ test('F-6: tokens de texto e estado mantêm contraste WCAG AA nas superfícies p
  const light=hex=>{const raw=hex.length===4?'#'+[...hex.slice(1)].map(c=>c+c).join(''):hex;const v=raw.slice(1).match(/../g).map(x=>parseInt(x,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return .2126*v[0]+.7152*v[1]+.0722*v[2];};
  for(const set of sets){const values=Object.fromEntries([...set.matchAll(/--([\w-]+):(#(?:[\da-f]{6}|[\da-f]{3}))(?![\da-f])/gi)].map(m=>[m[1],m[2]]));for(const foreground of ['text-primary','text-secondary','accent','success','warning','danger'])for(const background of ['bg-base','bg-panel','bg-card']){const levels=[light(values[foreground]),light(values[background])].sort((a,b)=>b-a),ratio=(levels[0]+.05)/(levels[1]+.05);assert.ok(ratio>=4.5,foreground+' / '+background+': '+ratio.toFixed(2));}}
 });
+
+test('Documentação compacta: conteúdo, download original e fechamento por Escape',async t=>{
+ const w=screen(t),d=w.document,html=fs.readFileSync('public/arthur.html','utf8'),modal=d.getElementById('modal-doc');
+ assert.equal(modal.querySelector('h3').textContent,'Documentação do Sistema');
+ assert.doesNotMatch(modal.textContent,/Papel MASTER|Papel CLIENTE|Segurança e papéis/);
+ assert.equal(modal.querySelectorAll('button').length,2);
+ assert.match(modal.querySelector('[onclick="baixarDocumentacao()"]').textContent,/Baixar documentação/);
+ for(const name of ['abrirDoc','fecharDoc','baixarDocumentacao'])w.eval(html.match(new RegExp('function '+name+'\\(\\) \\{[\\s\\S]*?\\n    \\}'))[0]);
+ let blob,download,revoked;w.Blob=class{constructor(parts,options){blob={parts,options};}};w.URL.createObjectURL=()=> 'blob:documentation';w.URL.revokeObjectURL=url=>{revoked=url;};w.HTMLAnchorElement.prototype.click=function(){download={name:this.download,url:this.href};};w.showToast=()=>{};
+ w.baixarDocumentacao();assert.equal(download.name,'Documentacao_Tecnica_SDA.doc');assert.equal(download.url,'blob:documentation');assert.equal(revoked,download.url);assert.equal(blob.options.type,'application/msword');assert.equal(blob.parts[0],'\ufeffDocumentação Técnica: Central de Controle Hídrico (SDA)\n\n1. Visão Geral...\n\n(DOCUMENTAÇÃO COMPLETA GERADA PELO SISTEMA)');
+ w.eval(fs.readFileSync('public/ui-polish.js','utf8'));await pause();const opener=d.querySelector('[onclick="abrirDoc()"]');opener.focus();w.abrirDoc();await pause();assert.equal(d.activeElement,modal.querySelector('button'));d.activeElement.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));await pause();assert.equal(modal.style.display,'none');assert.equal(d.activeElement,opener);
+});
