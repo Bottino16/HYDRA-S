@@ -38,3 +38,11 @@ body.light-mode #overview-section .digital-twin{--base:#f0f6f8;--panel:#fff;--ra
 #overview-section .digital-twin .circuit-pump.pump-card>.circuit-function{font-size:16px}
 #overview-section .digital-twin .circuit-pump.pump-card>.circuit-pump-route,#overview-section .digital-twin .circuit-pump.pump-card>.circuit-confirmed-state{font-size:12px}
 @media(max-width:560px){#overview-section .digital-twin .circuit-pump.pump-card>.circuit-function{font-size:17px}#overview-section .digital-twin .circuit-pump.pump-card>.circuit-pump-route,#overview-section .digital-twin .circuit-pump.pump-card>.circuit-confirmed-state{font-size:13px}}
+
+/* Leituras em destaque, preservando a geometria do circuito. */
+#overview-section .digital-twin .dt-scene .dt-reading{font-size:40px;font-weight:650;letter-spacing:-.045em;fill:var(--cyan);font-variant-numeric:tabular-nums}
+#overview-section .digital-twin .dt-scene .dt-reading[data-available=false]{font-size:17px;letter-spacing:0;font-weight:500;fill:var(--muted)}
+#overview-section .digital-twin .dt-scene .scene-title{font-size:18px;font-weight:500}
+#overview-section .digital-twin .dt-scene .scene-sub{font-size:13px}
+#overview-section .digital-twin .scene-tablet .dt-reading{font-size:34px}
+#overview-section .digital-twin .scene-mobile .dt-reading{font-size:38px}

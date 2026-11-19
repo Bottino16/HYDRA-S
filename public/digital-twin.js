@@ -145,8 +145,21 @@ const mobile=`<svg class="dt-scene scene-mobile" viewBox="0 0 350 920" role="img
  const sceneNote=document.createElement('p');sceneNote.className='dt-scene-note';sceneNote.textContent='Cena conceitual • volumes desenhados sem escala de leitura • nenhuma vazão medida';sceneRoot.append(sceneNote);
  track.after(heading,deck);
  const slots=[...sceneRoot.querySelectorAll('[data-dt-level]')];
+ // Hierarquia tipográfica apenas: nomes e unidades não competem com a leitura.
+ slots.forEach(slot=>{
+  slot.classList.remove('scene-sub','scene-title');slot.classList.add('dt-reading');
+  const mobile=slot.closest('.scene-mobile'),tablet=slot.closest('.scene-tablet'),index=Number(slot.dataset.dtLevel);
+  if(mobile&&index===1){slot.setAttribute('y','358');slot.parentElement.querySelector('.scene-sub').setAttribute('y','385');}
+  if(mobile&&index===2)slot.setAttribute('y','586');
+  if(!mobile&&!tablet&&index===2)slot.setAttribute('y','115');
+  if(!mobile&&!tablet&&index===3){const group=slot.parentElement;group.querySelector('.scene-number').setAttribute('y','101');group.querySelector('.scene-title').setAttribute('y','127');slot.setAttribute('y','199');}
+  const label=document.createElementNS('http://www.w3.org/2000/svg','text');
+  label.classList.add('scene-sub');
+  if(tablet&&index<3){label.setAttribute('x',slot.getAttribute('x'));label.setAttribute('y',slot.getAttribute('y'));label.textContent=['Rio','Poço','Caixa elevada'][index];slot.before(label);slot.setAttribute('x',[300,610,610][index]);slot.setAttribute('text-anchor','end');}
+  if(index===3){label.textContent='Solo · escala relativa';label.setAttribute('x',slot.getAttribute('x'));label.setAttribute('y',slot.getAttribute('y'));slot.before(label);slot.setAttribute('y',mobile?'859':tablet?'347':'177');slot.setAttribute('x',mobile?'15':tablet?'230':'924');}
+ });
  function sync(){
-  slots.forEach(slot=>{const tank=tanks[Number(slot.dataset.dtLevel)];slot.textContent=slot.dataset.prefix+tank.value.textContent+(tank.card.dataset.known==='true'?slot.dataset.suffix:'');});
+  slots.forEach(slot=>{const tank=tanks[Number(slot.dataset.dtLevel)];slot.textContent=tank.value.textContent;slot.dataset.available=tank.card.dataset.known;});
   const accessible=['Rio','Poço','Caixa','Solo'].map((name,i)=>name+': '+tanks[i].value.textContent).join('; ');
   sceneRoot.querySelectorAll('svg.dt-scene > desc').forEach(desc=>desc.textContent=accessible+'. Cena conceitual, sem escala física ou vazão medida.');
   sceneRoot.querySelectorAll('[data-scene-pump]').forEach(icon=>{icon.dataset.state=links[Number(icon.dataset.scenePump)-1].dataset.state||'unknown';});
