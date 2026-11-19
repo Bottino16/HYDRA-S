@@ -85,3 +85,17 @@ test('DT-1: geometria e posicionamento das ilustrações aprovadas não são rei
  assert.deepEqual(paths(production),paths(prototype));assert.deepEqual(transforms(production),transforms(prototype));
  assert.ok(paths(production).length>20);assert.ok(!/addEventListener|sdaRequest|fetch\(|WebSocket|preview-state|confirmação ilustrativa/.test(production));
 });
+
+test('Níveis DT: atualização, zero, ausência e vencimento preservam o contrato nas três composições',async t=>{
+ const f=await fixture(t);
+ const values=()=>[...f.d.querySelectorAll('[data-dt-level]')].map(n=>({index:Number(n.dataset.dtLevel),text:n.textContent}));
+ f.events.estado_sistema({...f.state,rio:91,poco:47,caixa:0,solo:12});
+ for(const slot of values())assert.ok(slot.text.includes([91,47,0,12][slot.index]+'%'));
+ f.events.estado_sistema({...f.state,connected:false,rio:91,poco:47,caixa:0,solo:12});
+ assert.ok(values().every(n=>n.text.includes('Sem dados')));assert.match(f.d.querySelector('#controller-connection').textContent,/desconectado/);
+ f.events.estado_sistema({...f.state,rio:null,poco:undefined,caixa:NaN,solo:null});
+ assert.ok(values().every(n=>n.text.includes('Sem dados')));
+ f.events.estado_sistema({...f.state,rio:0,poco:0,caixa:0,solo:0});
+ assert.ok(values().every(n=>n.text.includes('0%')));assert.match(f.d.querySelector('#controller-connection').textContent,/SIMULAÇÃO conectada/);
+ f.events.disconnect();assert.ok(values().every(n=>n.text.includes('Sem dados')));
+});
