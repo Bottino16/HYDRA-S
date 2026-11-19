@@ -136,7 +136,7 @@ const mobile=`<svg class="dt-scene scene-mobile" viewBox="0 0 350 920" role="img
  const caption=circuit.querySelector('.circuit-caption'),note=circuit.querySelector('.pump-summary-note'),bar=circuit.querySelector('.operating-bar');
  const top=document.createElement('header');top.className='dt-heading';circuit.prepend(top);top.append(caption,bar);
  caption.querySelector('strong').textContent='Da origem ao cultivo.';note.textContent='Um circuito. Três etapas de cuidado com a água.';caption.append(note);
- const heading=document.createElement('div');heading.className='dt-operation-heading';heading.append(document.getElementById('pump-operation-title'));heading.querySelector('h3').textContent='Operação das bombas';
+ const heading=document.createElement('div');heading.className='dt-operation-heading';heading.append(circuit.querySelector('#pump-operation-title'));heading.querySelector('h3').textContent='Operação das bombas';
  const deck=document.createElement('div');deck.className='dt-pump-deck';links.forEach(link=>{deck.append(link);link.querySelector('.circuit-pump > svg')?.remove();});
  circuit.insertBefore(sceneRoot,track);track.classList.add('dt-floats');track.setAttribute('aria-label','Estado das cinco boias');
  // Removem-se as ilustrações antigas; nós de leitura permanecem como contrato do renderer.
@@ -147,6 +147,8 @@ const mobile=`<svg class="dt-scene scene-mobile" viewBox="0 0 350 920" role="img
  const slots=[...sceneRoot.querySelectorAll('[data-dt-level]')];
  function sync(){
   slots.forEach(slot=>{const tank=tanks[Number(slot.dataset.dtLevel)];slot.textContent=slot.dataset.prefix+tank.value.textContent+(tank.card.dataset.known==='true'?slot.dataset.suffix:'');});
+  const accessible=['Rio','Poço','Caixa','Solo'].map((name,i)=>name+': '+tanks[i].value.textContent).join('; ');
+  sceneRoot.querySelectorAll('svg.dt-scene > desc').forEach(desc=>desc.textContent=accessible+'. Cena conceitual, sem escala física ou vazão medida.');
   sceneRoot.querySelectorAll('[data-scene-pump]').forEach(icon=>{icon.dataset.state=links[Number(icon.dataset.scenePump)-1].dataset.state||'unknown';});
  }
  sync();return {sync};

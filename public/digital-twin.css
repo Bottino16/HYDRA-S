@@ -16,3 +16,20 @@ body.light-mode #overview-section .digital-twin{--base:#f0f6f8;--panel:#fff;--ra
 @media(max-width:800px){#overview-section .digital-twin{padding:20px 18px}#overview-section .digital-twin .dt-floats{grid-template-columns:1fr;gap:6px}#overview-section .digital-twin .dt-floats .float-list{gap:6px}}
 @media(max-width:560px){#overview-section .hydra-heading h2{font-size:28px}#overview-section .telemetry-strip{gap:14px 0;padding:13px 0}#overview-section .telemetry-strip .bento-card{display:block;padding:0 10px;border:0!important}#overview-section .telemetry-strip .bento-card:nth-child(odd){padding-left:0;border-right:1px solid var(--border-color)!important}#overview-section .telemetry-strip .stat-value{font-size:26px;margin:4px 0}#overview-section .telemetry-strip .metric-context{font-size:11px}#overview-section .digital-twin{border-radius:17px;padding:18px 14px 14px}#overview-section .digital-twin .dt-heading{gap:9px}#overview-section .digital-twin .circuit-caption strong{font-size:21px}#overview-section .digital-twin .pump-summary-note{font-size:12px;max-width:23ch}#overview-section .digital-twin .mode-switch button{padding:7px;min-height:44px;font-size:10px}#overview-section .digital-twin .operating-bar p{font-size:10px;max-width:130px;text-align:right}#overview-section .digital-twin .dt-scene-wrap{margin:8px -7px 0;padding:0}#overview-section .digital-twin .scene-desktop,#overview-section .digital-twin .scene-tablet{display:none}#overview-section .digital-twin .scene-mobile{display:block}#overview-section .digital-twin .dt-scene-note{padding:0 7px;font-size:12px}#overview-section .digital-twin .dt-pump-deck{grid-template-columns:1fr;gap:16px}#overview-section .digital-twin .circuit-pump.pump-card{padding:0 0 16px;border-right:0;border-bottom:1px solid var(--line);grid-template-columns:68px minmax(0,1fr)}#overview-section .digital-twin .circuit-link:last-child .pump-card{padding-bottom:0;border-bottom:0}#overview-section .digital-twin .circuit-function{font-size:17px}#overview-section .digital-twin .circuit-pump-route,#overview-section .digital-twin .circuit-confirmed-state,#overview-section .digital-twin .circuit-pump.pump-card>.pump-feedback{font-size:13px}#overview-section .digital-twin .circuit-pump.pump-card .pump-actions button{font-size:13px}#overview-section .digital-twin .circuit-pump.pump-card>label{font-size:12px}#overview-section .digital-twin .circuit-pump.pump-card>.pump-feedback{min-height:0}#overview-section .digital-twin .dt-operation-heading h3{font-size:16px}}
 @media(prefers-reduced-motion:reduce){#overview-section .digital-twin *,#overview-section .digital-twin *::before,#overview-section .digital-twin *::after{animation:none!important;transition:none!important}}
+
+/* Tipografia SVG preserva as cores do protótipo sobre a regra geral de texto. */
+#overview-section .digital-twin .dt-scene .scene-number,#overview-section .digital-twin .dt-scene .scene-value{fill:var(--cyan)}
+#overview-section .digital-twin .dt-scene .scene-sub{fill:var(--muted)}
+
+#overview-section .digital-twin .circuit-pump.pump-card .pump-actions{align-self:end}
+#overview-section .digital-twin .dt-scene .scene-sub text{fill:var(--muted)}
+#overview-section .digital-twin .dt-scene .scene-sub text{fill:var(--muted)}
+@media(max-width:560px){
+ #overview-section .digital-twin .dt-heading{display:grid;grid-template-columns:minmax(0,1fr) 144px;align-items:start}
+ #overview-section .digital-twin .circuit-caption{grid-column:1;grid-row:1/3}
+ #overview-section .digital-twin .operating-bar{display:contents}
+ #overview-section .digital-twin .operating-bar>div:first-child{grid-column:2;grid-row:2;justify-self:end}
+ #overview-section .digital-twin .mode-switch{grid-column:2;grid-row:1;width:100%}
+ #overview-section .digital-twin .mode-switch button{flex:1;min-width:0;padding:7px 4px;white-space:normal}
+ #overview-section .digital-twin .operating-bar>.pump-feedback{grid-column:1/-1;grid-row:3;max-width:none;width:100%;font-size:12px;text-align:left;overflow-wrap:anywhere}
+}
