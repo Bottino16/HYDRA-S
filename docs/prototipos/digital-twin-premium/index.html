@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+ <title>HYDRA-S Digital Twin — protótipo independente</title>
+ <link rel="stylesheet" href="prototype.css">
+ <script src="prototype.js" defer></script>
+</head>
+<body>
+ <a class="skip" href="#main">Ir ao protótipo</a>
+ <header class="mobile-bar"><span>◈ HYDRA-S</span><button type="button" id="menu-open" aria-controls="navigation" aria-expanded="false">Menu</button></header>
+ <button type="button" class="backdrop" id="backdrop" aria-label="Fechar menu" hidden></button>
+ <aside id="navigation" aria-label="Navegação ilustrativa">
+  <div class="brand"><span class="brand-mark"><svg width="25" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3C9 7 5 11 5 15a7 7 0 0 0 14 0c0-4-4-8-7-12Z"/></svg></span><div><strong>HYDRA-S</strong><small>INTELIGÊNCIA HÍDRICA</small></div><button id="menu-close" type="button" aria-label="Fechar navegação">×</button></div>
+  <nav aria-label="Áreas ilustrativas do sistema">
+   <p class="nav-caption">NAVEGAÇÃO PRINCIPAL</p>
+   <span class="nav-item selected"><span>▦</span>Visão Geral</span>
+   <span class="nav-item"><span>≡</span>Histórico e Eventos</span>
+   <span class="nav-item"><span>⚙</span>Configurações</span>
+   <span class="nav-item"><span>◈</span>Assistente do Solo</span>
+   <p class="nav-caption separated">FERRAMENTAS</p>
+   <span class="nav-item"><span>▤</span>Documentação</span>
+   <button class="nav-item" id="theme" type="button"><span>◐</span>Alternar tema</button>
+   <span class="nav-item"><span>◉</span>Notificações</span>
+   <p class="nav-caption separated">CONTA E ADMINISTRAÇÃO</p>
+   <span class="nav-item"><span>⌑</span>Administração</span>
+   <span class="nav-item muted">Navegação apenas ilustrativa</span>
+  </nav>
+  <div class="sidebar-note"><i></i>Prévia independente · sem conexão</div>
+ </aside>
+ <main id="main">
+  <div class="prototype-notice"><strong>PROTÓTIPO VISUAL</strong><span>Dados e estados ilustrativos. Nenhum comando é enviado.</span></div>
+  <header class="page-heading"><div><p class="eyebrow">HYDRA-S / DIGITAL TWIN</p><h1>Inteligência em cada gota.</h1><p class="subtitle">Central inteligente de gestão hídrica</p></div><span class="status-pill"><i></i>SIMULAÇÃO · prévia</span></header>
+  <section class="telemetry" aria-label="Telemetria ilustrativa, não são medições">
+   <div><span>Umidade do solo</span><strong>38<span>%</span></strong><small>Escala relativa · exemplo</small></div>
+   <div><span>Temperatura</span><strong>29,5<span>°C</span></strong><small>Ambiente · exemplo</small></div>
+   <div><span>Umidade do ar</span><strong>68<span>%</span></strong><small>Umidade relativa · exemplo</small></div>
+   <div><span>Nível da caixa</span><strong>60<span>%</span></strong><small>Nível informado · exemplo</small></div>
+  </section>
+  <section class="experience" aria-labelledby="experience-title">
+   <header class="experience-heading"><div><h2 id="experience-title">Da origem ao cultivo.</h2><p>Um circuito. Três etapas de cuidado com a água.</p></div><div class="mode" aria-label="Modo apenas ilustrativo"><span>AUTO</span><span class="active">MANUAL</span></div></header>
+   <div class="scene-wrap">
+    <div id="scene" aria-label="Maquete digital conceitual"></div>
+    <p class="scene-key"><span><i class="water-dot"></i>Percurso conceitual da água</span><span>Ilustração · não mede vazão ou saúde das plantas</span></p>
+   </div>
+   <div class="operation-heading"><h3>Operação das bombas</h3><label>Ver estado ilustrativo <select id="preview-state"><option value="off">Três desligadas</option><option value="confirmed">B2 ligada · exemplo confirmado</option><option value="pending">B3 aguardando · exemplo</option><option value="blocked">B3 bloqueada · exemplo</option><option value="unknown">Sem dados</option></select></label></div>
+   <div class="pump-deck" id="pump-deck"></div>
+   <p class="safety">SIMULAÇÃO · Firmware NÃO VALIDADO fisicamente. Estados fictícios para avaliação visual; saída ligada não comprova vazão.</p>
+  </section>
+  <section class="alerts" aria-label="Alertas ilustrativos"><span class="alert-mark">i</span><div><strong>Prévia sem vínculo com o controlador</strong><p>As proteções, ACK e permissões existentes serão preservados em uma futura integração.</p></div></section>
+  <section class="environment" aria-labelledby="environment-title"><header><p class="eyebrow">TELEMETRIA / AMBIENTE</p><h2 id="environment-title">Análise Ambiental</h2><p>Área de continuidade — a Análise Ambiental V5 da aplicação não foi modificada.</p></header><div class="environment-layout"><div class="environment-chart"><span>Dinâmica da umidade · exemplo visual</span><svg viewBox="0 0 650 110" role="img" aria-label="Traçado meramente ilustrativo, não são leituras"><path d="M0 100H650M0 60H650M0 20H650" class="chart-grid"/><path d="M0 83C45 80 65 57 108 63S180 85 225 67S298 24 345 42S415 63 465 44S560 38 650 20" class="chart-line"/></svg><small>Não conectado ao histórico</small></div><div class="environment-weather"><span>CONTEXTO EXTERNO</span><strong>Sem consulta ao clima</strong><p>Este protótipo funciona offline.</p></div></div></section>
+ </main>
+</body>
+</html>
