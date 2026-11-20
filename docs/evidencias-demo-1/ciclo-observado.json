@@ -1,0 +1,201 @@
+{
+  "exclusiveSimulation": true,
+  "samples": 106,
+  "durationSeconds": 105.743,
+  "initial": {
+    "at": "2026-11-20T00:09:33.017Z",
+    "demo": {
+      "state": "running",
+      "stage": 0,
+      "phase": "intro",
+      "wetTarget": 30,
+      "message": "Demonstração preparada: Rio 85%, Poço 10%, Caixa 8%; solo abaixo do limiar configurado. Retenções e intervalos reais preservados.",
+      "remainingMs": 7028,
+      "simulated": true
+    },
+    "connected": true,
+    "rio": 85,
+    "poco": 10,
+    "caixa": 8,
+    "solo": 10,
+    "pumps": [
+      false,
+      false,
+      false
+    ],
+    "seq": 58
+  },
+  "final": {
+    "at": "2026-11-20T00:11:18.760Z",
+    "demo": {
+      "state": "completed",
+      "stage": 2,
+      "phase": "pumping",
+      "wetTarget": 30,
+      "message": "Ciclo concluído: três etapas confirmadas e umidade do solo aumentada. Saídas desligadas; valores finais congelados.",
+      "remainingMs": 0,
+      "simulated": true
+    },
+    "connected": true,
+    "rio": 67,
+    "poco": 28,
+    "caixa": 43,
+    "solo": 30,
+    "pumps": [
+      false,
+      false,
+      false
+    ],
+    "seq": 217
+  },
+  "maxSimultaneous": 1,
+  "confirmedStages": [
+    {
+      "pump": 1,
+      "first": {
+        "at": "2026-11-20T00:09:40.064Z",
+        "demo": {
+          "state": "running",
+          "stage": 0,
+          "phase": "pumping",
+          "wetTarget": 30,
+          "message": "Captação: bomba 1 confirmada, Rio → Poço.",
+          "remainingMs": 0,
+          "simulated": true
+        },
+        "connected": true,
+        "rio": 85,
+        "poco": 10,
+        "caixa": 8,
+        "solo": 10,
+        "pumps": [
+          true,
+          false,
+          false
+        ],
+        "seq": 69
+      },
+      "last": {
+        "at": "2026-11-20T00:09:57.164Z",
+        "demo": {
+          "state": "running",
+          "stage": 0,
+          "phase": "pumping",
+          "wetTarget": 30,
+          "message": "Captação: bomba 1 confirmada, Rio → Poço.",
+          "remainingMs": 0,
+          "simulated": true
+        },
+        "connected": true,
+        "rio": 69,
+        "poco": 75,
+        "caixa": 8,
+        "solo": 8,
+        "pumps": [
+          true,
+          false,
+          false
+        ],
+        "seq": 94
+      }
+    },
+    {
+      "pump": 2,
+      "first": {
+        "at": "2026-11-20T00:10:23.390Z",
+        "demo": {
+          "state": "running",
+          "stage": 1,
+          "phase": "pumping",
+          "wetTarget": 30,
+          "message": "Transferência: bomba 2 confirmada, Poço → Caixa.",
+          "remainingMs": 0,
+          "simulated": true
+        },
+        "connected": true,
+        "rio": 67,
+        "poco": 82,
+        "caixa": 8,
+        "solo": 8,
+        "pumps": [
+          false,
+          true,
+          false
+        ],
+        "seq": 133
+      },
+      "last": {
+        "at": "2026-11-20T00:10:40.520Z",
+        "demo": {
+          "state": "running",
+          "stage": 1,
+          "phase": "pumping",
+          "wetTarget": 30,
+          "message": "Transferência: bomba 2 confirmada, Poço → Caixa.",
+          "remainingMs": 0,
+          "simulated": true
+        },
+        "connected": true,
+        "rio": 67,
+        "poco": 33,
+        "caixa": 57,
+        "solo": 6,
+        "pumps": [
+          false,
+          true,
+          false
+        ],
+        "seq": 159
+      }
+    },
+    {
+      "pump": 3,
+      "first": {
+        "at": "2026-11-20T00:11:06.696Z",
+        "demo": {
+          "state": "running",
+          "stage": 2,
+          "phase": "pumping",
+          "wetTarget": 30,
+          "message": "Irrigação: bomba 3 confirmada, Caixa → Plantação.",
+          "remainingMs": 0,
+          "simulated": true
+        },
+        "connected": true,
+        "rio": 67,
+        "poco": 28,
+        "caixa": 62,
+        "solo": 6,
+        "pumps": [
+          false,
+          false,
+          true
+        ],
+        "seq": 198
+      },
+      "last": {
+        "at": "2026-11-20T00:11:17.760Z",
+        "demo": {
+          "state": "running",
+          "stage": 2,
+          "phase": "pumping",
+          "wetTarget": 30,
+          "message": "Irrigação: bomba 3 confirmada, Caixa → Plantação.",
+          "remainingMs": 0,
+          "simulated": true
+        },
+        "connected": true,
+        "rio": 67,
+        "poco": 28,
+        "caixa": 44,
+        "solo": 28,
+        "pumps": [
+          false,
+          false,
+          true
+        ],
+        "seq": 216
+      }
+    }
+  ]
+}
