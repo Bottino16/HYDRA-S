@@ -1,155 +1,199 @@
-# SDA — Sistema de Irrigação Inteligente
+# HYDRA-S — Inteligência Hídrica
 
-TCC SENAI / CETAF-AJU. Fase 0.5 preservada; Fase 3 acrescenta o Assistente do Solo com streaming, conhecimento privado e demonstração, preservando backend/segurança das fases anteriores. Ensaios físicos PAUSADOS. **Firmware NÃO validado para uso real até o usuário confirmar os testes físicos.** Nenhum hardware foi acionado nesta entrega.
+Sistema de monitoramento e irrigação desenvolvido como Trabalho de Conclusão de Curso (TCC), com interface web premium, Digital Twin do circuito hídrico e Assistente do Solo com inteligência artificial local gratuita.
 
-Entrega da Fase 3: [relatório](docs/RELATORIO-FASE-3.md) e [teste manual com/sem chave](docs/TESTE-MANUAL-FASE-3.md).
+O projeto integra a jornada **Rio → Poço → Caixa elevada → Plantação**, permitindo estudar o transporte de água, acompanhar sensores e demonstrar comandos sujeitos às proteções do controlador.
 
-Entrega da Fase 2: [relatório](docs/RELATORIO-FASE-2.md) e [teste manual em simulação](docs/TESTE-MANUAL-FASE-2.md).
+> **Estado atual: exclusivamente SIMULAÇÃO, sem Arduino. O firmware NÃO foi validado fisicamente e não está aprovado para uso real.** Os percentuais e movimentos da demonstração são virtuais; não comprovam vazão, volume físico ou condições reais de cultivo.
 
-Documentos da Fase 1: [firmware e configuração](firmware/README.md), [plano físico supervisionado](docs/TESTE-FISICO-FASE-1.md), [pinos e ligações](docs/PINOS-E-LIGACOES.md), [protocolo v1](docs/PROTOCOLO-SERIAL-V1.md), [matriz de boias](docs/MATRIZ-BOIAS.md) e [relatório](docs/RELATORIO-FASE-1.md).
+## Recursos implementados
 
-## Subir do zero em cerca de 5 minutos
+- **Visão Geral e Digital Twin:** circuito integrado, percentuais, cinco boias, estados confirmados das três bombas e monitoramento ambiental.
+- **DEMO-1:** captação, transferência e irrigação reproduzíveis, com iniciar, pausar, retomar, reiniciar e encerrar pelo MASTER. Animações acompanham as saídas confirmadas do simulador.
+- **Histórico e Eventos:** leituras, acionamentos, alertas, consulta por período e exportação CSV. Água consumida sempre identificada como **ESTIMATIVA**, dependente de vazão configurada.
+- **Configurações:** perfis de plantas, agendamentos, vazões e cenários simulados existentes.
+- **Assistente do Solo:** Ollama local, streaming SSE, base documental em português, histórico por usuário, interrupção, cópia e continuações controladas.
+- **Acesso autenticado:** contas MASTER/CLIENTE, sessões, CSRF e autorização no backend. Nesta versão, comandos de bombas, administração e cenários são exclusivos do MASTER; não há perfil visitante.
+- Interface responsiva, navegação entre seções e temas claro/escuro.
 
-Pré-requisitos: Node.js 20.19+ e MySQL 8 ou MariaDB local disponível. Docker Desktop é uma alternativa opcional. A primeira instalação depende de internet. O `.npmrc` do projeto usa o registro espelho Yarn com TLS válido, pois o npmjs apresentou cadeia de certificado não confiável neste ambiente; a verificação TLS permanece ativa.
+## Circuito e sensores
 
-1. Execute `npm ci`.
-2. Copie `.env.example` para `.env` (`Copy-Item .env.example .env` no PowerShell).
-3. Edite `.env`: preencha `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `ADMIN_USER`, `ADMIN_PASSWORD` e `SESSION_SECRET`. Gere o segredo com `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Use senha administrativa exclusiva com pelo menos 12 caracteres, maiúscula, minúscula, número e símbolo; evite padrões, nome do usuário e palavras como senha/admin. Coloque senhas entre aspas no `.env`, especialmente se contiverem `#`. Não há senha padrão.
-4. Com um banco local existente: o usuário configurado precisa criar o banco escolhido e suas tabelas. Não reutilize credenciais do Aiven antigo. Como alternativa, preencha também `DB_ROOT_PASSWORD` com outro valor forte e execute `docker compose up -d --wait` (escolha uma `DB_PORT` livre; o Compose publica só em 127.0.0.1). O Docker provisiona o banco e o usuário automaticamente.
-5. Execute o comando único `npm run ready`: prepara as tabelas, cria o primeiro master se ele não existe e inicia a aplicação. Abra **http://localhost:3000** e entre com as credenciais escolhidas. Se alterar a porta, atualize `PORT` e `APP_ORIGIN` juntos.
+| Bomba | Função | Percurso |
+|---|---|---|
+| B01 | Captação | Rio → Poço |
+| B02 | Transferência | Poço → Caixa elevada |
+| B03 | Irrigação | Caixa elevada → Plantação |
 
-O seed também pode pedir as credenciais em terminal interativo, com senha oculta. Não imprime nem grava a senha no código. Um seed posterior nunca redefine a senha de um usuário existente.
+As cinco boias representam presença de água no Rio, mínima/máxima no Poço e mínima/máxima na Caixa. **Boias não medem percentuais.** Rio e Poço têm percentuais virtuais na simulação; sem sensores contínuos correspondentes, esses percentuais não estão disponíveis no hardware. A Caixa tem informação de nível associada ao ultrassônico na implementação, ainda sem validação física.
 
-### Usar MySQL em nuvem
+O solo usa uma escala relativa do sensor capacitivo, não umidade volumétrica nem percentual ideal universal. Também são representadas temperatura e umidade relativa do ar. Leituras ausentes, inválidas ou vencidas aparecem como **sem dados**; zero válido continua sendo zero. Caixa cheia não significa solo encharcado.
 
-No `.env`, troque host, porta, usuário, senha e nome do banco. Use `DB_SSL=true`; se o provedor exigir CA própria, aponte `DB_SSL_CA` para o arquivo PEM confiável. Sem esse caminho, usa as autoridades do runtime. O certificado e o nome do servidor são verificados; não existe opção para ignorar a verificação. O usuário precisa ter permissão de criação no banco; quando o provedor já fornece um banco, use exatamente esse `DB_NAME`.
+As proteções incluem validade dos sensores, coerência das boias, proteção a seco, máximos de 120/120/60 s por ciclo, intervalo mínimo de 30 s, partidas separadas em 2 s e uma bomba simultânea. O painel acompanha ACK/telemetria, sem presumir saída ligada no clique. Saída ligada não comprova fluxo.
 
-Execute `npm run ready`. O procedimento de seed e schema é o mesmo. A conexão com nuvem não foi testada contra um provedor nesta entrega; a persistência foi validada em MySQL 8 local isolado.
+## Tecnologias
 
-### Demonstração sem banco
+| Área | Implementação |
+|---|---|
+| Frontend | HTML, CSS, JavaScript, SVG, Chart.js e Socket.IO |
+| Backend | Node.js ≥ 20.19, CommonJS e Express 5 |
+| Segurança | express-session, bcryptjs, Helmet, express-rate-limit e CSRF próprio |
+| Persistência | MySQL via mysql2 ou modo temporário em memória |
+| IA principal | Ollama em loopback, `llama3.2:3b`, NDJSON convertido em SSE |
+| Conhecimento | Markdown privado, recuperação local por relevância e referências |
+| Controlador | serialport, JSON com sequência/checksum/ACK e simulador Node.js |
+| Testes | node:test, Supertest, Socket.IO Client, jsdom e emulação AVR opcional |
 
-Configure `DB_MODE=memory`, `SIMULATE=true`, `ADMIN_USER`, `ADMIN_PASSWORD` forte e `SESSION_SECRET` e execute `npm run ready`. Login continua obrigatório. Os dados desaparecem ao encerrar.
+As versões exatas estão no [package-lock.json](package-lock.json); comandos e dependências estão em [package.json](package.json). O adaptador Anthropic permanece como legado opcional, sem uso nem chave necessária na implantação Ollama. Não há fallback silencioso para serviço pago ou demonstração.
 
-Em `DB_MODE=mysql`, `npm start` tenta carregar o banco. Se falhar, usa memória com administrador validado a partir do `.env`; sem credenciais fortes, recusa iniciar. A interface exibe o aviso. `npm run ready` interrompe se o setup falhar; use `npm start` para o fallback explícito. Após perda de conexão durante operação, as alterações ficam temporárias; não são reaplicadas automaticamente. Reinicie após recuperar o banco. Não troque senhas importantes nesse modo esperando persistência.
+## Estrutura principal
 
-## Comandos
+```text
+public/          Frontend e recursos visuais servidos pelo Express
+src/             Backend, segurança, serviços, assistente e simulador
+knowledge/       Documentos técnicos/agronômicos privados
+db/              Schema, seed e ferramentas de configuração do banco
+firmware/        Controlador e testes, sem validação física
+arduino/         Referências legadas do hardware
+test/            Testes e fixtures fictícias
+scripts/         Ferramentas de teste e diagnóstico
+docs/            Relatórios, roteiros e evidências de simulação
+server.js        Servidor da aplicação
+.env.example     Modelo de configuração sem credenciais reais
+```
 
-| Comando | Uso |
-| --- | --- |
-| `npm run ready` | Setup idempotente e servidor em uma execução, depois de configurar o ambiente |
-| `npm start` | Servidor com banco existente ou fallback em memória |
-| `npm run db:setup` | Cria banco, tabelas e primeiro administrador |
-| `npm run db:reset` | Apaga tabelas da aplicação somente após digitar `APAGAR nome_do_banco` em terminal interativo |
-| `npm test` | Testes de autenticação, protocolo, ACK, painel, APIs e regressões |
-| `npm run firmware:test` | Compila e executa controle/sketch no ATmega328P emulado; requer core AVR e CLI, não placa |
+Somente `public/` fornece assets web; páginas privadas exigem autenticação. `src/`, `db/`, `knowledge/`, `.env` e `node_modules/` não são servidos publicamente.
 
-`db:reset` perde todos os dados da aplicação e não possui opção de confirmação automática. Não apaga outros bancos.
+## Instalação local em SIMULAÇÃO
 
-## Uso das telas
+### Pré-requisitos
 
-- `/login.html`: login real, sem sessionStorage como credencial.
-- `/arthur.html`: painel autenticado; rega manual e parada exigem master.
-- `/painel-adm.html`: CRUD real, exclusivo do master. Editar a senha de um usuário é a redefinição administrativa; alterações revogam suas sessões.
-- “Trocar senha”: exige senha atual e nova senha confirmada, em campos ocultos; força novo login.
-- “Encerrar sessão”: destrói a sessão no servidor e desconecta os sockets.
-- Cliente acessa telemetria e mantém seus próprios perfis/agendamentos, sem administrar usuários ou comandar a bomba compartilhada. A automação compartilhada usa o primeiro master ativo nesta fase.
+- Git e Node.js **20.19 ou superior**, com npm e versão compatível com os requisitos das dependências.
+- Navegador moderno.
+- Para IA real: Ollama instalado e modelo `llama3.2:3b` disponível. O HYDRA-S não instala programas nem baixa modelos automaticamente.
+- Memória disponível para o painel e o modelo. As proteções podem impedir uma geração; não as desative. O notebook de desenvolvimento tem 8 GB de RAM e GTX 1050 Ti de 4 GB, mas a validação real da IA permanece parcial.
+- **MySQL não é necessário com `DB_MODE=memory`.**
 
-## Arquitetura desta fase
+### 1. Dependências e ambiente
 
-`server.js` é o único servidor. Apenas `/public` fornece assets. As páginas privadas passam por autenticação antes de serem enviadas; HTML codificado não contorna essas rotas. Arquivos de servidor, `.env`, `/db`, `/knowledge`, `/src` e `node_modules` retornam 404. As versões antigas inseguras foram aposentadas antes do primeiro commit.
-
-- `src/config.js`: ambiente e TLS.
-- `src/password.js`: política de senha e bcrypt, custo 12.
-- `src/db/store.js`, `src/db/operational-store.js`: SQL parametrizado, histórico, eventos, acionamentos, cache e fallback; `src/store.js` mantém compatibilidade.
-- `src/routes/monitoring-routes.js`, `src/controllers/monitoring-controller.js`: APIs operacionais.
-- `src/services/`: integração serial/simulação, agendamento com diário durável, configurações de vazão e proxy meteorológico com cache; `src/simulation.js` mantém compatibilidade.
-- `src/device-link.js`, `src/protocol.js`: checksum, sequências, validade e fila de comandos.
-- `src/simulated-board.js`, `src/pump-control.js`: física dos três reservatórios/cinco boias e controle equivalente ao C++.
-- `src/serial-transport.js`: porta configurável, detecção conservadora e reconexão.
-- `db/schema.sql`: sete tabelas, relações, índices e nomes corrigidos.
-- `db/seed.js`, `db/setup.js`: provisionamento e seed seguro.
-- `public/auth.js`, `public/login.js`: sessão real, CSRF, login/logout e troca de senha.
-- `test/`: verificações automatizadas.
-
-Sessões usam cookie `httpOnly`, `SameSite=Strict`, expiração absoluta de 60 minutos por padrão e armazenamento em memória no servidor. Reiniciar encerra todas as sessões. Logout, troca/redefinição de senha, edição de usuário e exclusão revogam as sessões afetadas. Sockets revalidam a sessão em cada comando e são desconectados até um segundo após expiração. Rate limit por IP e bloqueio temporário por IP/usuário reduzem tentativas de login. Nunca confie em papéis enviados pelo navegador.
-
-Consultas com valores usam prepared statements. A criação de banco e os comandos DDL usam SQL estático ou escape `??` de identificadores pelo driver, com `DB_NAME` validado. Os segredos antigos não foram usados nem migrados; removê-los daqui não revoga credenciais no provedor.
-
-Perfis e agendamentos pertencem ao usuário. O schema suporta vínculo do agendamento com planta; a interface edita um agendamento por perfil do usuário; somente os perfis do primeiro master ativo operam a automação compartilhada. Histórico grava solo, temperatura, umidade do ar, níveis disponíveis e três bombas; rio/poço têm percentuais apenas na física simulada e ficam nulos no hardware sem sensores contínuos. `READING_SAVE_SECONDS` controla coleta; `READING_RETENTION_DAYS` controla exclusão no início e a cada hora. O buffer em memória tem limite de 10.000 leituras. MySQL guarda o período de retenção; CSV exporta o período inteiro em lotes, sem truncar na paginação da API.
-
-## Testar
-
-`npm test` não precisa de banco: testa APIs reais com Supertest, conexões Socket.io reais e DOM com jsdom. O teste de dashboard substitui Chart.js/canvas; clima usa proxy offline ou provedores virtuais nos testes, sem mudar a aplicação; não equivale a revisão visual em Chrome ou celular.
-
-Para incluir integração com um banco **exclusivo de testes**, no PowerShell:
+No PowerShell, dentro da pasta do projeto:
 
 ```powershell
-$env:SDA_TEST_MYSQL_PORT = '3307'
-$env:SDA_TEST_MYSQL_USER = 'usuario_de_testes'
-$env:SDA_TEST_MYSQL_PASSWORD = 'sua_credencial_local'
+npm ci
+if (!(Test-Path -LiteralPath .env)) { Copy-Item -LiteralPath .env.example -Destination .env }
+```
+
+O `.npmrc` usa `https://registry.yarnpkg.com/`, mantendo verificação TLS. A primeira instalação depende de internet.
+
+Edite o `.env` **localmente** e confira:
+
+```ini
+SIMULATE=true
+DB_MODE=memory
+HOST=127.0.0.1
+PORT=3000
+APP_ORIGIN=http://localhost:3000
+COOKIE_SECURE=false
+ASSISTANT_PROVIDER=ollama
+ASSISTANT_DEMO=false
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3.2:3b
+OLLAMA_NUM_CTX=4096
+OLLAMA_NUM_PREDICT=256
+ASSISTANT_TIMEOUT_SECONDS=60
+ASSISTANT_AUTO_CONTINUATIONS=2
+ASSISTANT_MAX_CONTINUATIONS=2
+```
+
+Preencha também `ADMIN_USER`, `ADMIN_PASSWORD` e `SESSION_SECRET`. **Não existe senha padrão.** A senha precisa de 12+ caracteres, maiúscula, minúscula, número e símbolo, sem padrões proibidos nem nome do usuário, e no máximo 72 bytes. Coloque-a entre aspas no `.env`, especialmente se contiver `#`.
+
+Gere um segredo aleatório no seu terminal e copie o resultado para `SESSION_SECRET`, sem compartilhá-lo:
+
+```powershell
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
+
+O modo memória cria o MASTER com essas variáveis e recusa senha fraca. Ele **não pede senha interativamente em `npm start`**; o prompt oculto pertence ao setup MySQL. Deixe as chaves Anthropic vazias ao usar Ollama. Nunca envie `.env`, segredos ou dados reais de usuários ao GitHub.
+
+### 2. Iniciar e acessar
+
+```powershell
+ollama list
+npm start
+```
+
+Confira que `llama3.2:3b` está listado e que o serviço Ollama está disponível somente em loopback. Caso não esteja iniciado, siga o procedimento da instalação; `ollama serve` pode ser usado em outro terminal somente se não houver uma instância em execução. Não abra a porta 11434 para a rede.
+
+Abra **http://localhost:3000/login.html** e entre com o MASTER local. Frontend e backend usam o mesmo servidor: não abra o HTML diretamente no sistema de arquivos. Se mudar a porta, ajuste `PORT` e `APP_ORIGIN` juntos. Não inicie outro servidor numa porta ocupada.
+
+No **Assistente do Solo**, confira o motor **Ollama local** e o modelo **llama3.2:3b**. Falha do provedor é informada no chat e não deve impedir o painel. A IA não aciona bombas automaticamente. RAG e referências não garantem precisão nem substituem agrônomo ou análise de solo.
+
+### 3. Gravar a demonstração
+
+1. Na Visão Geral, confira **SIMULAÇÃO ATIVA** e telemetria recente.
+2. Desative agendamentos simulados ativos antes de preparar a tomada.
+3. Clique **Iniciar demonstração**. As três etapas executam sob as travas existentes.
+4. Use **Pausar** e **Retomar** quando necessário. Pausar desliga bombas e mantém telemetria; retomar pode aguardar o cooldown.
+5. **Reiniciar** prepara outra tomada. **Encerrar** termina com saídas desligadas e modo MANUAL.
+
+Um ciclo observado levou aproximadamente 106 s; perfil/calibração, pausas e esperas podem mudar a duração. Ao concluir, níveis finais ficam congelados até encerrar/reiniciar. Consulte o [roteiro DEMO-1](docs/RELATORIO-DEMO-1.md).
+
+Para encerrar um servidor iniciado por você, use `Ctrl+C` no terminal correspondente. **No modo memória, reiniciar perde contas temporárias, leituras, eventos e conversas; sessões também terminam.** Configurações e diário de agendamentos em `.data/` são arquivos privados e ficam fora do GitHub. Avalie esse impacto antes de parar um servidor existente.
+
+## MySQL opcional
+
+Para persistência, configure um banco local separado com credenciais próprias: `DB_MODE=mysql`, `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` e `DB_NAME`. O usuário precisa das permissões usadas pelo setup. Em ambiente novo, execute conscientemente:
+
+```powershell
+npm run db:setup
+npm start
+```
+
+O setup cria schema e primeiro MASTER, valida a senha e pode solicitá-la com entrada oculta. Não redefine automaticamente contas existentes. `npm run ready` combina setup/início; em modo memória ele pula o banco. Não execute resets sobre dados importantes.
+
+Falhas no MySQL podem ativar fallback identificado para memória; alterações temporárias não são reaplicadas automaticamente ao banco. Para TLS, use `DB_SSL=true` e, se necessário, CA confiável em `DB_SSL_CA`; não desative verificação de certificado. Docker Compose é opcional e exige configuração/revisão separada.
+
+## Testes
+
+```powershell
 npm test
 ```
 
-O usuário deve poder criar/apagar bancos com prefixos `sda_test_`, `sda_phase2_` e `sda_phase3_`. As suítes criam nomes aleatórios e removem apenas seus bancos ao final. Não aponte para produção. Sem `SDA_TEST_MYSQL_PORT`, a integração é marcada como ignorada; o teste da configuração TLS continua rodando.
+A suíte verifica autenticação, CSRF, isolamento de conversas, streaming com mocks, limites, RAG, APIs, simulação, ACK, navegação e componentes. Não carrega o modelo real e não substitui revisão visual ou ensaio físico.
 
-## Variáveis e operação
+Integrações MySQL são opcionais, habilitadas por `SDA_TEST_MYSQL_PORT` e credenciais de teste. Elas criam/apagam bancos de teste: não as configure para a instância de uso. Sem essa porta, são ignoradas. `npm run firmware:test` exige ferramentas AVR e executa emulação sem placa; não é necessário para abrir o painel simulado.
 
-O `.env.example` contém todos os campos utilizados. `DB_SSL_CA` aponta para certificado confiável e não precisa ser público. `COOKIE_SECURE=true` e HTTPS são obrigatórios em `NODE_ENV=production`; nesta fase use uma única instância local. Não há store persistente de sessões, coordenação entre processos nem terminação HTTPS embutida. Expansão para produção deve tratar esses pontos.
+## Limitações e segurança
 
-`HOST=127.0.0.1` é o padrão. Para acesso por outros aparelhos, configure a origem exata e disponibilize HTTPS conforme o ambiente. Não existe CORS aberto. Requisições mutáveis exigem `X-CSRF-Token`; o login obtém o token em `/api/auth/csrf`. As únicas APIs públicas são bootstrap CSRF e login. Handshake Socket.io exige sessão e token CSRF.
+- Firmware, ligações, boias, relés e sensores **não validados fisicamente**. Não conecte bombas reais com base nesta demonstração.
+- IA-3D: precisão agronômica, desempenho e continuações com Ollama real ainda têm ensaios pendentes. Contexto 4096, 256 tokens por geração, até duas continuações, timeout total de 60 s e uma geração ativa por processo; sem fila global de apresentação.
+- O teto de caracteres depende da configuração efetiva; na implantação local de validação era 3.072. Tokens e caracteres são diferentes. Consulte relatórios recentes antes de alterar limites.
+- Não existe parada de emergência global dedicada nesta versão. Desligar bombas/encerrar demonstração não substitui emergência elétrica.
+- Instância única local; sessões em memória não constituem arquitetura de produção distribuída.
+- Alguns recursos visuais usam CDN. Ollama local não torna toda a interface ou a primeira instalação automaticamente offline.
+- Rede local/QR Code, hospedagem pública e demonstração estática pública não foram implementados nesta entrega.
+- Segredos, logs, bancos, modelos, sessões e backups privados são excluídos pelo `.gitignore`. Revise sempre `git diff --cached` antes de enviar.
 
-## Pendências das próximas fases
+## Vídeo demonstrativo do TCC
 
-- **Fase 1:** implementação/testes de software concluídos; ensaios físicos A/B/C/D e calibração final PENDENTES.
-- **Fase 2:** concluída em simulação; relatório e roteiro acima. Hardware e provedor meteorológico real continuam sem ensaio físico/externo. Clima é informativo e não substitui travas do controlador.
-- **Fase 3:** implementada e testada sem chave real, com provedor falso e modo demonstração. Validação manual com a conta Anthropic é opcional e está documentada.
-- **Fase 4 — OFFLINE, apenas planejado:** versionar Chart.js e ícones em `/public/vendor`, servir fontes WOFF2 localmente, remover CDNs/importações remotas e adaptar CSP; oferecer clima indisponível/simulado sem internet. Testar em navegador com rede bloqueada. Dependências, imagem Docker e banco deverão estar previamente instalados; a IA remota requer internet.
-- **Fase 5:** documentação elétrica, testes de segurança física, roteiro da banca e revisão visual final.
+Espaço reservado para o vídeo do HYDRA-S. A existência e a URL do repositório planejado **HYDRA-S-Demonstracao** precisam ser confirmadas na conta GitHub autenticada. Nenhum vídeo grande foi incluído neste repositório de código.
 
-A CSP ainda permite scripts/estilos inline do dashboard legado e CDNs identificadas. O XSS de dados de usuário foi corrigido com DOM/textContent e handlers vinculados por função; remoção completa de inline faz parte do redesign. Os logs visuais antigos e o documento `.doc` de demonstração ainda são legados, sem valor de auditoria.
+## Versão online futura
 
+Repositório privado não disponibiliza o sistema como serviço. [GitHub Pages hospeda HTML/CSS/JavaScript estáticos](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages); não executa este backend Node.js.
 
-## Integração do firmware — Fase 1
+Uma apresentação estática separada poderia mostrar identidade, imagens, vídeo e cena conceitual rotulada. Exige aprovação e adaptação: os HTML atuais dependem de sessão/APIs e não devem ser apresentados como sistema completo no Pages.
 
-O modo normal para apresentação continua `SIMULATE=true`, sem Arduino: três bombas, cinco boias e ACK/protocolo são simulados no backend. A fonte de limiares/tempos é `firmware/sda/Config.h`; o simulador lê esses valores. O limite inicial é **uma bomba simultânea**, com 2 s entre partidas. Máximos por ciclo são 120/120/60 s; cooldown de 30 s. Rega antiga em minutos é recusada quando excede 60 s da bomba 3, sem truncamento silencioso. O painel novo permite ciclos de teste de 4 s; o agendamento segue uma ocorrência por perfil e dia/hora, com reserva anterior ao envio e sem repetição após reinício.
+Login, comandos, simulador, Socket.IO, histórico/CSV, clima e SSE dependem do Express. IA real exige que o backend alcance o Ollama local. `127.0.0.1` numa hospedagem não aponta para o notebook do autor. **Não exponha Ollama nem MySQL diretamente à internet.**
 
-Somente para o roteiro físico supervisionado, depois de conferir ligações, use `SIMULATE=false` e `SERIAL_PORT=COMx`. `auto` só abre quando encontra exatamente um dispositivo de fabricante reconhecido; ambiguidade fica desconectada. Falha serial não derruba o site nem muda silenciosamente para dados simulados. Depois de `DATA_STALE_SECONDS` sem telemetria válida (padrão 5 s), bombas aparecem como desconhecidas. O firmware volta AUTO local após 10 s sem heartbeat; isso não é emergência elétrica.
+Implantação pública exigiria auditoria própria, HTTPS/proxy, cookies seguros, sessões persistentes, armazenamento durável, controles de origem/abuso, isolamento de comandos e observabilidade sem segredos. Uma demonstração pública deve ser explicitamente simulada e isolada de hardware. Nenhuma hospedagem ou abertura de portas foi feita.
 
-Novas APIs autenticadas: `GET /api/estado`; master: `POST /api/bombas/:id` com `{on,ms}`, `/api/modo` com `{mode}`, `/api/limiares` com `{dry,wet}` e `/api/calibracao` com `{dry,wet}`. Todas as escritas exigem CSRF. `/api/rega` e eventos antigos permanecem compatíveis com a autorização da Fase 0.5. Uma resposta HTTP de sucesso contém ACK validado, não só confirmação de que bytes foram enviados. O painel nunca presume ligado no clique. A declaração de saída ligada do Arduino ainda não mede vazão/corrente/contato de relé.
+## Documentação técnica
 
-Os ensaios A/B/C/D não foram executados; fonte, diodos, contatos, boias, geometria, polarização e sensor de solo permanecem a conferir. ECHO foi movido para A1 (digital 15/PCINT9) e TRIG para A2 (digital 16); D12/D13 ficam livres. Confira a tabela e o diagrama atualizados antes de qualquer ensaio futuro. As bibliotecas/fontes externas continuam como pendência offline da Fase 4.
+- [DEMO-1: testes e gravação](docs/RELATORIO-DEMO-1.md)
+- [Ollama: ativação e teste manual](docs/TESTE-MANUAL-OLLAMA.md)
+- [Pinos e ligações — ainda não validados](docs/PINOS-E-LIGACOES.md)
+- [Protocolo serial](docs/PROTOCOLO-SERIAL-V1.md)
+- [Plano físico supervisionado — pendente](docs/TESTE-FISICO-FASE-1.md)
+- [Organização do conhecimento](knowledge/README.md)
 
-## Operação do backend — Fase 2
-
-Mantenha `SIMULATE=true`. `SERIAL_PORT=auto` só seleciona um dispositivo reconhecido; porta explícita e `SERIAL_RECONNECT_MS` são opções para ensaio futuro. Sem dados recentes, as APIs retornam sensores e bombas nulos, a interface mostra “sem dados” e comandos são recusados. Nunca há fallback silencioso de hardware para simulação.
-
-`GET /api/leituras` aceita `de`/`ate` ISO com fuso, `limit` (1–1000) e `offset`; máximo 31 dias por consulta. `/api/leituras.csv` exporta todas as leituras daquele período. `/api/eventos`, `/api/acionamentos`, `/api/configuracoes` e `/api/clima` exigem sessão. Configuração de vazão (`PUT /api/configuracoes`, três valores `vazoes_l_min` positivos ou null) e cenários (`POST /api/simulacao`) exigem master/CSRF. O consumo usa duração confirmada × vazão configurada e sempre aparece como **ESTIMATIVA**; ciclos incertos não recebem volume calculado.
-
-O clima passa apenas pelo backend. `WEATHER_OFFLINE=true` é o padrão para apresentação sem rede. Com `false`, usa OpenWeather se houver `OPENWEATHER_API_KEY`, ou Open-Meteo sem chave; cache de 600 s e timeout de 2 s são configuráveis. Falha mostra clima offline, usando cache identificado quando existir. As bibliotecas visuais ainda dependem de CDN até a Fase 4.
-
-Preserve `.data/schedule-occurrences` e `.data/device-settings.json` entre reinícios. O diário exclusivo por ocorrência é durável mesmo em `DB_MODE=memory`; leituras, eventos e acionamentos em memória são temporários e limitados. O diário e as configurações são privados e não são servidos. Reinício após envio com resultado desconhecido marca o ciclo como incerto e não reenvia: o sistema prefere perder uma ocorrência a duplicar uma irrigação. Não executa horários já passados nem agenda de cliente na bomba compartilhada. Instância única local continua sendo o escopo.
-
-## Assistente do Solo — Fase 3
-
-Mantenha `SIMULATE=true`. Para a banca com respostas prontas use `ASSISTANT_PROVIDER=demo` (legado sem seleção explícita: `ASSISTANT_DEMO=true`): a aba Assistente do Solo apresenta respostas pré-definidas, sempre rotuladas **resposta de demonstração, sem IA real**. Não existe fallback silencioso de Claude para demo. Firmware continua NÃO VALIDADO e não foi alterado.
-
-Para Claude real, selecione explicitamente `ASSISTANT_PROVIDER=claude`, use `ASSISTANT_DEMO=false` e configure `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL` exclusivamente no `.env`. Modelo não tem valor padrão no código. O SDK oficial `@anthropic-ai/sdk` fica apenas no backend; streaming por `POST /api/chat` exige sessão e CSRF. Sem chave/modelo, somente o assistente fica indisponível. Siga o roteiro manual antes de usar uma conta real: essas chamadas podem ser cobradas e não foram feitas pelo agente.
-
-`src/assistant/` reúne prompt, privacidade, seleção de contexto, busca em `/knowledge`, provedores e rotas. `src/db/chat-store.js` guarda mensagens na tabela existente `conversas_ia` (sem oitava tabela), agrupadas por UUID e usuário. A migração preserva mensagens anteriores. `GET/POST /api/conversas`, `GET /api/conversas/:id` e `GET /api/chat/status` também exigem sessão; listagem e mensagens têm paginação. Sem MySQL, o histórico é temporário em memória.
-
-O modelo recebe campos técnicos permitidos, perfil em cultura reconhecida/limite, clima disponível e documentos relevantes, nunca objetos de sessão/usuário. Dados vencidos são “sem dados”; origem SIMULAÇÃO é declarada. Sanitização remove identificadores conhecidos e padrões de e-mail/credenciais/documentos; não envie informações pessoais ou sensíveis em texto livre. Prompt injection é tratado como risco: dados são separados das regras fixas, não há ferramentas, e a segurança de comandos não depende da obediência do modelo.
-
-A IA não envia comandos. **Aplicar sugestão** é uma revisão manual de proposta determinística do backend, somente para master em SIMULAÇÃO, limitada à bomba 3 por até 4 s quando a checagem permite. Confirmação explícita chama a mesma `/api/bombas/3`, com CSRF, travas e ACK; bloqueio exibe motivo legível. Receitas/números do texto gerado não são interpretados. O modo AUTO local continua independente do chat.
-
-Os limites `ASSISTANT_MESSAGES_PER_HOUR`, `ASSISTANT_MESSAGES_PER_DAY`, `ASSISTANT_MESSAGE_MAX_CHARS`, `ASSISTANT_MAX_TOKENS`, `ASSISTANT_HISTORY_MAX_CHARS` e `ASSISTANT_TIMEOUT_SECONDS` estão no `.env.example`. Janelas móveis por usuário: padrão 20/h e 100/24 h; histórico enviado até 6.000 caracteres, pergunta até 2.000, resposta até 700 tokens, geração até 30 s. Tentativas aceitas, incluindo erro/cancelamento, contam. MySQL preserva cotas após reinício; modo memória não. SDK sem retries automáticos, logs/conteúdo de telemetria desabilitados. Uma geração simultânea por usuário, em instância única local.
-
-O renderizador local oferece Markdown simples por criação de nós DOM; HTML, imagens e links não são executados. Os sete documentos iniciais têm fontes e a busca relê `.md` privados a cada pergunta. Veja `knowledge/README.md` para acrescentar conteúdo. RAG e testes de software não validam todas as respostas de um modelo real nem substituem agrônomo/análise de solo.
-
-
-## Ollama local — Fase 3.5, Etapa 1
-
-A integração básica foi adicionada e ensaiada com o Ollama já instalado e `llama3.2:3b`, sem chave paga. Use `ASSISTANT_PROVIDER=ollama`, `OLLAMA_BASE_URL=http://127.0.0.1:11434`, `OLLAMA_MODEL=llama3.2:3b` e mantenha `SIMULATE=true`. O `.env.example` agora sugere essa seleção; nenhum `.env` real foi alterado. Seleção explícita prevalece sobre a opção demo legada. Falhas não trocam de provedor.
-
-Para Ollama, os limites adicionais são `OLLAMA_NUM_CTX=4096`, `OLLAMA_NUM_PREDICT=128` e timeout padrão de 60 s. Há uma geração global por processo, sem fila. Instruções de segurança e contexto atual são preservados; RAG/histórico são reduzidos para caber. O modelo é descarregado após cada resposta para economizar RAM. O ensaio curto levou 12,6 s e a RAM livre chegou a 387 MiB: começar com um usuário, sem aumentar concorrência.
-
-Leia [ativação e teste manual](docs/TESTE-MANUAL-OLLAMA.md) e [relatório da etapa](docs/RELATORIO-FASE-3-5-ETAPA-1.md). Firmware, protocolo, segurança e permissões permanecem inalterados. Rede local/QR e fila continuam pendentes de aprovação.
+Relatórios históricos registram limitações à época de cada etapa; confirme o comportamento atual pelo código e pelos relatórios recentes.
