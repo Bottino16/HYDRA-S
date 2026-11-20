@@ -10,11 +10,13 @@ class SimulatedBoard{
  input(now){const f=[this.river>5,this.well>=20,this.well>=90,this.box>=20,this.box>=90];return {floats:this.faults.floats||f,validFloats:this.faults.validFloats??31,soil:Math.max(0,Math.min(100,Math.round((this.rawDry-(limits.soilDry-this.soil*(limits.soilDry-limits.soilWet)/100))*100/(this.rawDry-this.rawWet)))),boxPercent:this.box,soilValid:!this.faults.soil&&now>=this.calibratingUntil,ultraValid:!this.faults.ultra,dhtValid:!this.faults.dht,floatAt:now,soilAt:now,ultraAt:now,dhtAt:now};}
  tick(){const now=this.clock()-this.epoch,dt=Math.min(0.25,Math.max(0,(now-this.lastTick)/1000));this.lastTick=now;
   const p=this.control.pumps;
+  if(!this.physicsPaused){
   if(p[0]){this.river-=dt;this.well+=4*dt;}
   if(p[1]){this.well-=3*dt;this.box+=3*dt;}
   if(p[2]){this.box-=1.6*dt;this.soil+=2*dt;}else this.soil-=0.12*dt;
   if(this.rain){this.river+=dt;this.soil+=dt;}
   for(const k of ['river','well','box','soil'])this[k]=Math.max(0,Math.min(100,this[k]));
+  }
   this.control.step(this.input(now),now);if(now-this.lastState>=1000)this.telemetry();
  }
  telemetry(){const now=this.clock()-this.epoch;this.lastState=now;const s=this.input(now);this.send({type:'state',solo:s.soilValid?s.soil:null,solo_bruto:s.soilValid?Math.round(limits.soilDry-this.soil*(limits.soilDry-limits.soilWet)/100):null,temperatura:s.dhtValid?29.5:null,umidade_ar:s.dhtValid?68:null,caixa:s.ultraValid?Math.round(this.box):null,rio:Math.round(this.river),poco:Math.round(this.well),boias:s.floats.map((value,i)=>s.validFloats&(1<<i)?value:null),pumps:[...this.control.pumps],modo:this.control.mode,alertas:this.control.alerts});}
@@ -33,6 +35,11 @@ class SimulatedBoard{
   if(!ok&&data.cmd==='pump')c.notifyBlocked(now);
   if(!ok&&!code)code=12;
   this.send({type:'ack',cmd:seq,ok,code,pumps:[...c.pumps],modo:c.mode});
+ }
+ prepareDemo(){
+  const desired=Math.max(0,this.control.dry-5),soil=(limits.soilDry-this.rawDry+desired*(this.rawDry-this.rawWet)/100)*100/(limits.soilDry-limits.soilWet);
+  if(soil<0||soil>100)throw new Error('Calibração atual não permite preparar o cenário sem inventar leitura.');
+  this.river=85;this.well=10;this.box=8;this.soil=soil;this.rain=false;this.faults={};this.telemetry();
  }
  close(){clearInterval(this.timer);}
 }

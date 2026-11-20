@@ -23,7 +23,7 @@ function monitoringController({store,device,weather}){return {
  settings:(req,res)=>res.json(device.settings.get()),
  saveSettings:async(req,res)=>{const saved=device.settings.save(req.body.vazoes_l_min);await device.event('calibracao_vazao','info','Vazões por bomba atualizadas; consumo permanece ESTIMATIVA.');res.json(saved);},
  weather:async(req,res)=>res.json(await weather.get()),
- simulation:(req,res)=>res.json(device.simulationControl(req.body)),
+ simulation:async(req,res)=>res.json(await device.simulationControl(req.body,req.user.id)),
  pump:async(req,res)=>res.json({sucesso:true,ack:await device.pumpId(Number(req.params.id),req.body.on,req.body.ms??0,{userId:req.user.id})}),
  irrigate:async(req,res)=>res.json({sucesso:true,ack:await device.pump(req.body.minutos,{userId:req.user.id})}),
  stop:async(req,res)=>res.json({sucesso:true,ack:await device.stop()}),

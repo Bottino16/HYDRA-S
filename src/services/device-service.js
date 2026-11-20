@@ -1,3 +1,4 @@
+const {IrrigationDemo}=require('./irrigation-demo');
 const {DeviceLink}=require('../device-link');
 const {SimulatedBoard}=require('../simulated-board');
 const {SerialTransport}=require('../serial-transport');
@@ -8,7 +9,7 @@ const {createLogger}=require('../logger');
 function createDeviceService(io,store,cfg,options={}){
  const logger=options.logger||createLogger();
  const settings=options.settings||new SettingsService({file:cfg.settingsFile,flows:cfg.flows});
- let transport,history=[],lastSaved=0,lastAlert=null,lastConnectivity=null,thresholds='',generation=0;
+ let demo,transport,history=[],lastSaved=0,lastAlert=null,lastConnectivity=null,thresholds='',generation=0;
  let heartbeatBusy=false,housekeepingBusy=false,closed=false,paused=false;
  let previous=[null,null,null],active=[null,null,null],contexts=[null,null,null];
  let operations=store.recoverActions(),controls=Promise.resolve();
@@ -19,7 +20,7 @@ function createDeviceService(io,store,cfg,options={}){
   io.emit('evento',row);if(severidade==='erro')logger.error(tipo);return row;
  }
  const source=()=>cfg.simulate?'SIMULAÇÃO':'HARDWARE';
- function snapshot(){return {...link.snapshot(),simulate:cfg.simulate,source:source(),limites:limits,dataStaleMs:link.staleMs};}
+ function snapshot(){return {...link.snapshot(),simulate:cfg.simulate,source:source(),limites:limits,dataStaleMs:link.staleMs,...(demo?{demo:demo.snapshot()}:{} )};}
  function queueOperation(fn){operations=operations.then(fn).catch(()=>{logger.error('persistencia_operacional');});return operations;}
  async function transitions(state){
   if(!state.connected){
@@ -62,7 +63,7 @@ function createDeviceService(io,store,cfg,options={}){
  function serialize(fn){const expected=generation;const job=controls.then(async()=>{if(closed||expected!==generation)throw Object.assign(new Error('Conexão mudou antes do comando; solicite novamente.'),{status:503});return fn();});controls=job.catch(()=>{});return job;}
  async function rawCommand(data){if(!snapshot().connected)throw Object.assign(new Error('Arduino desconectado ou sem dados recentes. Comando bloqueado.'),{status:503});return link.command(data);}
  async function cancelPending(reason){for(let i=0;i<3;i++)if(contexts[i]&&!active[i]){if(contexts[i].reservation)await store.finishAction(contexts[i].reservation,{status:'bloqueada',reason});contexts[i]=null;}}
- async function command(data){return serialize(async()=>{
+ async function command(data){if(demo?.active)throw Object.assign(new Error('Encerre a demonstração antes de trocar o modo ou configurar o controlador.'),{status:409});return serialize(async()=>{
   if(data.cmd==='setMode'){await cancelPending('Troca de modo cancelou pedido em fila.');}
   const ack=await rawCommand(data);await operations;
   await event('comando_confirmado','info','Comando '+data.cmd+' confirmado.');return ack;
@@ -77,11 +78,13 @@ function createDeviceService(io,store,cfg,options={}){
  }
  async function pumpId(id,on,ms=0,context={}){
   if(!Number.isInteger(id)||id<1||id>3||typeof on!=='boolean'||!Number.isInteger(ms)||ms<0||ms>limits.cycles[id-1])throw Object.assign(new Error('Bomba ou duração inválida (respeite o máximo por ciclo).'),{status:400});
+  if(demo?.active&&context.origin!=='demonstracao'){if(on)throw Object.assign(new Error('Encerre a demonstração antes de enviar outro acionamento.'),{status:409});await demo.action('stop',context.userId);}
   return serialize(()=>startPump(id,on,ms,{origin:'manual',...context}));
  }
  async function pump(minutes,context){if(!Number.isInteger(minutes)||minutes<1||minutes*60000>limits.cycles[2])throw Object.assign(new Error('Duração excede o limite seguro da bomba 3.'),{status:400});return pumpId(3,true,minutes*60000,context);}
  const device={snapshot,irrigationPending:()=>!!contexts[2]||snapshot().pumps[2]===true,
   runScheduled:(row,profile,reservation,userId)=>serialize(async()=>{
+   if(demo?.active)throw Object.assign(new Error('Demonstração simulada em execução; agendamento bloqueado.'),{status:409});
    if(contexts[2]||snapshot().pumps[2])throw Object.assign(new Error('Outra irrigação já ocupa a bomba.'),{status:409});
    await prepareManual();const dry=Number(profile.limite_umidade),wet=Math.min(100,dry+15);
    await rawCommand({cmd:'setThresholds',dry,wet});thresholds=dry+':'+wet;
@@ -95,22 +98,27 @@ function createDeviceService(io,store,cfg,options={}){
   if(housekeepingBusy||closed)return;housekeepingBusy=true;
   try{
    await ready;broadcast();io.emit('system_status',{simulate:cfg.simulate,...store.status()});
-   const state=snapshot();if(!state.connected)return;
+   const state=snapshot();if(!state.connected){if(demo?.active)await demo.tick();return;}
    const owner=store.users.find(u=>u.ativo&&u.nivel==='master');const profiles=owner?store.profiles.filter(p=>p.usuario_id===owner.id):[];
    const selected=profiles.find(p=>p.selecionado)||profiles[0];
-   if(selected&&!contexts[2]){const dry=Number(selected.limite_umidade),wet=Math.min(100,dry+15),key=dry+':'+wet;if(thresholds!==key){await serialize(()=>rawCommand({cmd:'setThresholds',dry,wet}));thresholds=key;}}
-   await scheduler.tick();
+   if(selected&&!contexts[2]&&!demo?.active){const dry=Number(selected.limite_umidade),wet=Math.min(100,dry+15),key=dry+':'+wet;if(thresholds!==key){await serialize(()=>rawCommand({cmd:'setThresholds',dry,wet}));thresholds=key;}}
+   if(demo?.active)await demo.tick();else await scheduler.tick();
    if(Date.now()-lastSaved>=cfg.saveSeconds*1000){lastSaved=Date.now();const current=snapshot();if(current.connected)await store.reading({solo:current.solo,temperatura:current.temperatura,umidade_ar:current.umidade_ar,nivel_rio:current.rio??null,nivel_poco:current.poco??null,nivel_caixa:current.caixa,bombas:current.pumps,boias:current.boias,modo:current.modo,simulado:cfg.simulate});}
   }catch{logger.error('sincronizacao_controlador');}finally{housekeepingBusy=false;}
  }
  const timer=setInterval(tick,Math.min(1000,Math.max(100,Math.floor(link.staleMs/2))));timer.unref();
- function simulationControl(data){
+ async function simulationControl(data,userId){
   if(!cfg.simulate)throw Object.assign(new Error('Controle de demonstração disponível apenas em SIMULAÇÃO.'),{status:400});
+  if(data.demo!==undefined){if(Object.keys(data).length!==1||!demo)throw Object.assign(new Error('Demonstração disponível somente no simulador interno.'),{status:400});if(['start','restart'].includes(data.demo)&&store.schedules.some(s=>s.ativo))throw Object.assign(new Error('Desative os agendamentos simulados antes de preparar a gravação.'),{status:409});paused=false;const result=await demo.action(data.demo,userId);transport.telemetry();return {simulate:true,demo:result};}
+  if(demo?.active)throw Object.assign(new Error('Encerre a demonstração antes de alterar o cenário ou pausar a telemetria.'),{status:409});
   if(Object.keys(data).some(k=>!['paused','scenario'].includes(k))||(data.paused!==undefined&&typeof data.paused!=='boolean')||(data.scenario!==undefined&&!['normal','rio_seco','caixa_baixa','solo_seco','erro_dht'].includes(data.scenario)))throw Object.assign(new Error('Cenário inválido.'),{status:400});
   if(data.paused!==undefined)paused=data.paused;
   if(data.scenario){transport.faults={};transport.river=data.scenario==='rio_seco'?0:80;transport.box=data.scenario==='caixa_baixa'?5:60;transport.soil=data.scenario==='solo_seco'?10:42;if(data.scenario==='erro_dht')transport.faults.dht=true;}
   if(!paused&&typeof transport.telemetry==='function')transport.telemetry();
   queueOperation(()=>event('simulacao_cenario','info','Cenário de SIMULAÇÃO atualizado.'));return {simulate:true,paused,scenario:data.scenario};
+ }
+ if(cfg.simulate&&transport instanceof SimulatedBoard){
+  demo=new IrrigationDemo({read:snapshot,readWet:()=>transport.control.wet,reset:()=>{transport.prepareDemo();demo.targetWet=transport.control.wet;},freeze:value=>{transport.physicsPaused=value;},pump:(id,userId)=>pumpId(id,true,limits.cycles[id-1],{origin:'demonstracao',userId}),stopAll:()=>serialize(async()=>{await cancelPending('Demonstração cancelou pedidos em fila.');await rawCommand({cmd:'setMode',mode:'MANUAL'});await operations;}),event,clock:options.clock||Date.now,...options.demoTiming});
  }
  return {ready,pump,pumpId,stop:()=>pumpId(3,false),command,initial,snapshot,link,settings,scheduler,event,simulationControl,tick,drain:()=>operations,
   async close(){closed=true;clearInterval(heartbeat);clearInterval(timer);transport.close();link.close();await operations;}
