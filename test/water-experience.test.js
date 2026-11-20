@@ -4,7 +4,7 @@ async function fixture(t,master=true){
  const dom=new JSDOM('<main><section id="overview-section"></section></main>',{url:'http://localhost:3000/arthur.html',runScripts:'outside-only'});t.after(()=>dom.window.close());const w=dom.window,events={},calls=[];let resolve;
  const state={connected:true,simulate:true,modo:'MANUAL',rio:0,poco:20,caixa:75,solo:0,boias:[false,true,false,true,false],pumps:[false,false,false],alertas:0};
  const originalLegacy=new w.DOMParser().parseFromString(fs.readFileSync('public/arthur.html','utf8'),'text/html').querySelector('.legacy-manual');const legacy=w.document.importNode(originalLegacy,true);w.document.querySelector('#overview-section').append(legacy);let legacyEvents=0;legacy.querySelector('#tempo-manual').addEventListener('input',()=>legacyEvents++);
- w.sdaReady=Promise.resolve({usuario:{nivel:master?'master':'cliente'}});w.sdaSocket={on:(n,fn)=>events[n]=fn};w.confirm=()=>true;
+ w.sdaReady=Promise.resolve({usuario:{nivel:master?'master':'cliente'},simulate:true});w.sdaSocket={on:(n,fn)=>events[n]=fn};w.confirm=()=>true;
  w.sdaRequest=async(url,options)=>{calls.push({url,options});return url==='/api/estado'?{ok:true,json:async()=>state}:new Promise(r=>resolve=r);};w.eval(fs.readFileSync('public/digital-twin.js','utf8'));w.eval(fs.readFileSync('public/maquete.js','utf8'));await wait();return {w,d:w.document,events,state,calls,legacy,legacyEvents:()=>legacyEvents,answer:r=>resolve(r)};
 }
 test('Water Experience: quatro cenários distintos, canteiros estáticos e cinco boias preservadas',async t=>{
@@ -98,4 +98,10 @@ test('Níveis DT: atualização, zero, ausência e vencimento preservam o contra
  f.events.estado_sistema({...f.state,rio:0,poco:0,caixa:0,solo:0});
  assert.ok(values().every(n=>n.text.includes('0%')));assert.match(f.d.querySelector('#controller-connection').textContent,/SIMULAÇÃO conectada/);
  f.events.disconnect();assert.ok(values().every(n=>n.text.includes('Sem dados')));
+});
+
+test('DEMO-1: controles MASTER, estados recebidos, fluxo e água vinculados à telemetria',async t=>{
+ const f=await fixture(t);f.events.estado_sistema({...f.state,demo:{state:'idle',message:'Pronto'}});const controls=[...f.d.querySelectorAll('.simulation-demo-actions button')];assert.equal(controls.length,5);assert.equal(controls[0].disabled,false);controls[0].click();assert.equal(f.calls.at(-1).url,'/api/simulacao');assert.deepEqual(JSON.parse(f.calls.at(-1).options.body),{demo:'start'});f.answer({ok:true,json:async()=>({demo:{message:'Preparado'}})});await wait();
+ f.events.estado_sistema({...f.state,pumps:[false,false,true],demo:{state:'running',message:'Irrigando'}});for(const svg of f.d.querySelectorAll('.dt-scene')){assert.deepEqual([...svg.querySelectorAll('.pipe-core path')].map(n=>n.dataset.state),['off','off','on']);assert.equal(svg.querySelector('.dt-irrigation').dataset.state,'on');}const rect=f.d.querySelector('#hydra-dt-tower-art-demo-clip rect');assert.ok(Number(rect.getAttribute('height'))>0);f.events.estado_sistema({...f.state,caixa:0,demo:{state:'paused',message:'Pausada'}});assert.equal(rect.getAttribute('height'),'0');assert.equal(f.d.querySelector('.dt-irrigation').dataset.state,'off');f.events.disconnect();assert.equal(f.d.querySelector('.dt-irrigation').dataset.state,'unknown');assert.match(f.d.querySelector('.simulation-demo strong').textContent,/SEM DADOS/);
+ const client=await fixture(t,false);assert.equal(client.d.querySelector('.simulation-demo-actions'),null);assert.ok(client.d.querySelector('.simulation-demo strong'));
 });

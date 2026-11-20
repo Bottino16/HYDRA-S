@@ -158,7 +158,23 @@ const mobile=`<svg class="dt-scene scene-mobile" viewBox="0 0 350 920" role="img
   if(tablet&&index<3){label.setAttribute('x',slot.getAttribute('x'));label.setAttribute('y',slot.getAttribute('y'));label.textContent=['Rio','Poço','Caixa elevada'][index];slot.before(label);slot.setAttribute('x',[300,610,610][index]);slot.setAttribute('text-anchor','end');}
   if(index===3){label.textContent='Solo • escala relativa';label.classList.add('dt-soil-caption');label.setAttribute('x',mobile?'15':tablet?'230':'924');label.setAttribute('y',mobile?'891':tablet?'375':'181');slot.before(label);slot.setAttribute('y',mobile?'859':tablet?'347':'155');slot.setAttribute('x',mobile?'15':tablet?'230':'924');}
  });
- function sync(){
+ const ns='http://www.w3.org/2000/svg',water=[];
+ for(const [id,base,bottom,range,x,width]of [['hydra-dt-well-art',60,184,124,70,70],['hydra-dt-tower-art',48,136,88,20,160]]){
+  const group=sceneRoot.querySelector('#'+id),wall=group.querySelector('path[fill="url(#hydra-dt-waterwall)"]'),surface=group.querySelector('ellipse[fill="var(--water-top)"]'),wave=group.querySelector('.decorative-wave');
+  const clip=document.createElementNS(ns,'clipPath');clip.id=id+'-demo-clip';const rect=document.createElementNS(ns,'rect');rect.setAttribute('x',x);rect.setAttribute('width',width);clip.append(rect);sceneRoot.querySelector('defs').append(clip);
+  water.push({wall,surface,wave,rect,clip,base,bottom,range,original:wall.getAttribute('d'),surfaceY:surface.getAttribute('cy')});
+ }
+ for(const svg of sceneRoot.querySelectorAll('.dt-scene')){const mobile=svg.classList.contains('scene-mobile'),tablet=svg.classList.contains('scene-tablet'),spray=document.createElementNS(ns,'g');spray.classList.add('dt-irrigation');spray.setAttribute('aria-hidden','true');spray.setAttribute('transform',mobile?'translate(160 810)':tablet?'translate(110 450)':'translate(910 270)');for(let i=0;i<5;i++){const drop=document.createElementNS(ns,'circle');drop.setAttribute('cx',i*14);drop.setAttribute('cy',(i%2)*12);drop.setAttribute('r','2.5');spray.append(drop);}svg.append(spray);}
+ function sync(state={}){
+  const proportional=state.simulate===true&&state.demo&&state.demo.state!=='idle';
+  water.forEach((item,i)=>{const known=tanks[i+1].card.dataset.known==='true',value=parseFloat(tanks[i+1].value.textContent),{wall,surface,wave,rect,base,bottom,range,clip}=item;
+   if(proportional&&known){const y=bottom-range*value/100;rect.setAttribute('y',y);rect.setAttribute('height',range*value/100);wall.setAttribute('d',i===0?'M77 60V170C77 184 131 184 131 170V60':'M27 48V108C27 144 171 144 171 108V48');wall.setAttribute('clip-path','url(#'+clip.id+')');surface.setAttribute('cy',y);wave.setAttribute('transform','translate(0 '+(y-Number(item.surfaceY))+')');}
+   else{wall.setAttribute('d',item.original);wall.removeAttribute('clip-path');surface.setAttribute('cy',item.surfaceY);wave.removeAttribute('transform');}
+   for(const shape of [wall,surface,wave])shape.style.opacity=!known?'.12':proportional&&value===0?'0':'';
+  });
+  sceneRoot.querySelector('.dt-scene-note').textContent=proportional?'SIMULAÇÃO • alturas de água proporcionais à escala virtual no Poço/Caixa; Rio ilustrativo. Não é volume físico nem vazão medida.':'Cena conceitual • volumes desenhados sem escala de leitura • nenhuma vazão medida';
+  sceneRoot.querySelectorAll('.dt-scene').forEach(svg=>{svg.querySelectorAll('.pipe-core path').forEach((path,i)=>path.dataset.state=links[i].dataset.state||'unknown');svg.querySelector('.dt-irrigation').dataset.state=links[2].dataset.state||'unknown';});
+
   slots.forEach(slot=>{const tank=tanks[Number(slot.dataset.dtLevel)];slot.textContent=tank.value.textContent;slot.dataset.available=tank.card.dataset.known;});
   const accessible=['Rio','Poço','Caixa','Solo'].map((name,i)=>name+': '+tanks[i].value.textContent).join('; ');
   sceneRoot.querySelectorAll('svg.dt-scene > desc').forEach(desc=>desc.textContent=accessible+'. Cena conceitual, sem escala física ou vazão medida.');

@@ -52,6 +52,17 @@ document.addEventListener('DOMContentLoaded',async()=>{
   const legacyStatus=document.getElementById('texto-bomba');if(legacyStatus?.parentElement)legacyStatus.parentElement.classList.add('sr-only');
  }
  const digitalTwin=window.HydraDigitalTwin.mount(circuit,{track,tanks,links});
+ let demoStatus,demoBadge,demoBusy=false;const demoButtons=[];
+ if(session.simulate){
+  const demoPanel=node('section',undefined,undefined,'simulation-demo');demoPanel.setAttribute('aria-label','Demonstração de irrigação');circuit.insertBefore(demoPanel,circuit.querySelector('.dt-scene-wrap'));
+  demoBadge=node('strong','SIMULAÇÃO • aguardando dados',demoPanel);node('span','DEMONSTRAÇÃO DE IRRIGAÇÃO',demoPanel,'hydra-eyebrow');demoStatus=node('p','Prepare um ciclo reproduzível Rio → Poço → Caixa → Plantação.',demoPanel);demoStatus.setAttribute('role','status');
+  if(master){const actions=node('div',undefined,demoPanel,'simulation-demo-actions');for(const [action,label]of [['start','Iniciar demonstração'],['pause','Pausar demonstração'],['resume','Retomar demonstração'],['restart','Reiniciar demonstração'],['stop','Encerrar demonstração']]){
+   const button=node('button',label,actions);button.type='button';button.className=action==='start'?'btn btn-primary':'btn btn-outline';demoButtons.push({action,button});button.addEventListener('click',async()=>{
+    if(demoBusy)return;
+    demoBusy=true;demoButtons.forEach(({button})=>button.disabled=true);try{const response=await window.sdaRequest('/api/simulacao',{method:'POST',body:JSON.stringify({demo:action})}),data=await response.json();demoStatus.textContent=response.ok?data.demo.message:(data.mensagem||'Demonstração não confirmada.');}catch{demoStatus.textContent='Sem confirmação da demonstração. Confira a conexão.';}finally{demoBusy=false;demoButtons.forEach(({button})=>button.disabled=false);}
+   });
+  }node('small','Iniciar/reiniciar substitui o cenário virtual, sem apagar o histórico. Ciclo de aproximadamente 2 minutos; pausas desligam bombas e retomadas respeitam o intervalo mínimo. Nenhum hardware conectado.',demoPanel);}
+ }
  const main=document.getElementById('overview-section')||document.querySelector('main'),banner=document.getElementById('sda-system-banner');if(banner?.parentElement===main)banner.after(panel);else main.prepend(panel);
  function render(state){current=state;const valid=state.connected===true;metricCards.forEach((card,i)=>{const value=[state.solo,state.temperatura,state.umidade_ar,state.caixa][i];card.dataset.known=String(valid&&typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=(i===1?60:100));});
   connection.textContent=valid?(state.simulate?'SIMULAÇÃO conectada':'Arduino conectado'):'Sem dados • controlador desconectado';connection.dataset.state=valid?'on':'error';
@@ -63,7 +74,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
   mode.textContent='Modo confirmado: '+(valid&&['AUTO','MANUAL'].includes(state.modo)?state.modo:'Sem dados');modeButtons.forEach(({button,value})=>button.setAttribute('aria-pressed',String(valid&&state.modo===value)));
   labels.forEach((label,i)=>{const value=valid?state.pumps?.[i]:null,known=typeof value==='boolean',status=known?(value?'on':'off'):'unknown';label.textContent='Bomba '+(i+1)+': '+(!known?'DESCONHECIDA':value?'LIGADA (confirmada)':'DESLIGADA (confirmada)');pumpCards[i].card.dataset.state=status;pumpCards[i].chip.dataset.state=status;pumpCards[i].chip.textContent=!known?'Sem dados':value?'Ligada':'Desligada';links[i].dataset.state=status;circuitStates[i].textContent=!known?'Sem dados':value?'Ligada · confirmada':'Desligada · confirmada';pumpCards[i].duration.disabled=!master||!valid;if(state.limites?.cycles?.[i])pumpCards[i].duration.max=String(state.limites.cycles[i]/1000);});
   buttons.forEach(button=>button.disabled=!master||!valid||pendingButtons.has(button));
-  digitalTwin.sync();
+  if(demoStatus){const demo=state.demo;demoBadge.textContent=valid?'SIMULAÇÃO ATIVA':'SIMULAÇÃO • SEM DADOS';demoStatus.textContent=demo?.message||'Demonstração indisponível neste servidor. Reinicialização exige autorização se houver dados em memória.';demoButtons.forEach(({action,button})=>{button.disabled=demoBusy||!valid||!demo||(action==='pause'&&demo.state!=='running')||(action==='resume'&&demo.state!=='paused')||(action==='stop'&&demo.state==='idle')||(action==='start'&&['running','paused'].includes(demo.state));});}
+  digitalTwin.sync(state);
  }
  socket.on('estado_sistema',render);socket.on('disconnect',()=>render({connected:false,pumps:[null,null,null]}));
  const response=await window.sdaRequest('/api/estado');if(response.ok)render(await response.json());

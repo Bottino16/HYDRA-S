@@ -50,3 +50,14 @@ body.light-mode #overview-section .digital-twin{--base:#f0f6f8;--panel:#fff;--ra
 /* Plantação: legenda independente, com respiro em relação à leitura. */
 #overview-section .digital-twin .dt-scene .dt-soil-caption{font-size:12px;font-weight:400;letter-spacing:.015em;fill:var(--muted);opacity:1}
 #overview-section .digital-twin .scene-desktop .dt-reading[data-dt-level="3"][data-available=true]{font-size:36px}
+
+/* DEMO-1: sinais visuais seguem exclusivamente saídas confirmadas do simulador. */
+#overview-section .digital-twin .pipe-core path[data-state=on]{stroke:var(--cyan);stroke-dasharray:7 10;animation:dt-demo-flow 1.1s linear infinite}
+#overview-section .digital-twin [data-scene-pump][data-state=on]{filter:drop-shadow(0 0 4px var(--cyan))}
+#overview-section .digital-twin .dt-irrigation{opacity:0;fill:var(--cyan);pointer-events:none}#overview-section .digital-twin .dt-irrigation[data-state=on]{opacity:.9}#overview-section .digital-twin .dt-irrigation[data-state=on] circle{animation:dt-demo-water .9s ease-in infinite}
+@keyframes dt-demo-flow{to{stroke-dashoffset:-34}}@keyframes dt-demo-water{from{opacity:.9;transform:translateY(-9px)}to{opacity:.2;transform:translateY(9px)}}
+.simulation-demo{margin:16px 0;padding:14px 16px;border:1px solid var(--border-color);border-radius:12px;background:var(--bg-panel);display:grid;gap:8px}.simulation-demo>strong{color:var(--accent);font-size:12px}.simulation-demo p{margin:0;font-size:13px;line-height:1.6;overflow-wrap:anywhere}.simulation-demo small{font-size:12px;color:var(--text-secondary);line-height:1.6}.simulation-demo-actions{display:flex;flex-wrap:wrap;gap:8px}.simulation-demo-actions button{min-height:44px;font:600 12px var(--ui-font);padding:9px 12px}.simulation-demo-actions button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:560px){.simulation-demo{padding:12px}.simulation-demo-actions{display:grid;grid-template-columns:1fr 1fr}.simulation-demo-actions button{white-space:normal}.simulation-demo-actions button:last-child{grid-column:1/-1}}
+@media(prefers-reduced-motion:reduce){#overview-section .digital-twin .pipe-core path[data-state=on],#overview-section .digital-twin .dt-irrigation circle{animation:none!important}}
+
+#overview-section .digital-twin .simulation-demo-actions button{width:auto;flex:0 1 auto;margin:0}
