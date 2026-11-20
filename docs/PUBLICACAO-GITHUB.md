@@ -2,7 +2,9 @@
 
 ## Resultado
 
-**Conteúdo revisado aprovado para o envio privado, sem credenciais reais identificadas nos arquivos e no histórico alcançável analisados. Publicação ainda NÃO realizada.** A conta salva no Git Credential Manager precisa ser confirmada pelo proprietário e autenticada novamente pelo fluxo oficial. Nenhuma senha ou token deve ser enviado pelo chat.
+**Publicação privada concluída em [Bottino16/HYDRA-S](https://github.com/Bottino16/HYDRA-S), branch `master`.** Após o usuário concluir o login oficial, a API confirmou a conta autenticada `Bottino16`. A conta salva anteriormente como `Bottino0612` continuou inválida e não foi usada para publicar.
+
+Conteúdo revisado aprovado para envio privado, sem credenciais reais identificadas nos arquivos e no histórico alcançável analisados. Nenhuma senha ou token foi publicado ou solicitado pelo chat.
 
 A auditoria combina varredura por padrões, comparação com os segredos presentes na configuração local, revisão dos candidatos, inspeção visual de miniaturas dos assets e verificação de dependências. Não é garantia matemática de ausência de segredos ou de vulnerabilidades, nem uma aprovação para hospedagem pública.
 
@@ -15,7 +17,21 @@ A auditoria combina varredura por padrões, comparação com os segredos present
 - GitHub CLI (`gh`) não está disponível no PATH. Git Credential Manager 2.6.1 está instalado e tem uma conta salva chamada `Bottino0612`.
 - A tentativa de verificar essa conta pela API oficial autenticada retornou **401**. Portanto, não se confirmou uma sessão válida nem a titularidade humana da conta.
 
-As consultas públicas de `HYDRA-S` e `HYDRA-S-Demonstracao` nessa conta retornaram 404. **Isso não comprova inexistência:** repositórios privados também podem ficar invisíveis sem autenticação. Não foi criado repositório, configurado remote nem executado push. A checagem autenticada deve ser repetida antes da criação, evitando duplicatas ou sobrescrita.
+Na verificação inicial, consultas públicas de `HYDRA-S` e `HYDRA-S-Demonstracao` na conta antiga retornaram 404. **Isso não comprova inexistência:** repositórios privados também podem ficar invisíveis sem autenticação. A publicação ficou pendente até o novo login. Depois, consultas autenticadas na conta efetivamente conectada `Bottino16` também retornaram 404 para ambos os nomes, antes da criação do repositório de código.
+
+## Confirmação da publicação
+
+- Conta autenticada pela API oficial: **Bottino16**.
+- Repositório criado: **https://github.com/Bottino16/HYDRA-S**, confirmado como **privado** pela API.
+- Criado vazio, sem commit remoto automático; nenhum conteúdo existente foi sobrescrito.
+- Remote `origin`: `https://github.com/Bottino16/HYDRA-S.git`.
+- Primeiro push: `master`, com upstream `origin/master`, preservando os 148 commits existentes.
+- Primeiro HEAD confirmado local/remoto: `af2c4385df764ae2074c71f5304d5212777674ec`.
+- Árvore remota conferida: **239 arquivos**, exatamente iguais aos rastreados localmente naquele envio. `.env`, `.data/`, `node_modules/` e o relatório anterior não rastreado ficaram ausentes.
+- `has_pages=false`: nenhum GitHub Pages, backend ou serviço local foi exposto.
+- O repositório de vídeo não foi encontrado na conta autenticada e não foi criado.
+
+Um commit documental posterior registra esta confirmação e atualiza o README; ele é enviado sem reescrever o histórico. O hash final é informado na entrega e pode ser comparado com `git ls-remote origin refs/heads/master`.
 
 ## Auditoria dos arquivos e do histórico
 
@@ -58,13 +74,15 @@ Proteções de exclusão verificadas com `git check-ignore`: `.env`, `.data/`, `
 
 A suíte abriu aplicações isoladas de teste e usou mocks de IA. Não carregou o modelo real nem acionou hardware físico. Não foi feito `npm ci` sobre `node_modules` existente nem acessado/modificado o MySQL de uso. Os testes não substituem instalação limpa em outra máquina ou validação real da IA-3D, que continua pendente.
 
-## Como concluir a publicação
+## Procedimento usado e referência para outro ambiente
 
-1. Confirme que `Bottino0612` é a conta correta. Caso não seja, use a conta indicada pelo proprietário.
+O envio acima já foi concluído. Os passos abaixo são referência; não recrie o repositório nem repita `remote add` na instalação já configurada.
+
+1. Confirme a conta correta; nesta publicação foi **Bottino16**.
 2. No terminal local, conclua o fluxo oficial do GitHub; não copie senha/token para o chat:
 
 ```powershell
-git credential-manager github login --username Bottino0612 --browser --force
+git credential-manager github login --username Bottino16 --browser --force
 ```
 
 3. Após autenticar, confira a conta e consulte os dois nomes de repositório, incluindo os privados. Se `HYDRA-S` já existir e contiver conteúdo, pare para comparar os históricos; não sobrescreva nem use force push.
@@ -73,16 +91,16 @@ git credential-manager github login --username Bottino0612 --browser --force
 
 ```powershell
 git remote -v
-git remote add origin https://github.com/Bottino0612/HYDRA-S.git
+git remote add origin https://github.com/Bottino16/HYDRA-S.git
 git push -u origin master
 ```
 
 Esses comandos pressupõem que o remote ainda não existe e a conta foi confirmada. Se já houver remote, revise-o em vez de substituí-lo. Preserve `master`; não é necessário renomear a branch para publicar.
 
 6. Confira na interface o selo **Private**, a branch `master`, o último commit e os arquivos. Compare `git rev-parse HEAD` com `git ls-remote origin refs/heads/master`. Nenhum segredo, dado local ou modelo deve aparecer.
-7. Se `HYDRA-S-Demonstracao` existir, confirme o endereço e proponha incluir o link no README principal. Nenhum vídeo foi enviado e a existência desse repositório permanece não verificada de forma autenticada.
+7. Se `HYDRA-S-Demonstracao` existir futuramente, confirme o endereço e proponha incluir o link no README principal. Nenhum vídeo foi enviado; a consulta autenticada nesta entrega não encontrou esse repositório em `Bottino16`.
 
-O usuário já autorizou o primeiro envio privado condicionado à auditoria. O impedimento atual é autenticação/identificação da conta, não uma necessidade de autorizar novamente o mesmo escopo.
+O usuário autorizou o primeiro envio privado condicionado à auditoria e concluiu o login oficial. Não foi necessário repetir a autorização do mesmo escopo.
 
 ## Atualizações futuras
 

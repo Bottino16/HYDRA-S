@@ -75,6 +75,13 @@ Somente `public/` fornece assets web; páginas privadas exigem autenticação. `
 
 ### 1. Dependências e ambiente
 
+O código está no repositório privado [Bottino16/HYDRA-S](https://github.com/Bottino16/HYDRA-S). Para obter uma cópia, autentique-se no GitHub com uma conta autorizada e execute, fora de outra pasta do projeto:
+
+```powershell
+git clone https://github.com/Bottino16/HYDRA-S.git
+Set-Location HYDRA-S
+```
+
 No PowerShell, dentro da pasta do projeto:
 
 ```powershell
@@ -175,7 +182,7 @@ Integrações MySQL são opcionais, habilitadas por `SDA_TEST_MYSQL_PORT` e cred
 
 ## Vídeo demonstrativo do TCC
 
-Espaço reservado para o vídeo do HYDRA-S. A existência e a URL do repositório planejado **HYDRA-S-Demonstracao** precisam ser confirmadas na conta GitHub autenticada. Nenhum vídeo grande foi incluído neste repositório de código.
+Espaço reservado para o vídeo do HYDRA-S. A consulta autenticada na conta **Bottino16** não encontrou o repositório planejado **HYDRA-S-Demonstracao**; o link poderá ser incluído quando o endereço for confirmado. Nenhum repositório de vídeo foi criado nesta entrega, e nenhum vídeo grande foi incluído no repositório de código.
 
 ## Versão online futura
 
